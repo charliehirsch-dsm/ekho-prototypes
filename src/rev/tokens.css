@@ -1,0 +1,211 @@
+/* =============================================================================
+   Rev Design System Tokens
+   Extracted from ekho-common/src/rev/_constants/
+   ============================================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@250;350;400;450;500;550;600;650;700&display=swap');
+
+:root {
+  /* -------------------------------------------------------------------------
+     Colors - Backgrounds
+     ------------------------------------------------------------------------- */
+  --rev-color-backgroundPrimary: white;
+  --rev-color-backgroundSecondary: #fafafa;
+  --rev-color-backgroundTertiary: #e5e5e5;
+  --rev-color-backgroundInvertPrimary: rgb(24 24 27);
+
+  /* -------------------------------------------------------------------------
+     Colors - Text
+     ------------------------------------------------------------------------- */
+  --rev-color-textPrimary: black;
+  --rev-color-textSecondary: #666;
+  --rev-color-textTertiary: rgb(113 113 122);
+  --rev-color-textQuaternary: rgb(138 142 148);
+  --rev-color-textInvertPrimary: rgb(250 250 250);
+  --rev-color-textSuccess: #00805e;
+  --rev-color-textDestructive: #d32733;
+  --rev-color-textDisabled: #999;
+
+  /* -------------------------------------------------------------------------
+     Colors - Separators / Borders
+     ------------------------------------------------------------------------- */
+  --rev-color-separatorPrimary: rgb(24 24 27);
+  --rev-color-separatorSecondary: rgb(188 188 188);
+  --rev-color-separatorTertiary: rgb(222 226 230);
+
+  /* -------------------------------------------------------------------------
+     Colors - Status
+     ------------------------------------------------------------------------- */
+  --rev-color-error: rgb(243 84 33);
+  --rev-color-success: rgb(22 163 74);
+
+  --rev-color-infoBold: #0074b2;
+  --rev-color-infoBase: #bde8ff;
+  --rev-color-infoLight: #ebf8ff;
+
+  --rev-color-warningBold: #d97f18;
+  --rev-color-warningBase: #ffe5c7;
+  --rev-color-warningLight: #fff5eb;
+
+  --rev-color-errorBold: #d9265c;
+  --rev-color-errorBase: #f7d4de;
+  --rev-color-errorLight: #fdf4f7;
+
+  --rev-color-successBold: #00805e;
+  --rev-color-successBase: #cdefe3;
+  --rev-color-successLight: #f0faf7;
+
+  /* -------------------------------------------------------------------------
+     Colors - Badge / Pill
+     ------------------------------------------------------------------------- */
+  --rev-color-positiveBg: #00805e;
+  --rev-color-positiveFg: #186048;
+  --rev-color-negativeBg: #d32733;
+  --rev-color-negativeFg: #b01c27;
+  --rev-color-informationBg: #0074b2;
+  --rev-color-informationFg: #124f87;
+  --rev-color-warningBg: #c66f0c;
+  --rev-color-warningFg: #ae6109;
+  --rev-color-neutralBg: #666;
+  --rev-color-neutralFg: #333;
+
+  /* -------------------------------------------------------------------------
+     Colors - Accent
+     ------------------------------------------------------------------------- */
+  --rev-color-accentNeutralBold: #666;
+  --rev-color-accentNeutralLight: #f5f5f5;
+  --rev-color-accent1Bold: #0d5bf2;
+  --rev-color-accent1Light: #e7effe;
+  --rev-color-accent5Bold: #e07020;
+  --rev-color-accent5Base: #f5a623;
+  --rev-color-accent5Light: #fef3e2;
+
+  /* -------------------------------------------------------------------------
+     Colors - Controls
+     ------------------------------------------------------------------------- */
+  --rev-color-controlFillDisabled: rgb(233 236 239);
+  --rev-color-menuHighlight: rgba(0, 0, 0, 0.05);
+  --rev-color-menuHighlightOpaque: #f2f2f2;
+  --rev-color-textInputBackground: rgb(248 249 250);
+
+  /* -------------------------------------------------------------------------
+     Colors - Brand
+     ------------------------------------------------------------------------- */
+  --rev-color-brand: #1e1e21;
+  --rev-color-brandLight: rgb(196, 196, 196);
+
+  /* -------------------------------------------------------------------------
+     Colors - Named grays (for direct use)
+     ------------------------------------------------------------------------- */
+  --rev-color-carbonGray: rgb(24 24 27);
+  --rev-color-grapheneGray: rgb(50 50 50);
+  --rev-color-coolGray: rgb(113 113 122);
+  --rev-color-compositeGray: rgb(138 142 148);
+  --rev-color-gunmetalGray: rgb(188 188 188);
+  --rev-color-silverGray: rgb(222 226 230);
+  --rev-color-aluminumGray: rgb(233 236 239);
+  --rev-color-dustyGray: rgb(244 244 245);
+  --rev-color-mistGray: rgb(248 249 250);
+  --rev-color-vaporGray: rgb(250 250 250);
+
+  /* -------------------------------------------------------------------------
+     Typography
+     ------------------------------------------------------------------------- */
+  --rev-fontFamily: 'Inter', 'Reddit Sans', sans-serif, system-ui, -apple-system,
+    'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+
+  --rev-fontWeight-light: 250;
+  --rev-fontWeight-regular: 350;
+  --rev-fontWeight-medium: 450;
+  --rev-fontWeight-semibold: 550;
+  --rev-fontWeight-bold: 650;
+
+  /* -------------------------------------------------------------------------
+     Spacing
+     ------------------------------------------------------------------------- */
+  --rev-spacing-0: 0px;
+  --rev-spacing-2: 2px;
+  --rev-spacing-4: 4px;
+  --rev-spacing-6: 6px;
+  --rev-spacing-8: 8px;
+  --rev-spacing-10: 10px;
+  --rev-spacing-12: 12px;
+  --rev-spacing-16: 16px;
+  --rev-spacing-20: 20px;
+  --rev-spacing-24: 24px;
+  --rev-spacing-32: 32px;
+  --rev-spacing-40: 40px;
+  --rev-spacing-48: 48px;
+  --rev-spacing-64: 64px;
+  --rev-spacing-80: 80px;
+
+  /* -------------------------------------------------------------------------
+     Shadows
+     ------------------------------------------------------------------------- */
+  --rev-boxShadow-elevation0: 0 0 0 1px rgba(0, 0, 0, 0.1);
+  --rev-boxShadow-elevation1: 1px 1px 2px 0 rgba(0, 0, 0, 0.07),
+    0 0 4px 0 rgba(0, 0, 0, 0.1);
+  --rev-boxShadow-elevation2: 2px 2px 4px 0 rgba(0, 0, 0, 0.08),
+    0 0 8px 0 rgba(0, 0, 0, 0.1);
+  --rev-boxShadow-elevation3: 0 5px 6px 0 rgba(0, 0, 0, 0.1),
+    0 0 10px 0 rgba(0, 0, 0, 0.1);
+  --rev-boxShadow-elevation4: 0 0 12px 0 rgba(0, 0, 0, 0.1),
+    0 8px 10px 0 rgba(0, 0, 0, 0.12);
+  --rev-boxShadow-elevation5: 0 0 14px 0 rgba(0, 0, 0, 0.1),
+    0 12px 17px 0 rgba(0, 0, 0, 0.15);
+  --rev-boxShadow-elevation6: 0 0 16px 0 rgba(0, 0, 0, 0.1),
+    0 16px 24px 0 rgba(0, 0, 0, 0.18);
+
+  /* -------------------------------------------------------------------------
+     Border Radius
+     ------------------------------------------------------------------------- */
+  --rev-borderRadius-0: 0px;
+  --rev-borderRadius-8: 8px;
+  --rev-borderRadius-10: 10px;
+  --rev-borderRadius-12: 12px;
+  --rev-borderRadius-16: 16px;
+  --rev-borderRadius-20: 20px;
+  --rev-borderRadius-24: 24px;
+  --rev-borderRadius-full: 999rem;
+  --rev-borderRadius-brand: 10px;
+
+  /* -------------------------------------------------------------------------
+     Animations
+     ------------------------------------------------------------------------- */
+  --rev-duration-presto: 125ms;
+  --rev-duration-allegro: 150ms;
+  --rev-duration-moderato: 250ms;
+  --rev-duration-andante: 500ms;
+  --rev-duration-lento: 1s;
+
+  --rev-timingFunction-slowThenZoom: cubic-bezier(0.4, 0, 0.2, 1);
+  --rev-timingFunction-curveOut: cubic-bezier(0.3, 0, 0, 1);
+  --rev-timingFunction-smoothEaseOut: cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* ===========================================================================
+   Global Reset & Base Styles
+   =========================================================================== */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-family: var(--rev-fontFamily);
+  font-weight: var(--rev-fontWeight-regular);
+  font-size: 16px;
+  line-height: 1.25;
+  color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundPrimary);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  min-height: 100vh;
+}
