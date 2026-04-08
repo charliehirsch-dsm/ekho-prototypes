@@ -438,11 +438,11 @@ function PaymentCard({ vehicle }: {
             )}
             <PriceBreakdownRow
               label="Est. shipping"
-              value="Calculated at checkout"
+              value="$349"
             />
             <PriceBreakdownRow
               label="Est. tax, title & reg."
-              value="Calculated at checkout"
+              value="$812"
             />
           </Stack>
 
