@@ -1,10 +1,10 @@
-import { IncludedUpgradesPrototype } from './prototypes/included-upgrades/IncludedUpgradesPrototype';
+import { Prop65Prototype } from './prototypes/prop65/Prop65Prototype';
 import { ToastContainer } from './rev';
 
 function App() {
   return (
     <>
-      <IncludedUpgradesPrototype />
+      <Prop65Prototype />
       <ToastContainer />
     </>
   );
