@@ -444,6 +444,13 @@ function PaymentCard({ vehicle }: {
               label="Est. tax, title & reg."
               value="$812"
             />
+            {paymentSelection === 'one-time' && (
+              <PriceBreakdownRow
+                label="Total purchase price"
+                value={`$${(vehicle.advertisedPrice + 400 + 349 + 812).toLocaleString()}`}
+                isBold
+              />
+            )}
           </Stack>
 
           {/* 6. Social proof */}
