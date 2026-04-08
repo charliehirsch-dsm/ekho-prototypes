@@ -293,6 +293,7 @@ function PaymentCard({ vehicle }: {
   vehicle: VehicleInfo;
 }) {
   const [paymentSelection, setPaymentSelection] = useState('one-time');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   return (
     <div
@@ -324,9 +325,25 @@ function PaymentCard({ vehicle }: {
                     <Text size="footnote" color="tertiary" style={{ textDecoration: 'line-through' }}>
                       ${vehicle.dealerRetailPrice.toLocaleString()}
                     </Text>
-                    <Text size="title200" weight="semibold">
-                      ${vehicle.financing.monthlyPayment}/mo*
-                    </Text>
+                    <ComplianceHighlight label="Total Payment + Disclaimer" ticket="BXP-1892 / 1896" condition="Monthly selected">
+                      <Group itemsSpacing="6" itemsAlignY="center" noWrap>
+                        <Text size="title200" weight="semibold">
+                          ${vehicle.financing.monthlyPayment}/mo
+                        </Text>
+                        <span
+                          className="material-symbols-outlined"
+                          onClick={(e) => { e.stopPropagation(); setShowPaymentModal(true); }}
+                          style={{
+                            fontSize: '18px',
+                            color: 'var(--rev-color-textTertiary)',
+                            cursor: 'pointer',
+                            marginTop: '2px',
+                          }}
+                        >
+                          info
+                        </span>
+                      </Group>
+                    </ComplianceHighlight>
                   </Stack>
                 ) : (
                   <Stack itemsSpacing="2">
@@ -356,15 +373,6 @@ function PaymentCard({ vehicle }: {
               )}
             </Stack>
           </ComplianceHighlight>
-
-          {/* Total Payment + Disclaimer (BXP-1892 / BXP-1896) */}
-          {paymentSelection === 'monthly' && vehicle.financing && (
-            <ComplianceHighlight label="Total Payment + Disclaimer" ticket="BXP-1892 / 1896" condition="Monthly selected">
-              <Text size="caption" color="tertiary" style={{ lineHeight: '16px' }}>
-                *Total of all payments: ${(vehicle.financing.monthlyPayment * vehicle.financing.term + vehicle.financing.downPayment).toLocaleString()}. Actual terms vary by creditworthiness.
-              </Text>
-            </ComplianceHighlight>
-          )}
 
           {/* 2. Payment Methods Accordion */}
           <div>
@@ -418,6 +426,13 @@ function PaymentCard({ vehicle }: {
 
           {/* 5. Price breakdown */}
           <Stack itemsSpacing="0">
+            <ComplianceHighlight label="Hang Tag / MSRP" ticket="BXP-1888" condition="New only">
+              <PriceBreakdownRow
+                label="MSRP"
+                value={`$${vehicle.dealerRetailPrice.toLocaleString()}`}
+              />
+            </ComplianceHighlight>
+            <Divider />
             <PriceBreakdownRow
               label="Vehicle price"
               value={`$${vehicle.advertisedPrice.toLocaleString()}`}
@@ -425,7 +440,7 @@ function PaymentCard({ vehicle }: {
             {paymentSelection === 'one-time' && (
               <ComplianceHighlight label="Hang Tag / Freight" ticket="BXP-1888" condition="New only">
                 <PriceBreakdownRow
-                  label="Manufacturer freight"
+                  label="Freight"
                   value="$400"
                 />
               </ComplianceHighlight>
@@ -464,6 +479,65 @@ function PaymentCard({ vehicle }: {
 
         </Stack>
       </Box>
+
+      {/* Payment Details Modal (BXP-1892 / BXP-1896) */}
+      {showPaymentModal && vehicle.financing && (
+        <div
+          onClick={() => setShowPaymentModal(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: 'var(--rev-color-backgroundPrimary)',
+              borderRadius: '16px',
+              padding: '24px',
+              width: '360px',
+              maxWidth: '90vw',
+              boxShadow: 'var(--rev-boxShadow-elevation3)',
+            }}
+          >
+            <Stack itemsSpacing="16">
+              <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
+                <Text size="heading" weight="bold">Payment details</Text>
+                <span
+                  className="material-symbols-outlined"
+                  onClick={() => setShowPaymentModal(false)}
+                  style={{ fontSize: '20px', cursor: 'pointer', color: 'var(--rev-color-textSecondary)' }}
+                >
+                  close
+                </span>
+              </Group>
+              <Divider />
+              <Stack itemsSpacing="0">
+                <PriceBreakdownRow label="Vehicle price" value={`$${vehicle.advertisedPrice.toLocaleString()}`} />
+                <PriceBreakdownRow label="Down payment" value={`$${vehicle.financing.downPayment.toLocaleString()}`} />
+                <PriceBreakdownRow label="Amount financed" value={`$${(vehicle.advertisedPrice - vehicle.financing.downPayment).toLocaleString()}`} />
+                <PriceBreakdownRow label="APR" value={`${vehicle.financing.apr}%`} />
+                <PriceBreakdownRow label="Term" value={`${vehicle.financing.term} months`} />
+                <PriceBreakdownRow label="Monthly payment" value={`$${vehicle.financing.monthlyPayment}/mo`} />
+                <PriceBreakdownRow
+                  label="Total of all payments"
+                  value={`$${(vehicle.financing.monthlyPayment * vehicle.financing.term + vehicle.financing.downPayment).toLocaleString()}`}
+                  isBold
+                />
+              </Stack>
+              <Text size="caption" color="tertiary" style={{ lineHeight: '16px' }}>
+                Actual terms may vary based on creditworthiness. Monthly payment shown is an estimate and does not include taxes, fees, or insurance.
+              </Text>
+            </Stack>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -951,6 +1025,13 @@ function VDPContent() {
               There is no cooling-off period unless you obtain a contract cancellation option.
             </Text>
           </ComplianceHighlight>
+
+          {/* ---- TOTAL PAYMENT + DISCLAIMER (BXP-1892 / BXP-1896) ---- */}
+          <ComplianceHighlight label="Total Payment + Disclaimer" ticket="BXP-1892 / 1896" condition="All vehicles">
+            <Text size="footnote" color="tertiary" style={{ lineHeight: '18px' }}>
+              Advertised monthly payments are estimates only. Actual terms may vary based on creditworthiness. Total of all payments includes down payment and all monthly installments. Monthly payment does not include taxes, fees, or insurance.
+            </Text>
+          </ComplianceHighlight>
         </Stack>
       </div>
 
@@ -995,6 +1076,45 @@ function SpecSection({ title, badge, badgeColor, children }: {
   );
 }
 
+
+function CommentaryCard({ ticket, title, notes }: {
+  ticket: string;
+  title: string;
+  notes: string[];
+}) {
+  return (
+    <Box background="primary" rounding="12" padding="16" style={{ border: '1px solid var(--rev-color-separatorTertiary)' }}>
+      <Stack itemsSpacing="8">
+        <Group itemsSpacing="8" itemsAlignY="center" noWrap>
+          <span
+            style={{
+              background: '#3b82f6',
+              color: 'white',
+              fontSize: '9px',
+              fontWeight: 700,
+              fontFamily: 'var(--rev-fontFamily)',
+              padding: '2px 8px',
+              borderRadius: '4px',
+              letterSpacing: '0.3px',
+              whiteSpace: 'nowrap',
+              flexShrink: 0,
+            }}
+          >
+            {ticket}
+          </span>
+          <Text size="bodySmall" weight="semibold">{title}</Text>
+        </Group>
+        <ul style={{ margin: 0, paddingLeft: '16px' }}>
+          {notes.map((note) => (
+            <li key={note} style={{ fontSize: '12px', lineHeight: '18px', color: 'var(--rev-color-textSecondary)', fontFamily: 'var(--rev-fontFamily)', marginBottom: '4px' }}>
+              {note}
+            </li>
+          ))}
+        </ul>
+      </Stack>
+    </Box>
+  );
+}
 
 function DeviceFrame({
   width,
@@ -1050,6 +1170,11 @@ function SpecView() {
               State-mandated disclosures placed in their correct production locations on the Vehicle Details Page.
               All items active regardless of vehicle type. CARS Act disclosures (SB 766) included proactively.
             </Text>
+            <div style={{ marginTop: '8px', padding: '8px 12px', background: '#fffbeb', border: '1px solid #fbbf24', borderRadius: '8px' }}>
+              <Text size="footnote" weight="semibold" style={{ color: '#92400e' }}>
+                Note: Add-on "purchase not required" notice (BXP-1895) also applies to Buyer Portal wherever the configurator/accessories are shown.
+              </Text>
+            </div>
           </Stack>
         </div>
 
@@ -1093,8 +1218,8 @@ function SpecView() {
                 </thead>
                 <tbody>
                   {[
-                    { name: 'Hang Tag / MSRP', ticket: 'BXP-1888', section: 'Payment Card', how: 'MSRP strikethrough + freight line item', why: 'CA law requires MSRP and freight displayed on new vehicles', condition: 'New only', regulation: 'VEH \u00A724014(a)', targetId: 'section-payment-card' },
-                    { name: 'Total Payment + Disclaimer', ticket: 'BXP-1892 / 1896', section: 'Payment Card', how: 'Footnote on monthly view', why: 'SB 766 requires total cost and terms disclaimer alongside monthly payment', condition: 'Monthly selected', regulation: 'SB 766', targetId: 'section-payment-card' },
+                    { name: 'Hang Tag / MSRP', ticket: 'BXP-1888', section: 'Payment Card', how: 'MSRP line + divider in price breakdown, freight line item', why: 'CA law requires MSRP and freight displayed on new vehicles', condition: 'New only', regulation: 'VEH \u00A724014(a)', targetId: 'section-payment-card' },
+                    { name: 'Total Payment + Disclaimer', ticket: 'BXP-1892 / 1896', section: 'Payment Card + Disclosures', how: 'Info icon opens modal with payment breakdown; also in disclosures', why: 'SB 766 requires total cost and terms disclaimer alongside monthly payment', condition: 'Monthly selected', regulation: 'SB 766', targetId: 'section-payment-card' },
                     { name: 'Add-On Notice', ticket: 'BXP-1895', section: 'F&I + Accessories', how: '"Purchase not required." appended to copy', why: 'SB 766 requires "purchase not required" wherever add-ons are shown. Applies to both F&I and accessories sections.', condition: 'Add-on sections', regulation: 'SB 766', targetId: 'section-affordable-protection' },
                     { name: 'Inspection Notice', ticket: 'BXP-1889', section: 'Disclosures', how: 'Simple disclosure line', why: 'CA law requires notice of right to independent inspection on used vehicles', condition: 'Used only', regulation: 'VEH \u00A711709.1', targetId: 'section-disclosures' },
                     { name: 'No Cooling-Off', ticket: 'BXP-1890', section: 'Disclosures', how: 'Simple disclosure line', why: 'CA law requires notice that there is no return period', condition: 'All vehicles', regulation: 'VEH \u00A711709.2', targetId: 'section-disclosures' },
@@ -1148,12 +1273,83 @@ function SpecView() {
         </SpecSection>
 
         {/* ============================================================ */}
-        {/* 2. VDP PREVIEW (desktop only)                                */}
+        {/* 2. VDP PREVIEW + COMMENTARY SIDEBAR                         */}
         {/* ============================================================ */}
         <SpecSection title="CA Dealer VDP" badge="All Disclosures" badgeColor="#2563eb">
-          <DeviceFrame width={1100} label="Desktop (1100px)">
-            <VDPContent />
-          </DeviceFrame>
+          <div style={{ display: 'flex', gap: '32px', alignItems: 'flex-start' }}>
+            <DeviceFrame width={1100} label="Desktop (1100px)">
+              <VDPContent />
+            </DeviceFrame>
+            <div style={{ width: '320px', flexShrink: 0, position: 'sticky', top: '24px' }}>
+              <Stack itemsSpacing="16">
+                <Text size="heading" weight="bold">Implementation notes</Text>
+
+                <CommentaryCard
+                  ticket="BXP-1888"
+                  title="Hang Tag / MSRP"
+                  notes={[
+                    'Show MSRP as top line in price breakdown with divider below',
+                    'Strikethrough MSRP next to advertised/monthly price at top of card',
+                    'Freight as separate line item in one-time price breakdown',
+                    'New vehicles only (CA dealers or CA buyers)',
+                  ]}
+                />
+
+                <CommentaryCard
+                  ticket="BXP-1892 / 1896"
+                  title="Total Payment + Disclaimer"
+                  notes={[
+                    'Info icon next to monthly payment opens read-only modal',
+                    'Modal shows: vehicle price, down payment, amount financed, APR, term, monthly payment, total of all payments',
+                    'Disclaimer text in modal: "Actual terms may vary based on creditworthiness"',
+                    'Also duplicated as text line in Disclosures section',
+                    'Monthly view only',
+                  ]}
+                />
+
+                <CommentaryCard
+                  ticket="BXP-1895"
+                  title="Add-On Notice"
+                  notes={[
+                    '"Purchase not required." appended to F&I and accessories copy',
+                    'Applies to both Affordable Protection and Accessories sections on VDP',
+                    'Also applies to Buyer Portal configurator/accessories (separate ticket)',
+                  ]}
+                />
+
+                <CommentaryCard
+                  ticket="BXP-1891"
+                  title="Prop 65 Warning"
+                  notes={[
+                    'All-caps "WARNING" as hyperlink in Disclosures section',
+                    'Click expands safe harbor text per 27 CCR 25602(b)',
+                    'Must include link to full Prop 65 warning page',
+                    'All vehicles (CA dealers or CA buyers)',
+                  ]}
+                />
+
+                <CommentaryCard
+                  ticket="BXP-1889"
+                  title="Inspection Notice"
+                  notes={[
+                    'Simple text line in Disclosures section',
+                    'Used vehicles only',
+                    '"California law entitles you to have this vehicle inspected by an independent mechanic before purchase."',
+                  ]}
+                />
+
+                <CommentaryCard
+                  ticket="BXP-1890"
+                  title="No Cooling-Off"
+                  notes={[
+                    'Simple text line in Disclosures section',
+                    'All vehicles (CA dealers or CA buyers)',
+                    '"There is no cooling-off period unless you obtain a contract cancellation option."',
+                  ]}
+                />
+              </Stack>
+            </div>
+          </div>
         </SpecSection>
 
       </div>
