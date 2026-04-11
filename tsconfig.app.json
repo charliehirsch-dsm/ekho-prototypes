@@ -16,11 +16,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
 
-    /* Linting */
+    /* Path aliases */
+    "baseUrl": ".",
+    "paths": {
+      "@rev-source/*": ["../../Repos/ekho/packages/ekho-common/src/rev/*"]
+    },
+
+    /* Relaxed for prototype use - importing raw Rev source with different TS settings */
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },

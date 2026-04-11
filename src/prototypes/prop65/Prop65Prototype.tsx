@@ -403,7 +403,7 @@ function PaymentCard({ vehicle }: {
           {/* 3. Prequal Banner (monthly only, matches production) */}
           {paymentSelection === 'monthly' && (
             <Callout
-              variant="info"
+              variant="information"
               message="Check your rate in minutes with no impact to your credit score."
             />
           )}

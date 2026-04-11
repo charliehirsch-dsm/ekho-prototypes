@@ -1,10 +1,10 @@
-import { Prop65Prototype } from './prototypes/prop65/Prop65Prototype';
+import { FeesPrototype } from './prototypes/fees/FeesPrototype';
 import { ToastContainer } from './rev';
 
 function App() {
   return (
     <>
-      <Prop65Prototype />
+      <FeesPrototype />
       <ToastContainer />
     </>
   );

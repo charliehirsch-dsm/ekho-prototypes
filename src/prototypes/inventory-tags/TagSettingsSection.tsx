@@ -204,7 +204,7 @@ export function TagSettingsSection() {
       </Stack>
 
       <Callout
-        variant="info"
+        variant="information"
         message={`${enabledCount} of 7 tags enabled. Disabled tags won't appear in the tag picker or on the SRP.`}
         appearance="outline"
       />
