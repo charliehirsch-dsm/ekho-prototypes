@@ -347,6 +347,7 @@ export function FeesPrototype() {
 
   const breadcrumbItems = [
     { id: 'settings', label: 'Settings' },
+    { id: 'sales', label: 'Sales' },
     { id: 'fees', label: 'Fees' },
   ];
 
