@@ -1,27 +1,96 @@
 /**
  * Mock fee configuration data for the Fees Settings prototype.
+ *
+ * V2 data model: conditions are decoupled from pricing source.
+ * Each rule has an explicit `conditions` array (dealer-configured filters)
+ * and a `pricingSource` that determines how the fee is calculated.
  */
 
 // ---------------------------------------------------------------------------
-// Rule types and amount models
+// Condition types (the "Applies when" half)
 // ---------------------------------------------------------------------------
 
-export type RuleType = 'dms' | 'ekho_single_unit' | 'inventory_attributes' | 'order_attributes';
+export type ConditionField =
+  | 'vehicle_condition'
+  | 'vehicle_category'
+  | 'make'
+  | 'cc'
+  | 'inventory_age'
+  | 'buyer_state'
+  | 'payment_method'
+  | 'delivery_distance';
+
+export interface ConditionFilter {
+  field: ConditionField;
+  values: string[];
+}
+
+export const CONDITION_FIELD_LABELS: Record<ConditionField, string> = {
+  vehicle_condition: 'Vehicle condition',
+  vehicle_category: 'Vehicle category',
+  make: 'Make',
+  cc: 'Engine size (CC)',
+  inventory_age: 'Days in stock',
+  buyer_state: "Buyer's state",
+  payment_method: 'Payment method',
+  delivery_distance: 'Delivery distance',
+};
+
+export const CONDITION_FIELD_VALUES: Partial<Record<ConditionField, Record<string, string>>> = {
+  vehicle_condition: { new: 'New', used: 'Used' },
+  vehicle_category: { motorcycle: 'Motorcycle', atv: 'ATV', sxs: 'SxS' },
+  payment_method: { ach: 'ACH', card: 'Card', bnpl: 'BNPL', crypto: 'Crypto', financing: 'Financing' },
+};
+
+export const CONDITION_FIELD_GROUPS: { label: string; fields: ConditionField[] }[] = [
+  {
+    label: 'Vehicle',
+    fields: ['vehicle_condition', 'vehicle_category', 'make', 'cc', 'inventory_age'],
+  },
+  {
+    label: 'Order',
+    fields: ['buyer_state', 'payment_method', 'delivery_distance'],
+  },
+];
+
+// ---------------------------------------------------------------------------
+// Pricing source types (the "Fee calculation" half)
+// ---------------------------------------------------------------------------
+
+export type PricingSource =
+  | 'dms_field'
+  | 'ekho_per_unit'
+  | 'fixed'
+  | 'labor_hours'
+  | 'stepped'
+  | 'markup';
+
+export const PRICING_SOURCE_LABELS: Record<PricingSource, string> = {
+  dms_field: 'From your DMS',
+  ekho_per_unit: 'Set per vehicle in Ekho',
+  fixed: 'Fixed amount',
+  labor_hours: 'Labor hours',
+  stepped: 'Tiered pricing',
+  markup: 'Markup on cost',
+};
+
+export const PRICING_SOURCE_DESCRIPTIONS: Record<PricingSource, string> = {
+  dms_field: 'Pulls the fee amount from a field in your DMS for each vehicle',
+  ekho_per_unit: 'A value you set on each vehicle individually in Ekho inventory',
+  fixed: 'Flat fee or percentage of vehicle/purchase price',
+  labor_hours: 'Hours multiplied by your shop labor rate',
+  stepped: 'Different prices based on ranges (e.g., distance tiers, engine size tiers)',
+  markup: 'Adds a flat or percentage amount on top of your cost',
+};
+
+// ---------------------------------------------------------------------------
+// Amount model (for fixed pricing)
+// ---------------------------------------------------------------------------
 
 export type AmountModel =
   | 'flat'
   | 'pct_vehicle_price'
   | 'pct_total_purchase';
-
-export type InventoryAttribute = 'vehicle_condition' | 'cc' | 'inventory_age' | 'vehicle_category' | 'make' | 'make_model' | 'make_model_year' | 'powertrain_type';
-export type OrderAttribute = 'delivery_distance' | 'payment_option' | 'delivery_state' | 'accessory_selection' | 'fulfillment_option' | 'promo_status';
-
-export const RULE_TYPE_LABELS: Record<RuleType, string> = {
-  dms: 'DMS lookup',
-  ekho_single_unit: 'Ekho single unit lookup',
-  inventory_attributes: 'Major unit attributes',
-  order_attributes: 'Order attributes',
-};
 
 export const AMOUNT_MODEL_LABELS: Record<AmountModel, string> = {
   flat: 'Flat fee',
@@ -29,56 +98,57 @@ export const AMOUNT_MODEL_LABELS: Record<AmountModel, string> = {
   pct_total_purchase: '% of total purchase price',
 };
 
-export const INVENTORY_ATTRIBUTE_LABELS: Record<InventoryAttribute, string> = {
-  vehicle_condition: 'Vehicle condition',
-  cc: 'CC',
-  inventory_age: 'Inventory age',
-  vehicle_category: 'Vehicle category',
-  make: 'Make',
-  make_model: 'Make model',
-  make_model_year: 'Make model year',
-  powertrain_type: 'Powertrain type',
+// ---------------------------------------------------------------------------
+// Fee model (section-level, used for delivery)
+// ---------------------------------------------------------------------------
+
+export type FeeModel = 'flat' | 'percentage' | 'per_mile' | 'stepped' | 'markup';
+
+export const MODEL_LABELS: Record<FeeModel, string> = {
+  flat: 'Flat fee',
+  percentage: 'Percentage',
+  per_mile: 'Per-mile',
+  stepped: 'Tiered',
+  markup: 'Markup on cost',
 };
 
-export const ORDER_ATTRIBUTE_LABELS: Record<OrderAttribute, string> = {
-  delivery_distance: 'Delivery distance',
-  payment_option: 'Payment option',
-  delivery_state: 'Delivery state',
-  accessory_selection: 'Accessory selection',
-  fulfillment_option: 'Fulfillment option',
-  promo_status: 'Promo status',
-};
+// ---------------------------------------------------------------------------
+// Stepped brackets
+// ---------------------------------------------------------------------------
 
-/** Match values for inventory attributes that have a finite set of options */
-export const INVENTORY_ATTRIBUTE_VALUES: Partial<Record<InventoryAttribute, Record<string, string>>> = {
-  vehicle_condition: { new: 'New vehicles', used: 'Used vehicles' },
-  vehicle_category: { motorcycle: 'Motorcycles', atv: 'ATVs', sxs: 'Side-by-Sides' },
-};
-
-/** Inventory attributes that use stepped brackets instead of a single match value */
-export const BRACKETED_INVENTORY_ATTRIBUTES: Set<InventoryAttribute> = new Set(['inventory_age', 'cc']);
-
-/** Units and labels for bracketed inventory attributes */
-export const INVENTORY_BRACKET_UNITS: Partial<Record<InventoryAttribute, string>> = {
-  inventory_age: 'day ',
-  cc: 'cc ',
-};
-
-/** Bracket range labels (for display in sublabels) */
-export function formatBracketRange(attr: InventoryAttribute | undefined, bracket: SteppedBracket): string {
-  if (attr === 'inventory_age') {
-    if (bracket.to == null) return `${bracket.from}+ days`;
-    return `${bracket.from}–${bracket.to} days`;
-  }
-  if (attr === 'cc') {
-    if (bracket.to == null) return `${bracket.from}+ cc`;
-    return `${bracket.from}–${bracket.to} cc`;
-  }
-  if (bracket.to == null) return `${bracket.from}+`;
-  return `${bracket.from}–${bracket.to}`;
+export interface SteppedBracket {
+  from: number;
+  to: number | null;
+  amount: number;
 }
 
-export type PaymentMethod = 'ach' | 'card' | 'bnpl' | 'crypto' | 'financing';
+export function formatBracketRange(bracketField: string | undefined, bracket: SteppedBracket): string {
+  if (bracketField === 'inventory_age') {
+    if (bracket.to == null) return `${bracket.from}+ days`;
+    return `${bracket.from}\u2013${bracket.to} days`;
+  }
+  if (bracketField === 'cc') {
+    if (bracket.to == null) return `${bracket.from}+ cc`;
+    return `${bracket.from}\u2013${bracket.to} cc`;
+  }
+  if (bracketField === 'delivery_distance') {
+    if (bracket.to == null) return `${bracket.from}+ mi`;
+    return `${bracket.from}\u2013${bracket.to} mi`;
+  }
+  if (bracket.to == null) return `${bracket.from}+`;
+  return `${bracket.from}\u2013${bracket.to}`;
+}
+
+/** Units for bracket fields */
+export const BRACKET_FIELD_UNITS: Partial<Record<string, string>> = {
+  inventory_age: 'day',
+  cc: 'cc',
+  delivery_distance: 'mi',
+};
+
+// ---------------------------------------------------------------------------
+// US States reference data
+// ---------------------------------------------------------------------------
 
 export const US_STATES: { id: string; label: string }[] = [
   { id: 'AL', label: 'Alabama' }, { id: 'AK', label: 'Alaska' }, { id: 'AZ', label: 'Arizona' },
@@ -100,73 +170,41 @@ export const US_STATES: { id: string; label: string }[] = [
   { id: 'WI', label: 'Wisconsin' }, { id: 'WY', label: 'Wyoming' },
 ];
 
-export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
-  ach: 'ACH',
-  card: 'Card',
-  bnpl: 'Buy now pay later',
-  crypto: 'Crypto',
-  financing: 'Financing',
-};
-
 // ---------------------------------------------------------------------------
-// Fee model (for the section-level fee model dropdown, e.g. Delivery)
-// ---------------------------------------------------------------------------
-
-export type FeeModel = 'flat' | 'percentage' | 'per_mile' | 'stepped' | 'markup';
-
-export const MODEL_LABELS: Record<FeeModel, string> = {
-  flat: 'Flat fee',
-  percentage: 'Percentage',
-  per_mile: 'Per-mile',
-  stepped: 'Stepped (brackets)',
-  markup: 'Markup on cost',
-};
-
-// ---------------------------------------------------------------------------
-// Stepped brackets (for delivery distance)
-// ---------------------------------------------------------------------------
-
-export interface SteppedBracket {
-  from: number;
-  to: number | null;
-  amount: number;
-}
-
-// ---------------------------------------------------------------------------
-// Rule interface
+// Rule interface (V2: conditions decoupled from pricing)
 // ---------------------------------------------------------------------------
 
 export interface FeeRule {
   id: string;
-  type: RuleType;
-  /** DMS field name (only for type=dms) */
+  /** Explicit conditions: dealer-configured filters (AND logic) */
+  conditions: ConditionFilter[];
+  /** How the fee amount is determined */
+  pricingSource: PricingSource;
+
+  // --- Pricing source-specific fields ---
+
+  /** DMS field name (pricingSource=dms_field) */
   dmsFieldName?: string;
-  /** Ekho field display name (only for type=ekho_single_unit, read-only) */
+  /** Whether the DMS field contains labor hours */
+  dmsIsLabor?: boolean;
+  /** Ekho field display name (pricingSource=ekho_per_unit) */
   ekhoFieldName?: string;
-  /** Selected attribute (only for type=inventory_attributes) */
-  inventoryAttribute?: InventoryAttribute;
-  /** Match value for the selected attribute (e.g., "used" for vehicle_condition) */
-  attributeValue?: string;
-  /** Selected attribute (only for type=order_attributes) */
-  orderAttribute?: OrderAttribute;
-  /** Selected payment method (only for orderAttribute=payment_option) */
-  paymentMethod?: PaymentMethod;
-  /** Selected US states (only for orderAttribute=delivery_state) */
-  states?: string[];
-  /** Fee model for delivery distance rules */
-  feeModel?: FeeModel;
-  /** Markup type: flat dollar or percentage (only for feeModel=markup) */
-  markupType?: 'flat' | 'percentage';
-  /** Stepped brackets (only for feeModel=stepped) */
-  brackets?: SteppedBracket[];
-  /** Amount model (only for inventory_attributes and order_attributes) */
+  /** Whether the Ekho field contains labor hours */
+  ekhoIsLabor?: boolean;
+  /** Amount model for fixed pricing (pricingSource=fixed) */
   amountModel?: AmountModel;
-  /** Amount value (only for non-labor inventory_attributes and order_attributes) */
+  /** Dollar or percentage amount (pricingSource=fixed, markup) */
   amount?: number;
-  /** Whether this rule maps labor hours instead of a fee amount */
-  isLabor?: boolean;
-  /** Labor hours (only when isLabor=true and type is inventory/order attributes) */
+  /** Labor hours (pricingSource=labor_hours) */
   hours?: number;
+  /** Stepped brackets (pricingSource=stepped) */
+  brackets?: SteppedBracket[];
+  /** What field the brackets are over (e.g. 'cc', 'inventory_age', 'delivery_distance') */
+  bracketField?: string;
+  /** Whether bracket values are labor hours */
+  bracketIsLabor?: boolean;
+  /** Markup type (pricingSource=markup) */
+  markupType?: 'flat' | 'percentage';
 }
 
 // ---------------------------------------------------------------------------
@@ -187,7 +225,6 @@ export interface FallbackConfig {
 export interface FeeConfig {
   id: string;
   label: string;
-  /** Shorter label for the table of contents (falls back to label) */
   tocLabel?: string;
   description: string;
   icon: string;
@@ -196,106 +233,82 @@ export interface FeeConfig {
   availableModels: FeeModel[];
   fallback: FallbackConfig;
   rules: FeeRule[];
-  /** Read-only Ekho field name for the single-unit rule */
   ekhoFieldName: string;
-  /** True for dealer-created custom fees */
-  isCustom?: boolean;
 }
 
-
 // ---------------------------------------------------------------------------
-// Helpers: auto-generate label and sublabel for a rule
+// Helpers: generate condition chips and pricing summary for a rule
 // ---------------------------------------------------------------------------
 
-export function getRuleLabel(rule: FeeRule): string {
-  switch (rule.type) {
-    case 'dms':
-      return 'DMS lookup';
-    case 'ekho_single_unit':
-      return 'Ekho single unit override';
-    case 'inventory_attributes': {
-      if (!rule.inventoryAttribute) return 'Inventory attribute rule';
-      const attrLabel = INVENTORY_ATTRIBUTE_LABELS[rule.inventoryAttribute];
-      if (rule.brackets?.length) {
-        return attrLabel;
-      }
-      if (rule.attributeValue) {
-        const values = INVENTORY_ATTRIBUTE_VALUES[rule.inventoryAttribute];
-        const valueLabel = values?.[rule.attributeValue] ?? rule.attributeValue;
-        return valueLabel;
-      }
-      return attrLabel;
-    }
-    case 'order_attributes':
-      if (rule.orderAttribute === 'payment_option' && rule.paymentMethod) {
-        return `Payment: ${PAYMENT_METHOD_LABELS[rule.paymentMethod]}`;
-      }
-      if (rule.orderAttribute === 'delivery_state' && rule.states?.length) {
-        return `Delivery in ${rule.states.join(', ')}`;
-      }
-      return rule.orderAttribute
-        ? ORDER_ATTRIBUTE_LABELS[rule.orderAttribute]
-        : 'Order attribute rule';
+/** Returns a short chip label for a single condition filter */
+function formatConditionChip(cond: ConditionFilter): string {
+  const valueMap = CONDITION_FIELD_VALUES[cond.field];
+  if (valueMap) {
+    return cond.values.map((v) => valueMap[v] ?? v).join(', ');
   }
+  if (cond.field === 'buyer_state') {
+    return cond.values.join(', ');
+  }
+  return `${CONDITION_FIELD_LABELS[cond.field]}: ${cond.values.join(', ')}`;
 }
 
-function formatLaborCalc(hours: number | undefined, shopRate: number): string {
-  if (hours == null) return 'Not configured';
-  return `${hours} hrs x $${shopRate}/hr = $${(hours * shopRate).toFixed(0)}`;
+/** Returns chip objects for display on rule rows */
+export function getRuleChips(rule: FeeRule): { label: string; implicit: boolean }[] {
+  const chips: { label: string; implicit: boolean }[] = [];
+
+  // Explicit condition chips
+  for (const cond of rule.conditions) {
+    chips.push({ label: formatConditionChip(cond), implicit: false });
+  }
+
+  // Implicit data condition chips (phrased as conditions, not requirements)
+  if (rule.pricingSource === 'dms_field' && rule.dmsFieldName) {
+    chips.push({ label: `${rule.dmsFieldName} in DMS`, implicit: true });
+  }
+  if (rule.pricingSource === 'ekho_per_unit') {
+    chips.push({ label: 'Value set in Ekho', implicit: true });
+  }
+  if (rule.pricingSource === 'stepped' && rule.bracketField) {
+    const fieldLabel = CONDITION_FIELD_LABELS[rule.bracketField as ConditionField] ?? rule.bracketField;
+    chips.push({ label: `Has ${fieldLabel.toLowerCase()} data`, implicit: true });
+  }
+
+  return chips;
 }
 
+/** Returns the pricing summary line (shown as sublabel on rule rows) */
 export function getRuleSublabel(rule: FeeRule, shopRate = 75): string {
-  switch (rule.type) {
-    case 'dms':
+  switch (rule.pricingSource) {
+    case 'dms_field':
       if (!rule.dmsFieldName) return 'No field mapped';
-      return rule.isLabor ? `Field: ${rule.dmsFieldName} (hrs x $${shopRate}/hr)` : `Field: ${rule.dmsFieldName}`;
-    case 'ekho_single_unit':
-      return rule.isLabor ? `Per-vehicle hours x $${shopRate}/hr` : (rule.ekhoFieldName ? `Field: ${rule.ekhoFieldName}` : 'Per-vehicle override');
-    case 'order_attributes':
-      if (rule.isLabor) return formatLaborCalc(rule.hours, shopRate);
-      if (rule.orderAttribute === 'payment_option' && rule.paymentMethod) {
-        if (rule.amount == null) return 'Not configured';
-        if (rule.amountModel === 'flat') return `$${rule.amount} flat fee`;
-        return `${rule.amount}% ${AMOUNT_MODEL_LABELS[rule.amountModel].replace('% ', '').toLowerCase()}`;
-      }
-      if (rule.orderAttribute === 'delivery_state' && rule.states?.length) {
-        if (rule.feeModel === 'markup') {
-          return rule.markupType === 'flat'
-            ? `$${rule.amount ?? 0} flat markup on cost`
-            : `${rule.amount ?? 0}% markup on cost`;
-        }
-        if (rule.amount == null || !rule.amountModel) return 'Not configured';
-        if (rule.amountModel === 'flat') return `$${rule.amount} flat fee`;
-        return `${rule.amount}% ${AMOUNT_MODEL_LABELS[rule.amountModel].replace('% ', '').toLowerCase()}`;
-      }
-      if (rule.orderAttribute === 'delivery_distance' && rule.feeModel) {
-        if (rule.feeModel === 'flat') return `$${rule.amount ?? 0} flat fee`;
-        if (rule.feeModel === 'per_mile') return `$${rule.amount ?? 0}/mi`;
-        if (rule.feeModel === 'markup') {
-          return rule.markupType === 'flat'
-            ? `$${rule.amount ?? 0} flat markup on cost`
-            : `${rule.amount ?? 0}% markup on cost`;
-        }
-        if (rule.feeModel === 'stepped') {
-          const n = rule.brackets?.length ?? 0;
-          return n > 0 ? `${n} distance bracket${n === 1 ? '' : 's'}` : 'Stepped brackets';
-        }
-        return MODEL_LABELS[rule.feeModel];
-      }
+      return rule.dmsIsLabor
+        ? `Field: ${rule.dmsFieldName} (hrs x $${shopRate}/hr)`
+        : `Field: ${rule.dmsFieldName}`;
+
+    case 'ekho_per_unit':
+      return rule.ekhoIsLabor
+        ? `Per-vehicle hours x $${shopRate}/hr`
+        : (rule.ekhoFieldName ? `Field: ${rule.ekhoFieldName}` : 'Per-vehicle override');
+
+    case 'fixed':
       if (rule.amount == null || !rule.amountModel) return 'Not configured';
       if (rule.amountModel === 'flat') return `$${rule.amount} flat fee`;
       return `${rule.amount}% ${AMOUNT_MODEL_LABELS[rule.amountModel].replace('% ', '').toLowerCase()}`;
-    case 'inventory_attributes':
-      if (rule.brackets?.length) {
-        const n = rule.brackets.length;
-        const unit = INVENTORY_BRACKET_UNITS[rule.inventoryAttribute!]?.trim() ?? '';
-        if (rule.isLabor) return `${n} ${unit} bracket${n === 1 ? '' : 's'}, labor hours`;
-        return `${n} ${unit} bracket${n === 1 ? '' : 's'}`;
-      }
-      if (rule.isLabor) return formatLaborCalc(rule.hours, shopRate);
-      if (rule.amount == null || !rule.amountModel) return 'Not configured';
-      if (rule.amountModel === 'flat') return `$${rule.amount} flat fee`;
-      return `${rule.amount}% ${AMOUNT_MODEL_LABELS[rule.amountModel].replace('% ', '').toLowerCase()}`;
+
+    case 'labor_hours':
+      if (rule.hours == null) return 'Not configured';
+      return `${rule.hours} hrs x $${shopRate}/hr = $${(rule.hours * shopRate).toFixed(0)}`;
+
+    case 'stepped': {
+      const n = rule.brackets?.length ?? 0;
+      const unit = rule.bracketField ? (BRACKET_FIELD_UNITS[rule.bracketField] ?? '') : '';
+      if (rule.bracketIsLabor) return `${n} ${unit} tier${n === 1 ? '' : 's'}, labor hours`;
+      return n > 0 ? `${n} ${unit} tier${n === 1 ? '' : 's'}` : 'Tiered pricing';
+    }
+
+    case 'markup':
+      if (rule.markupType === 'flat') return `$${rule.amount ?? 0} flat markup on cost`;
+      return `${rule.amount ?? 0}% markup on cost`;
   }
 }
 
@@ -317,9 +330,8 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r1',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'vehicle_condition',
-        attributeValue: 'used',
+        conditions: [{ field: 'vehicle_condition', values: ['used'] }],
+        pricingSource: 'fixed',
         amountModel: 'flat',
         amount: 395,
       },
@@ -338,18 +350,16 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r2a',
-        type: 'order_attributes',
-        orderAttribute: 'delivery_state',
-        states: ['AK', 'HI'],
-        feeModel: 'markup',
+        conditions: [{ field: 'buyer_state', values: ['AK', 'HI'] }],
+        pricingSource: 'markup',
         markupType: 'percentage',
         amount: 20,
       },
       {
         id: 'r2b',
-        type: 'order_attributes',
-        orderAttribute: 'delivery_distance',
-        feeModel: 'stepped',
+        conditions: [],
+        pricingSource: 'stepped',
+        bracketField: 'delivery_distance',
         brackets: [
           { from: 0, to: 25, amount: 0 },
           { from: 25, to: 75, amount: 149 },
@@ -384,32 +394,27 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r3',
-        type: 'dms',
+        conditions: [],
+        pricingSource: 'dms_field',
         dmsFieldName: 'setup_hrs',
-        isLabor: true,
+        dmsIsLabor: true,
       },
       {
         id: 'r3b',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'vehicle_category',
-        attributeValue: 'sxs',
-        isLabor: true,
+        conditions: [{ field: 'vehicle_category', values: ['sxs'] }],
+        pricingSource: 'labor_hours',
         hours: 4,
       },
       {
         id: 'r3c',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'vehicle_category',
-        attributeValue: 'atv',
-        isLabor: true,
+        conditions: [{ field: 'vehicle_category', values: ['atv'] }],
+        pricingSource: 'labor_hours',
         hours: 3,
       },
       {
         id: 'r3d',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'vehicle_category',
-        attributeValue: 'motorcycle',
-        isLabor: true,
+        conditions: [{ field: 'vehicle_category', values: ['motorcycle'] }],
+        pricingSource: 'labor_hours',
         hours: 2,
       },
     ],
@@ -427,9 +432,10 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r_insp_age',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'inventory_age',
-        isLabor: true,
+        conditions: [],
+        pricingSource: 'stepped',
+        bracketField: 'inventory_age',
+        bracketIsLabor: true,
         brackets: [
           { from: 0, to: 30, amount: 1 },
           { from: 30, to: 90, amount: 2 },
@@ -451,8 +457,9 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r_freight_cc',
-        type: 'inventory_attributes',
-        inventoryAttribute: 'cc',
+        conditions: [],
+        pricingSource: 'stepped',
+        bracketField: 'cc',
         brackets: [
           { from: 0, to: 300, amount: 299 },
           { from: 300, to: 700, amount: 499 },
@@ -476,41 +483,36 @@ export const DEMO_FEES: FeeConfig[] = [
     rules: [
       {
         id: 'r_pay_card',
-        type: 'order_attributes',
-        orderAttribute: 'payment_option',
-        paymentMethod: 'card',
+        conditions: [{ field: 'payment_method', values: ['card'] }],
+        pricingSource: 'fixed',
         amountModel: 'pct_vehicle_price',
         amount: 2.9,
       },
       {
         id: 'r_pay_ach',
-        type: 'order_attributes',
-        orderAttribute: 'payment_option',
-        paymentMethod: 'ach',
+        conditions: [{ field: 'payment_method', values: ['ach'] }],
+        pricingSource: 'fixed',
         amountModel: 'flat',
         amount: 0,
       },
       {
         id: 'r_pay_bnpl',
-        type: 'order_attributes',
-        orderAttribute: 'payment_option',
-        paymentMethod: 'bnpl',
+        conditions: [{ field: 'payment_method', values: ['bnpl'] }],
+        pricingSource: 'fixed',
         amountModel: 'pct_vehicle_price',
         amount: 3.5,
       },
       {
         id: 'r_pay_financing',
-        type: 'order_attributes',
-        orderAttribute: 'payment_option',
-        paymentMethod: 'financing',
+        conditions: [{ field: 'payment_method', values: ['financing'] }],
+        pricingSource: 'fixed',
         amountModel: 'flat',
         amount: 0,
       },
       {
         id: 'r_pay_crypto',
-        type: 'order_attributes',
-        orderAttribute: 'payment_option',
-        paymentMethod: 'crypto',
+        conditions: [{ field: 'payment_method', values: ['crypto'] }],
+        pricingSource: 'fixed',
         amountModel: 'pct_vehicle_price',
         amount: 1.5,
       },
@@ -525,12 +527,12 @@ export const DEMO_FEES: FeeConfig[] = [
     model: 'flat',
     availableModels: ['flat'],
     ekhoFieldName: 'Custom fee one',
-    isCustom: true,
     fallback: { amountModel: 'flat', amount: 0 },
     rules: [
       {
         id: 'r_custom_1',
-        type: 'dms',
+        conditions: [],
+        pricingSource: 'dms_field',
         dmsFieldName: 'laborprepfee',
       },
     ],
@@ -565,57 +567,69 @@ export const COMMENTARY: CommentaryNote[] = [
     notes: [
       'Complete configurability.',
       'Total transparency.',
-      'One modal to rule them all.',
+      'Conditions decoupled from pricing: "when does this fee apply?" is answered separately from "how is it calculated?"',
       'Extensible paradigm for custom fees.',
+    ],
+  },
+  {
+    sectionId: 'modal-split',
+    title: 'Modal split rationale',
+    notes: [
+      'The previous design mixed "when does this fee apply" with "how is it calculated" into a single "Source / driver" dropdown. Selecting "Inventory attributes > Vehicle condition > Used" set BOTH the condition AND implied the pricing structure.',
+      'The new modal splits into two sections: "Applies when" (conditions) and "Fee calculation" (pricing source). This makes the data model visible in the UI and enables combinations the old design could not express.',
+      'Conditions come in two flavors: explicit (dealer-configured filters like "Used vehicles" or "Payment: Card") and implicit (auto-generated from the pricing source, like "DMS field has a value").',
+      'Implicit conditions make data dependencies visible. If a DMS field rule reads from "setup_hrs" and that field is blank for a vehicle, it is obvious why the rule was skipped.',
+      'Labor is now a pricing source ("Labor hours") instead of a toggle. This simplifies the modal and eliminates the question of "what is labor + DMS?".',
     ],
   },
   {
     sectionId: 'limitations',
     title: 'Limitations of current design',
     notes: [
-      'Difficult to know the sub-types when selecting rule types if not intuitive by nomenclature.',
-      'Multi-field DMS sum (e.g., summing assembly_hrs + accessory_install_hrs + pdi_hrs from DMS) is V2. This also does not consider summing labor hours across individual parts on a unit. Current DMS rule maps to a single field only.',
-      'A rule is either labor or non-labor. You cannot combine labor hours with a flat fee amount on the same rule.',
-      'No configurability over combining two fee types together for how they display in Checkout and on the Bill of Sale. For example, you cannot merge an assembly fee and an inspection fee into a single line item.',
-      'No ability to rename fee types for how they show up in Settings, in Checkout, or on the Bill of Sale. The label is fixed.',
-      'Some fees are known on the VDP (e.g., document fee, assembly), while others depend on buyer selections in Checkout (e.g., delivery distance, payment method). This design does not address how or when fees are surfaced to the buyer across those two contexts.',
-      'Rule submenus and submenu designs were not fully explored. Many attribute types would need their own match-value pickers, condition builders, or range inputs. The ones shown here (e.g., vehicle condition with New/Used) illustrate common use cases but are not exhaustive.',
-      'Several rule types shown in the prototype have upstream dependencies that do not exist yet. For example, markup on cost requires knowing the dealer\'s delivery cost (likely via a shipping API or manual entry), and delivery distance requires a distance calculation service. These are prototyped to show the configurability model, not to imply the dependencies are resolved.',
+      'Multi-field DMS sum (e.g., summing assembly_hrs + accessory_install_hrs + pdi_hrs from DMS) is V2. Current DMS rule maps to a single field only.',
+      'A rule can only use one pricing source. Cannot combine labor hours with a flat fee on the same rule.',
+      'No configurability over combining two fee types together for how they display in Checkout and on the Bill of Sale.',
+      'Some fees are known on the VDP while others depend on buyer selections in Checkout. This design does not address how or when fees are surfaced to the buyer across those two contexts.',
+      'Several pricing sources have upstream dependencies that do not exist yet (markup on cost requires a shipping API, delivery distance requires a distance calculation service).',
     ],
   },
   {
     sectionId: 'decisions',
     title: 'Decisions',
     notes: [
-      'Labor hours is a top-level toggle on a rule, not a standalone rule type. We considered making it a 5th rule type (peer to DMS, Ekho, etc.), but labor hours has the same "where does the value come from?" problem as other fees. The sources (DMS, Ekho single unit, inventory attributes) still apply, they just resolve to hours instead of amounts. Making it a toggle preserves the full rules methodology for sourcing.',
-      'Fee types cannot be combined on a single rule. A rule is either labor-based (hours x shop rate) or amount-based (flat, percentage, etc.). If a dealer needs both labor and a parts fee, they use separate fee sections.',
-      'Every rule can be cleanly summarized: the title says when the rule applies (e.g., "Used vehicles", "Credit card"), and the description says the fee type and amount (e.g., "$349 flat fee", "3 hrs x $75/hr = $225"). This title/description pattern validates the data model: if a rule cannot be expressed this way, it is too complex.',
-      'The title of each rule row is always the most granular dropdown selection available for that rule type. For example, "Used vehicles" (not "Vehicle condition"), "Payment: Card" (not "Payment option"), "Delivery in AK, HI" (not "Delivery state"). The parent attribute name is visible in the modal; the priority list surface shows the specific match value.',
+      'All filters on a rule must match. If a rule has [Used] and [SxS], both must be true. To match multiple values within one filter (e.g., ATV or SxS), select them in the same filter row.',
+      'Data requirements are auto-generated and read-only. They appear when the pricing source depends on per-vehicle data (From your DMS, Set per vehicle in Ekho, or a tiered pricing field).',
+      'Fee types cannot be combined on a single rule. If a dealer needs both labor and a parts fee, they use separate fee sections.',
+      'Condition chips on rule rows replace the old auto-generated label. Explicit conditions get solid chips, implicit data conditions get lighter/dotted chips.',
     ],
   },
   {
-    sectionId: 'rules',
-    title: 'Rules',
+    sectionId: 'conditions',
+    title: 'Conditions',
     notes: [
-      'Each rule answers three questions: (1) Is this labor or non-labor? (top-level toggle), (2) Where does the value come from? ("Source / driver": DMS, Ekho single unit, inventory attributes, or order attributes), (3) What is the value? (amount or hours, depending on labor toggle).',
-      'DMS and Ekho single unit source from external systems, so no amount input in the modal. Inventory and order attributes let the user set amounts/hours against attribute conditions (full attribute builder not prototyped).',
-      'Rule labels and descriptions are auto-generated from configuration. No manual naming.',
+      'Eight condition fields available: Vehicle condition, Vehicle category, Make, Engine size (CC), Days in stock, Buyer\'s state, Payment method, Delivery distance.',
+      'Conditions are optional. A rule with no conditions applies to all vehicles (subject to implicit data conditions).',
+      'Multiple filters on a rule all must match.',
+      'Within a single condition, values are OR: vehicle_category = [ATV, SxS] matches either.',
     ],
   },
   {
-    sectionId: 'amount',
-    title: 'Amount model',
+    sectionId: 'pricing',
+    title: 'Pricing sources',
     notes: [
-      'Only applies to non-labor rules. Labor rules resolve to hours (multiplied by shop rate), so the amount model is irrelevant.',
-      'Three options in a single dropdown: Flat fee, % of vehicle price, % of total purchase price.',
-      'Only Inventory attribute and Order attribute rules get amount configuration. DMS and Ekho single unit source from external systems.',
+      'Six pricing sources: From your DMS, Set per vehicle in Ekho, Fixed amount, Labor hours, Tiered pricing, Markup on cost.',
+      'From your DMS and Set per vehicle in Ekho auto-add data requirements (data must exist for the vehicle).',
+      'Fixed amount replaces the old inline amount editors. Supports flat fee, % of vehicle price, or % of total purchase.',
+      'Labor hours replaces the old labor toggle. Hours x shop rate = fee.',
+      'Tiered pricing supports any numeric field (engine size, days in stock, delivery distance).',
+      'Markup on cost supports flat dollar or percentage markup.',
     ],
   },
   {
     sectionId: 'fallback',
     title: 'Fallback',
     notes: [
-      'Renamed from "Default" to "Fallback" to be clearer about its role.',
+      'Named "Fallback" to emphasize this is only used when no rule matches.',
       'Always the last item in the priority list. Applied when no rule matches.',
       'Configurable as flat fee or percentage (same dropdown as rules).',
     ],
@@ -633,30 +647,26 @@ export const COMMENTARY: CommentaryNote[] = [
     title: 'Delivery models',
     notes: [
       'Most requested fee enhancement. Dealers want distance-based pricing instead of one flat rate.',
-      'Stepped brackets are the most common ask: "free under 25 mi, $199 for 25-50, $349 for 50-100."',
+      'Tiered pricing is the most common ask: "free under 25 mi, $199 for 25-50, $349 for 50-100."',
       'Per-mile and markup models cover edge cases for high-value vehicles.',
-    ],
-  },
-  {
-    sectionId: 'labor',
-    title: 'Labor hours',
-    notes: [
-      'Labor is a top-level toggle on a rule, not a rule type. When enabled, the same four source types (DMS, Ekho single unit, inventory attributes, order attributes) resolve to hours instead of a dollar amount.',
-      'Fee total for labor rules = hours x shop rate. Shop labor rate is a dealer-wide setting at the top of the Fees page.',
-      'DMS + labor: the mapped field contains hours. Ekho single unit + labor: per-vehicle hours override. Inventory/order attributes + labor: hours input replaces the amount editor.',
-      'A rule is either labor or non-labor. Cannot combine labor hours with a flat fee on the same rule.',
-      'Common on Assembly and Inspection. Available on all fee types for flexibility, including custom fees.',
-      'V2: Multi-field DMS sum (summing hours across multiple DMS fields like assembly_hrs + accessory_install_hrs).',
     ],
   },
   {
     sectionId: 'payments',
     title: 'Payment fees',
     notes: [
-      'Payment fees are now handled through the rules system like every other fee, via Order attributes > Payment option.',
-      'Payment method submenu: ACH, Card, Buy now pay later, Crypto, Financing.',
+      'Payment fees use the same rules system. The payment method becomes a condition, and the fee amount is set via the fixed pricing source.',
       'Each payment method gets flat fee or percentage configuration.',
       'Credit card surcharging legality varies by state. We handle compliance server-side.',
+    ],
+  },
+  {
+    sectionId: 'naming',
+    title: 'Fee naming',
+    notes: [
+      'Every fee name is editable. The name flows to the VDP, checkout, and bill of sale.',
+      'No built-in/custom distinction. All fees can be renamed, reconfigured, or removed.',
+      'Default fees (Document, Delivery, Assembly, etc.) are pre-configured starting points. Dealers can rename or remove any of them.',
     ],
   },
   {

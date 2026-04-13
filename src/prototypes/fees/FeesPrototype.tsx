@@ -93,6 +93,7 @@ function SettingsSection({
   title,
   description,
   hideDivider,
+  onEdit,
   onDelete,
   children,
 }: {
@@ -100,9 +101,23 @@ function SettingsSection({
   title: string;
   description?: string;
   hideDivider?: boolean;
+  onEdit?: () => void;
   onDelete?: () => void;
   children: React.ReactNode;
 }) {
+  const iconBtnStyle: React.CSSProperties = {
+    all: 'unset',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '28px',
+    height: '28px',
+    borderRadius: 'var(--rev-borderRadius-8)',
+    color: 'var(--rev-color-textTertiary)',
+    transition: 'color 150ms ease',
+  };
+
   return (
     <div id={id} style={{ scrollMarginTop: '32px' }}>
       <div
@@ -125,36 +140,35 @@ function SettingsSection({
             alignSelf: 'flex-start',
           }}
         >
-          <Group itemsSpacing="8" itemsAlignY="center" noWrap>
-            <Text size="heading" weight="bold">{title}</Text>
-            {onDelete && (
-              <button
-                onClick={onDelete}
-                title="Remove fee"
-                style={{
-                  all: 'unset',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '28px',
-                  height: '28px',
-                  borderRadius: 'var(--rev-borderRadius-8)',
-                  color: 'var(--rev-color-textTertiary)',
-                  transition: 'color 150ms ease',
-                }}
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M3 6h18" />
-                  <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
-                  <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
-                </svg>
-              </button>
+          <div style={{ display: 'flex', alignItems: 'flex-start', gap: '6px' }}>
+            <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: '4px' }}>
+              <Text size="heading" weight="bold">{title}</Text>
+              {description && (
+                <Text size="bodySmall" color="secondary">{description}</Text>
+              )}
+            </div>
+            {(onEdit || onDelete) && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', flexShrink: 0 }}>
+                {onEdit && (
+                  <button onClick={onEdit} title="Edit fee name" style={iconBtnStyle}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M17 3a2.83 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z" />
+                      <path d="m15 5 4 4" />
+                    </svg>
+                  </button>
+                )}
+                {onDelete && (
+                  <button onClick={onDelete} title="Remove fee" style={iconBtnStyle}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M3 6h18" />
+                      <path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6" />
+                      <path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2" />
+                    </svg>
+                  </button>
+                )}
+              </div>
             )}
-          </Group>
-          {description && (
-            <Text size="bodySmall" color="secondary">{description}</Text>
-          )}
+          </div>
         </div>
 
         {/* Right content */}
@@ -183,15 +197,20 @@ const INPUT_STYLE: React.CSSProperties = {
   outline: 'none',
 };
 
-function NewFeeModal({
+function FeeModal({
+  initialName,
+  initialDescription,
   onSave,
   onClose,
 }: {
+  initialName?: string;
+  initialDescription?: string;
   onSave: (name: string, description: string) => void;
   onClose: () => void;
 }) {
-  const [name, setName] = useState('');
-  const [description, setDescription] = useState('');
+  const isEditing = initialName != null;
+  const [name, setName] = useState(initialName ?? '');
+  const [description, setDescription] = useState(initialDescription ?? '');
 
   return (
     <div
@@ -226,7 +245,7 @@ function NewFeeModal({
             borderBottom: '1px solid var(--rev-color-separatorTertiary)',
           }}
         >
-          <Text size="body" weight="bold">New fee</Text>
+          <Text size="body" weight="bold">{isEditing ? 'Edit fee' : 'New fee'}</Text>
         </div>
         <div style={{ padding: '24px' }}>
           <Stack itemsSpacing="16">
@@ -239,6 +258,9 @@ function NewFeeModal({
                 placeholder="e.g., Environmental fee"
                 style={INPUT_STYLE}
               />
+              <Text size="caption" color="tertiary">
+                This name appears on your VDP, at checkout, and on the bill of sale.
+              </Text>
             </Stack>
             <Stack itemsSpacing="8">
               <Text size="footnote" color="secondary" weight="medium">Description</Text>
@@ -266,7 +288,7 @@ function NewFeeModal({
             variant="filled"
             onPress={() => { if (name.trim()) onSave(name.trim(), description.trim()); }}
           >
-            Add fee
+            {isEditing ? 'Save' : 'Add fee'}
           </Button>
         </div>
       </div>
@@ -281,19 +303,19 @@ export function FeesPrototype() {
   const [fees, setFees] = useState<FeeConfig[]>(DEMO_FEES);
   const [shopRate, setShopRate] = useState(75);
   const [activeSection, setActiveSection] = useState('sale');
-  const [showNewFeeModal, setShowNewFeeModal] = useState(false);
+  const [feeModalState, setFeeModalState] = useState<
+    | { type: 'closed' }
+    | { type: 'create' }
+    | { type: 'edit'; feeId: string }
+    | { type: 'delete'; feeId: string }
+  >({ type: 'closed' });
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const scrollContainerRef = useRef<HTMLDivElement | null>(null);
 
-  // Split fees into built-in and custom
-  const builtInFees = fees.filter((f) => !f.isCustom);
-  const customFees = fees.filter((f) => f.isCustom);
-
-  // Derive TOC: labor rate, built-in fees, custom fees, add new
+  // Derive TOC: labor rate, all fees, add new
   const tocSections = [
     { id: 'labor-rate', label: 'Labor rate' },
-    ...builtInFees.map((f) => ({ id: f.id, label: f.tocLabel ?? f.label })),
-    ...customFees.map((f) => ({ id: f.id, label: f.tocLabel ?? f.label })),
+    ...fees.map((f) => ({ id: f.id, label: f.tocLabel ?? f.label })),
     { id: 'add-new', label: 'Add new' },
   ];
 
@@ -333,12 +355,20 @@ export function FeesPrototype() {
       model: 'flat',
       availableModels: ['flat'],
       ekhoFieldName: name,
-      isCustom: true,
       fallback: { amountModel: 'flat', amount: 0 },
       rules: [],
     };
     setFees((prev) => [...prev, newFee]);
-    setShowNewFeeModal(false);
+    setFeeModalState({ type: 'closed' });
+  };
+
+  const handleEditFee = (feeId: string, name: string, description: string) => {
+    setFees((prev) =>
+      prev.map((f) =>
+        f.id === feeId ? { ...f, label: name, description } : f
+      )
+    );
+    setFeeModalState({ type: 'closed' });
   };
 
   const handleDeleteFee = (feeId: string) => {
@@ -445,28 +475,14 @@ export function FeesPrototype() {
                 </div>
               </SettingsSection>
 
-              {/* Built-in fee sections */}
-              {builtInFees.map((fee) => (
+              {/* Fee sections (all editable + deletable) */}
+              {fees.map((fee) => (
                 <SettingsSection
                   key={fee.id}
                   title={fee.label}
                   description={fee.description}
-                >
-                  <FeeSection
-                    fee={fee}
-                    shopRate={shopRate}
-                    sectionRef={(el) => { sectionRefs.current[fee.id] = el; }}
-                  />
-                </SettingsSection>
-              ))}
-
-              {/* Custom fee sections */}
-              {customFees.map((fee) => (
-                <SettingsSection
-                  key={fee.id}
-                  title={fee.label}
-                  description={fee.description}
-                  onDelete={() => handleDeleteFee(fee.id)}
+                  onEdit={() => setFeeModalState({ type: 'edit', feeId: fee.id })}
+                  onDelete={() => setFeeModalState({ type: 'delete', feeId: fee.id })}
                 >
                   <FeeSection
                     fee={fee}
@@ -484,7 +500,7 @@ export function FeesPrototype() {
               >
                 <div style={{ flex: '0 0 220px' }} />
                 <button
-                  onClick={() => setShowNewFeeModal(true)}
+                  onClick={() => setFeeModalState({ type: 'create' })}
                   style={{
                     all: 'unset',
                     boxSizing: 'border-box',
@@ -546,13 +562,87 @@ export function FeesPrototype() {
         </div>
       </div>
 
-      {/* New fee modal */}
-      {showNewFeeModal && (
-        <NewFeeModal
+      {/* Fee modal (create or edit) */}
+      {feeModalState.type === 'create' && (
+        <FeeModal
           onSave={handleAddFee}
-          onClose={() => setShowNewFeeModal(false)}
+          onClose={() => setFeeModalState({ type: 'closed' })}
         />
       )}
+      {feeModalState.type === 'edit' && (() => {
+        const editingFee = fees.find((f) => f.id === feeModalState.feeId);
+        if (!editingFee) return null;
+        return (
+          <FeeModal
+            initialName={editingFee.label}
+            initialDescription={editingFee.description}
+            onSave={(name, desc) => handleEditFee(editingFee.id, name, desc)}
+            onClose={() => setFeeModalState({ type: 'closed' })}
+          />
+        );
+      })()}
+      {feeModalState.type === 'delete' && (() => {
+        const deletingFee = fees.find((f) => f.id === feeModalState.feeId);
+        if (!deletingFee) return null;
+        const onClose = () => setFeeModalState({ type: 'closed' });
+        return (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+            }}
+          >
+            <div
+              onClick={onClose}
+              style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.4)' }}
+            />
+            <div
+              style={{
+                position: 'relative',
+                width: '420px',
+                background: 'var(--rev-color-backgroundPrimary)',
+                borderRadius: 'var(--rev-borderRadius-16, 16px)',
+                boxShadow: '0 16px 48px rgba(0,0,0,0.2)',
+                display: 'flex',
+                flexDirection: 'column',
+                overflow: 'hidden',
+              }}
+            >
+              <div style={{ padding: '24px 24px 0' }}>
+                <Stack itemsSpacing="8">
+                  <Text size="body" weight="bold">Remove {deletingFee.label}?</Text>
+                  <Text size="bodySmall" color="secondary">
+                    This will remove the fee and all its rules. This cannot be undone, but you can always set up a new fee later.
+                  </Text>
+                </Stack>
+              </div>
+              <div
+                style={{
+                  padding: '20px 24px',
+                  display: 'flex',
+                  justifyContent: 'flex-end',
+                  gap: '8px',
+                }}
+              >
+                <Button variant="secondary" onPress={onClose}>Cancel</Button>
+                <Button
+                  variant="filled"
+                  onPress={() => {
+                    handleDeleteFee(deletingFee.id);
+                    onClose();
+                  }}
+                >
+                  Remove fee
+                </Button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

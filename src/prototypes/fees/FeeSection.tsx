@@ -1,34 +1,29 @@
-import { Fragment, useRef, useState } from 'react';
+import { Fragment, useEffect, useRef, useState } from 'react';
 import { Stack, Text, Group, Switch, SegmentedControl, Divider, Dropdown, Box, Button } from '../../rev';
 import type {
   FeeConfig,
-  FeeModel,
   FeeRule,
-  RuleType,
+  PricingSource,
   AmountModel,
-  InventoryAttribute,
-  OrderAttribute,
-  PaymentMethod,
+  ConditionField,
+  ConditionFilter,
   FallbackConfig,
   SteppedBracket,
 } from './mock-data';
 import {
-  MODEL_LABELS,
-  RULE_TYPE_LABELS,
+  PRICING_SOURCE_LABELS,
   AMOUNT_MODEL_LABELS,
-  INVENTORY_ATTRIBUTE_LABELS,
-  INVENTORY_ATTRIBUTE_VALUES,
-  BRACKETED_INVENTORY_ATTRIBUTES,
-  INVENTORY_BRACKET_UNITS,
-  ORDER_ATTRIBUTE_LABELS,
+  CONDITION_FIELD_LABELS,
+  CONDITION_FIELD_VALUES,
+  CONDITION_FIELD_GROUPS,
+  BRACKET_FIELD_UNITS,
   US_STATES,
-  PAYMENT_METHOD_LABELS,
-  getRuleLabel,
+  getRuleChips,
   getRuleSublabel,
 } from './mock-data';
 
 // ---------------------------------------------------------------------------
-// Inline SVG icons (matching production CTA pattern)
+// Inline SVG icons
 // ---------------------------------------------------------------------------
 function DragHandleIcon() {
   return (
@@ -88,65 +83,6 @@ const INPUT_STYLE: React.CSSProperties = {
 };
 
 // ---------------------------------------------------------------------------
-// Amount editor (shared between rule modal and fallback modal)
-// ---------------------------------------------------------------------------
-function AmountEditor({
-  amountModel,
-  amount,
-  onModelChange,
-  onAmountChange,
-}: {
-  amountModel: AmountModel;
-  amount: number;
-  onModelChange: (m: AmountModel) => void;
-  onAmountChange: (n: number) => void;
-}) {
-  const modelOptions = (Object.keys(AMOUNT_MODEL_LABELS) as AmountModel[]).map((k) => ({
-    id: k,
-    label: AMOUNT_MODEL_LABELS[k],
-  }));
-
-  const isPercentage = amountModel !== 'flat';
-
-  return (
-    <Box padding="16" background="secondary" rounding="12">
-      <Stack itemsSpacing="8">
-        <Text size="bodySmall" weight="semibold">Fee amount</Text>
-        <Dropdown
-          options={modelOptions}
-          value={amountModel}
-          onSelectionChange={(val) => onModelChange(val as AmountModel)}
-          size="medium"
-          buttonVariant="outline"
-        />
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          {!isPercentage && (
-            <Text size="body" weight="semibold" color="secondary">$</Text>
-          )}
-          <input
-            type="text"
-            value={amount}
-            onChange={(e) => {
-              const num = parseFloat(e.target.value);
-              if (!isNaN(num)) onAmountChange(num);
-            }}
-            style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
-          />
-          {isPercentage && (
-            <Text size="body" weight="semibold" color="secondary">%</Text>
-          )}
-        </div>
-        {isPercentage && (
-          <Text size="caption" color="tertiary">
-            {AMOUNT_MODEL_LABELS[amountModel].toLowerCase()}
-          </Text>
-        )}
-      </Stack>
-    </Box>
-  );
-}
-
-// ---------------------------------------------------------------------------
 // Modal backdrop + panel
 // ---------------------------------------------------------------------------
 function Modal({
@@ -171,21 +107,15 @@ function Modal({
         justifyContent: 'center',
       }}
     >
-      {/* Backdrop */}
       <div
         onClick={onClose}
-        style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'rgba(0, 0, 0, 0.4)',
-        }}
+        style={{ position: 'absolute', inset: 0, background: 'rgba(0, 0, 0, 0.4)' }}
       />
-      {/* Panel */}
       <div
         style={{
           position: 'relative',
-          width: '480px',
-          maxHeight: '80vh',
+          width: '520px',
+          maxHeight: '85vh',
           background: 'var(--rev-color-backgroundPrimary)',
           borderRadius: 'var(--rev-borderRadius-16, 16px)',
           boxShadow: '0 16px 48px rgba(0,0,0,0.2)',
@@ -194,7 +124,6 @@ function Modal({
           overflow: 'hidden',
         }}
       >
-        {/* Header */}
         <div
           style={{
             padding: '20px 24px 16px',
@@ -222,11 +151,9 @@ function Modal({
             <CloseIcon />
           </button>
         </div>
-        {/* Body */}
         <div style={{ padding: '24px', overflowY: 'auto', flex: 1 }}>
           {children}
         </div>
-        {/* Footer */}
         <div
           style={{
             padding: '16px 24px',
@@ -244,141 +171,61 @@ function Modal({
 }
 
 // ---------------------------------------------------------------------------
-// Rule modal
+// Amount editor (shared between rule modal and fallback modal)
 // ---------------------------------------------------------------------------
-// ---------------------------------------------------------------------------
-// Bracket editor for stepped delivery distance
-// ---------------------------------------------------------------------------
-function BracketEditor({
-  brackets,
-  onChange,
+function AmountEditor({
+  amountModel,
+  amount,
+  onModelChange,
+  onAmountChange,
 }: {
-  brackets: SteppedBracket[];
-  onChange: (brackets: SteppedBracket[]) => void;
+  amountModel: AmountModel;
+  amount: number;
+  onModelChange: (m: AmountModel) => void;
+  onAmountChange: (n: number) => void;
 }) {
-  const handleUpdate = (index: number, field: keyof SteppedBracket, value: number | null) => {
-    const updated = brackets.map((b, i) => (i === index ? { ...b, [field]: value } : b));
-    // Auto-sync: next bracket's "from" = this bracket's "to"
-    if (field === 'to' && value !== null && index < updated.length - 1) {
-      updated[index + 1] = { ...updated[index + 1], from: value };
-    }
-    onChange(updated);
-  };
+  const modelOptions = (Object.keys(AMOUNT_MODEL_LABELS) as AmountModel[]).map((k) => ({
+    id: k,
+    label: AMOUNT_MODEL_LABELS[k],
+  }));
 
-  const handleAdd = () => {
-    const lastTo = brackets.length > 0 ? (brackets[brackets.length - 1].to ?? 0) : 0;
-    onChange([...brackets, { from: lastTo, to: null, amount: 0 }]);
-  };
-
-  const handleRemove = (index: number) => {
-    const updated = brackets.filter((_, i) => i !== index);
-    // Fix gaps: set next bracket's "from" to previous bracket's "to"
-    for (let i = 1; i < updated.length; i++) {
-      updated[i] = { ...updated[i], from: updated[i - 1].to ?? 0 };
-    }
-    if (updated.length > 0) updated[0] = { ...updated[0], from: 0 };
-    onChange(updated);
-  };
-
-  const COMPACT_INPUT: React.CSSProperties = {
-    ...INPUT_STYLE,
-    width: '64px',
-    padding: '6px 8px',
-    textAlign: 'center' as const,
-  };
+  const isPercentage = amountModel !== 'flat';
 
   return (
-    <Stack itemsSpacing="12">
-      <Text size="footnote" color="secondary" weight="medium">Distance brackets</Text>
-      {brackets.map((bracket, i) => {
-        const isLast = i === brackets.length - 1;
-        return (
-          <div
-            key={i}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '8px',
-              padding: '8px 12px',
-              background: 'var(--rev-color-backgroundSecondary)',
-              borderRadius: 'var(--rev-borderRadius-10)',
-            }}
-          >
-            <input
-              type="text"
-              value={bracket.from}
-              onChange={(e) => {
-                const num = parseFloat(e.target.value);
-                if (!isNaN(num)) handleUpdate(i, 'from', num);
-              }}
-              style={{ ...COMPACT_INPUT, background: 'var(--rev-color-backgroundSecondary)', border: 'none', color: 'var(--rev-color-textSecondary)' }}
-              readOnly
-            />
-            <Text size="caption" color="tertiary">{isLast ? '+' : 'to'}</Text>
-            {!isLast && (
-              <input
-                type="text"
-                value={bracket.to ?? ''}
-                onChange={(e) => {
-                  const num = parseFloat(e.target.value);
-                  if (!isNaN(num)) handleUpdate(i, 'to', num);
-                }}
-                style={COMPACT_INPUT}
-              />
-            )}
-            <Text size="caption" color="tertiary">mi</Text>
-            <div style={{ flex: 1 }} />
-            <Text size="caption" color="tertiary">$</Text>
-            <input
-              type="text"
-              value={bracket.amount}
-              onChange={(e) => {
-                const num = parseFloat(e.target.value);
-                if (!isNaN(num)) handleUpdate(i, 'amount', num);
-              }}
-              style={COMPACT_INPUT}
-            />
-            <button
-              onClick={() => handleRemove(i)}
-              style={{
-                all: 'unset',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                width: '24px',
-                height: '24px',
-                borderRadius: 'var(--rev-borderRadius-8)',
-                color: 'var(--rev-color-textTertiary)',
-              }}
-            >
-              <CloseIcon />
-            </button>
-          </div>
-        );
-      })}
-      <button
-        onClick={handleAdd}
-        style={{
-          all: 'unset',
-          cursor: 'pointer',
-          fontSize: '13px',
-          fontFamily: 'var(--rev-fontFamily)',
-          fontWeight: 600,
-          color: 'var(--rev-color-textSecondary)',
-          padding: '8px 0',
-        }}
-      >
-        + Add bracket
-      </button>
+    <Stack itemsSpacing="8">
+      <Dropdown
+        options={modelOptions}
+        value={amountModel}
+        onSelectionChange={(val) => onModelChange(val as AmountModel)}
+        size="medium"
+        buttonVariant="outline"
+      />
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+        {!isPercentage && <Text size="body" weight="semibold" color="secondary">$</Text>}
+        <input
+          type="text"
+          value={amount}
+          onChange={(e) => {
+            const num = parseFloat(e.target.value);
+            if (!isNaN(num)) onAmountChange(num);
+          }}
+          style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
+        />
+        {isPercentage && <Text size="body" weight="semibold" color="secondary">%</Text>}
+      </div>
+      {isPercentage && (
+        <Text size="caption" color="tertiary">
+          {AMOUNT_MODEL_LABELS[amountModel].toLowerCase()}
+        </Text>
+      )}
     </Stack>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Inventory bracket editor (for inventory_age, cc, etc.)
+// Bracket editor (generic, works for any bracket field)
 // ---------------------------------------------------------------------------
-function InventoryBracketEditor({
+function BracketEditor({
   brackets,
   onChange,
   unitLabel,
@@ -421,230 +268,753 @@ function InventoryBracketEditor({
   };
 
   return (
-    <Box padding="16" background="secondary" rounding="12">
-      <Stack itemsSpacing="12">
-        <Text size="footnote" color="secondary" weight="medium">
-          {isLabor ? 'Labor hours by bracket' : 'Fee by bracket'}
-        </Text>
-        {brackets.map((bracket, i) => {
-          const isLast = i === brackets.length - 1;
-          return (
-            <div
-              key={i}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: '10px',
-                padding: '10px 14px',
-                background: 'var(--rev-color-backgroundPrimary)',
-                borderRadius: 'var(--rev-borderRadius-10)',
-                flexWrap: 'nowrap',
-              }}
-            >
-              {/* Range side */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '140px' }}>
-                <input
-                  type="text"
-                  value={bracket.from}
-                  style={{ ...COMPACT_INPUT, width: '48px', background: 'transparent', border: 'none', color: 'var(--rev-color-textSecondary)' }}
-                  readOnly
-                />
-                <Text size="caption" color="tertiary">{isLast ? '+' : 'to'}</Text>
-                {!isLast && (
-                  <input
-                    type="text"
-                    value={bracket.to ?? ''}
-                    onChange={(e) => {
-                      const num = parseFloat(e.target.value);
-                      if (!isNaN(num)) handleUpdate(i, 'to', num);
-                    }}
-                    style={COMPACT_INPUT}
-                  />
-                )}
-                <Text size="caption" color="tertiary">{unitLabel.trim()}</Text>
-              </div>
-              <div style={{ flex: 1 }} />
-              {/* Value side */}
-              {isLabor ? (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                  <input
-                    type="text"
-                    value={bracket.amount}
-                    onChange={(e) => {
-                      const num = parseFloat(e.target.value);
-                      if (!isNaN(num)) handleUpdate(i, 'amount', num);
-                    }}
-                    style={{ ...COMPACT_INPUT, fontWeight: 600 }}
-                  />
-                  <Text size="caption" color="tertiary">hrs</Text>
-                  <Text size="caption" color="tertiary">
-                    = ${(bracket.amount * shopRate).toFixed(0)}
-                  </Text>
-                </div>
-              ) : (
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
-                  <Text size="caption" color="tertiary">$</Text>
-                  <input
-                    type="text"
-                    value={bracket.amount}
-                    onChange={(e) => {
-                      const num = parseFloat(e.target.value);
-                      if (!isNaN(num)) handleUpdate(i, 'amount', num);
-                    }}
-                    style={{ ...COMPACT_INPUT, fontWeight: 600 }}
-                  />
-                </div>
-              )}
-              <button
-                onClick={() => handleRemove(i)}
-                style={{
-                  all: 'unset',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  width: '24px',
-                  height: '24px',
-                  borderRadius: 'var(--rev-borderRadius-8)',
-                  color: 'var(--rev-color-textTertiary)',
-                }}
-              >
-                <CloseIcon />
-              </button>
-            </div>
-          );
-        })}
-        <button
-          onClick={handleAdd}
-          style={{
-            all: 'unset',
-            cursor: 'pointer',
-            fontSize: '13px',
-            fontFamily: 'var(--rev-fontFamily)',
-            fontWeight: 600,
-            color: 'var(--rev-color-textSecondary)',
-            padding: '8px 0',
-          }}
-        >
-          + Add bracket
-        </button>
-        {isLabor && (
-          <Text size="caption" color="tertiary">
-            Hours multiplied by ${shopRate}/hr shop labor rate
-          </Text>
-        )}
-      </Stack>
-    </Box>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Delivery distance amount editor (with fee model + brackets)
-// ---------------------------------------------------------------------------
-function DeliveryDistanceAmountEditor({
-  feeModel,
-  amount,
-  brackets,
-  onModelChange,
-  onAmountChange,
-  onBracketsChange,
-  markupType,
-  onMarkupTypeChange,
-}: {
-  feeModel: FeeModel;
-  amount: number;
-  brackets: SteppedBracket[];
-  onModelChange: (m: FeeModel) => void;
-  onAmountChange: (n: number) => void;
-  onBracketsChange: (b: SteppedBracket[]) => void;
-  markupType: 'flat' | 'percentage';
-  onMarkupTypeChange: (t: 'flat' | 'percentage') => void;
-}) {
-  const DELIVERY_MODELS: FeeModel[] = ['flat', 'per_mile', 'stepped', 'markup'];
-  const modelOptions = DELIVERY_MODELS.map((m) => ({
-    id: m,
-    label: MODEL_LABELS[m],
-  }));
-
-  const isMarkupFlat = feeModel === 'markup' && markupType === 'flat';
-  const isMarkupPct = feeModel === 'markup' && markupType === 'percentage';
-
-  const amountLabel =
-    feeModel === 'per_mile' ? 'Rate per mile' :
-    isMarkupFlat ? 'Flat markup amount' :
-    isMarkupPct ? 'Markup percentage' :
-    'Amount';
-
-  const prefix = isMarkupPct ? undefined : '$';
-  const suffix = isMarkupPct ? '%' : feeModel === 'per_mile' ? '/mi' : undefined;
-
-  return (
-    <Stack itemsSpacing="16">
-      <Stack itemsSpacing="8">
-        <Text size="footnote" color="secondary" weight="medium">Fee model</Text>
-        <Dropdown
-          options={modelOptions}
-          value={feeModel}
-          onSelectionChange={(val) => onModelChange(val as FeeModel)}
-          size="medium"
-          buttonVariant="outline"
-        />
-      </Stack>
-      {feeModel === 'stepped' ? (
-        <BracketEditor brackets={brackets} onChange={onBracketsChange} />
-      ) : feeModel === 'markup' ? (
-        <Stack itemsSpacing="12">
-          <Stack itemsSpacing="8">
-            <Text size="footnote" color="secondary" weight="medium">Markup type</Text>
-            <SegmentedControl
-              size="small"
-              items={[
-                { value: 'flat', label: 'Flat' },
-                { value: 'percentage', label: '%' },
-              ]}
-              value={markupType}
-              onChange={(val) => onMarkupTypeChange(val as 'flat' | 'percentage')}
-            />
-          </Stack>
-          <Stack itemsSpacing="8">
-            <Text size="footnote" color="secondary" weight="medium">{amountLabel}</Text>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-              {prefix && <Text size="bodySmall" color="tertiary">{prefix}</Text>}
+    <Stack itemsSpacing="12">
+      <Text size="footnote" color="secondary" weight="medium">
+        {isLabor ? 'Hours by tier' : 'Fee by tier'}
+      </Text>
+      {brackets.map((bracket, i) => {
+        const isLast = i === brackets.length - 1;
+        return (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              padding: '10px 14px',
+              background: 'var(--rev-color-backgroundSecondary)',
+              borderRadius: 'var(--rev-borderRadius-10)',
+              flexWrap: 'nowrap',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', minWidth: '140px' }}>
               <input
                 type="text"
-                value={amount}
-                onChange={(e) => {
-                  const num = parseFloat(e.target.value);
-                  if (!isNaN(num)) onAmountChange(num);
-                }}
-                style={{ ...INPUT_STYLE, width: '120px' }}
+                value={bracket.from}
+                style={{ ...COMPACT_INPUT, width: '48px', background: 'transparent', border: 'none', color: 'var(--rev-color-textSecondary)' }}
+                readOnly
               />
-              {suffix && <Text size="bodySmall" color="tertiary">{suffix}</Text>}
+              <Text size="caption" color="tertiary">{isLast ? '+' : 'to'}</Text>
+              {!isLast && (
+                <input
+                  type="text"
+                  value={bracket.to ?? ''}
+                  onChange={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (!isNaN(num)) handleUpdate(i, 'to', num);
+                  }}
+                  style={COMPACT_INPUT}
+                />
+              )}
+              <Text size="caption" color="tertiary">{unitLabel}</Text>
             </div>
-          </Stack>
-        </Stack>
-      ) : (
-        <Stack itemsSpacing="8">
-          <Text size="footnote" color="secondary" weight="medium">{amountLabel}</Text>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            {prefix && <Text size="bodySmall" color="tertiary">{prefix}</Text>}
-            <input
-              type="text"
-              value={amount}
-              onChange={(e) => {
-                const num = parseFloat(e.target.value);
-                if (!isNaN(num)) onAmountChange(num);
+            <div style={{ flex: 1 }} />
+            {isLabor ? (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <input
+                  type="text"
+                  value={bracket.amount}
+                  onChange={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (!isNaN(num)) handleUpdate(i, 'amount', num);
+                  }}
+                  style={{ ...COMPACT_INPUT, fontWeight: 600 }}
+                />
+                <Text size="caption" color="tertiary">hrs</Text>
+                <Text size="caption" color="tertiary">
+                  = ${(bracket.amount * shopRate).toFixed(0)}
+                </Text>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', whiteSpace: 'nowrap' }}>
+                <Text size="caption" color="tertiary">$</Text>
+                <input
+                  type="text"
+                  value={bracket.amount}
+                  onChange={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (!isNaN(num)) handleUpdate(i, 'amount', num);
+                  }}
+                  style={{ ...COMPACT_INPUT, fontWeight: 600 }}
+                />
+              </div>
+            )}
+            <button
+              onClick={() => handleRemove(i)}
+              style={{
+                all: 'unset',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '24px',
+                height: '24px',
+                borderRadius: 'var(--rev-borderRadius-8)',
+                color: 'var(--rev-color-textTertiary)',
               }}
-              style={{ ...INPUT_STYLE, width: '120px' }}
-            />
-            {suffix && <Text size="bodySmall" color="tertiary">{suffix}</Text>}
+            >
+              <CloseIcon />
+            </button>
           </div>
-        </Stack>
+        );
+      })}
+      <button
+        onClick={handleAdd}
+        style={{
+          all: 'unset',
+          cursor: 'pointer',
+          fontSize: '13px',
+          fontFamily: 'var(--rev-fontFamily)',
+          fontWeight: 600,
+          color: 'var(--rev-color-textSecondary)',
+          padding: '8px 0',
+        }}
+      >
+        + Add tier
+      </button>
+      {isLabor && (
+        <Text size="caption" color="tertiary">
+          Hours multiplied by ${shopRate}/hr shop labor rate
+        </Text>
       )}
     </Stack>
   );
 }
 
+// ---------------------------------------------------------------------------
+// Grouped filter picker (replaces flat Dropdown for "+ Add a filter")
+// ---------------------------------------------------------------------------
+function GroupedFilterPicker({
+  availableFields,
+  onSelect,
+}: {
+  availableFields: Set<ConditionField>;
+  onSelect: (field: ConditionField) => void;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handleClick = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, [open]);
+
+  const groups = CONDITION_FIELD_GROUPS
+    .map((g) => ({
+      ...g,
+      fields: g.fields.filter((f) => availableFields.has(f)),
+    }))
+    .filter((g) => g.fields.length > 0);
+
+  if (groups.length === 0) return null;
+
+  return (
+    <div ref={containerRef} style={{ position: 'relative' }}>
+      <button
+        onClick={() => setOpen((prev) => !prev)}
+        style={{
+          all: 'unset',
+          cursor: 'pointer',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '8px 12px',
+          borderRadius: 'var(--rev-borderRadius-10)',
+          border: '1px solid var(--rev-color-separatorTertiary)',
+          fontSize: '13px',
+          fontFamily: 'var(--rev-fontFamily)',
+          fontWeight: 500,
+          color: 'var(--rev-color-textSecondary)',
+          background: '#fff',
+          width: '100%',
+          boxSizing: 'border-box',
+        }}
+      >
+        + Add a filter
+      </button>
+      {open && (
+        <div
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 4px)',
+            left: 0,
+            right: 0,
+            zIndex: 100,
+            background: 'var(--rev-color-backgroundPrimary)',
+            borderRadius: 'var(--rev-borderRadius-12, 12px)',
+            border: '1px solid var(--rev-color-separatorTertiary)',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.12)',
+            padding: '6px 0',
+            maxHeight: '320px',
+            overflowY: 'auto',
+          }}
+        >
+          {groups.map((group, gi) => (
+            <div key={group.label}>
+              {gi > 0 && (
+                <div style={{ height: '1px', background: 'var(--rev-color-separatorTertiary)', margin: '4px 0' }} />
+              )}
+              <div
+                style={{
+                  padding: '6px 12px 2px',
+                  fontSize: '10px',
+                  fontWeight: 600,
+                  fontFamily: 'var(--rev-fontFamily)',
+                  color: 'var(--rev-color-textTertiary)',
+                  textTransform: 'uppercase',
+                  letterSpacing: '0.05em',
+                }}
+              >
+                {group.label}
+              </div>
+              {group.fields.map((field) => (
+                <button
+                  key={field}
+                  onClick={() => {
+                    onSelect(field);
+                    setOpen(false);
+                  }}
+                  style={{
+                    all: 'unset',
+                    cursor: 'pointer',
+                    display: 'block',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '7px 12px 7px 20px',
+                    fontSize: '13px',
+                    fontFamily: 'var(--rev-fontFamily)',
+                    color: 'var(--rev-color-textPrimary)',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'var(--rev-color-backgroundSecondary)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.currentTarget as HTMLElement).style.background = 'transparent';
+                  }}
+                >
+                  {CONDITION_FIELD_LABELS[field]}
+                </button>
+              ))}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Conditions editor (Section 1 of the modal: "Applies when")
+// ---------------------------------------------------------------------------
+function ConditionsEditor({
+  conditions,
+  onChange,
+  pricingSource,
+  dmsFieldName,
+  bracketField,
+}: {
+  conditions: ConditionFilter[];
+  onChange: (conditions: ConditionFilter[]) => void;
+  pricingSource: PricingSource;
+  dmsFieldName?: string;
+  bracketField?: string;
+}) {
+  const usedFields = new Set(conditions.map((c) => c.field));
+  const availableFields = (Object.keys(CONDITION_FIELD_LABELS) as ConditionField[]).filter(
+    (f) => !usedFields.has(f)
+  );
+
+  const handleAddCondition = (field: ConditionField) => {
+    onChange([...conditions, { field, values: [] }]);
+  };
+
+  const handleRemoveCondition = (index: number) => {
+    onChange(conditions.filter((_, i) => i !== index));
+  };
+
+  const handleUpdateValues = (index: number, values: string[]) => {
+    onChange(conditions.map((c, i) => (i === index ? { ...c, values } : c)));
+  };
+
+  // Implicit data conditions based on pricing source
+  const implicitConditions: string[] = [];
+  if (pricingSource === 'dms_field') {
+    implicitConditions.push(dmsFieldName ? `Only when ${dmsFieldName} is available in your DMS` : 'Only when DMS data is available');
+  }
+  if (pricingSource === 'ekho_per_unit') {
+    implicitConditions.push('Only when a per-vehicle value is set in Ekho');
+  }
+  if (pricingSource === 'stepped' && bracketField) {
+    const fieldLabel = CONDITION_FIELD_LABELS[bracketField as ConditionField] ?? bracketField;
+    implicitConditions.push(`Only when ${fieldLabel} data is available`);
+  }
+
+  return (
+    <Stack itemsSpacing="12">
+      {/* Section header */}
+      <Stack itemsSpacing="2">
+        <Text size="bodySmall" weight="semibold">Applies when</Text>
+        <Text size="caption" color="tertiary">
+          Every condition listed here must match for this rule to apply.
+        </Text>
+      </Stack>
+
+      {/* Explicit conditions */}
+      {conditions.length === 0 && implicitConditions.length === 0 && (
+        <Text size="bodySmall" color="tertiary" style={{ fontStyle: 'italic' }}>
+          No conditions set. This rule applies to all vehicles.
+        </Text>
+      )}
+
+      {conditions.map((cond, i) => {
+        const valueOptions = CONDITION_FIELD_VALUES[cond.field];
+        const isStateField = cond.field === 'buyer_state';
+
+        return (
+          <div
+            key={i}
+            style={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: '8px',
+              padding: '10px 12px',
+              background: 'var(--rev-color-backgroundSecondary)',
+              borderRadius: 'var(--rev-borderRadius-10)',
+            }}
+          >
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <Stack itemsSpacing="6">
+                <Text size="footnote" weight="medium" color="secondary">
+                  {CONDITION_FIELD_LABELS[cond.field]}
+                </Text>
+
+                {/* Value selector */}
+                {valueOptions ? (
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                    {Object.entries(valueOptions).map(([val, label]) => {
+                      const selected = cond.values.includes(val);
+                      return (
+                        <button
+                          key={val}
+                          onClick={() => {
+                            const newValues = selected
+                              ? cond.values.filter((v) => v !== val)
+                              : [...cond.values, val];
+                            handleUpdateValues(i, newValues);
+                          }}
+                          style={{
+                            all: 'unset',
+                            cursor: 'pointer',
+                            padding: '4px 10px',
+                            borderRadius: '999px',
+                            fontSize: '12px',
+                            fontWeight: 500,
+                            fontFamily: 'var(--rev-fontFamily)',
+                            background: selected
+                              ? 'var(--rev-color-carbonGray)'
+                              : 'var(--rev-color-backgroundPrimary)',
+                            color: selected ? '#fff' : 'var(--rev-color-textSecondary)',
+                            border: selected
+                              ? '1px solid var(--rev-color-carbonGray)'
+                              : '1px solid var(--rev-color-separatorTertiary)',
+                            transition: 'all 150ms ease',
+                          }}
+                        >
+                          {label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                ) : isStateField ? (
+                  <Stack itemsSpacing="6">
+                    <Dropdown
+                      key={`state-${cond.values.length}`}
+                      options={US_STATES.filter((s) => !cond.values.includes(s.id))}
+                      placeholder="Add a state..."
+                      onSelectionChange={(val) => {
+                        if (val && !cond.values.includes(val)) {
+                          handleUpdateValues(i, [...cond.values, val]);
+                        }
+                      }}
+                      size="medium"
+                      buttonVariant="outline"
+                    />
+                    {cond.values.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                        {cond.values.map((s) => (
+                          <span
+                            key={s}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '3px 8px',
+                              borderRadius: '999px',
+                              background: 'var(--rev-color-backgroundPrimary)',
+                              fontSize: '12px',
+                              fontWeight: 500,
+                              color: 'var(--rev-color-textPrimary)',
+                            }}
+                          >
+                            {s}
+                            <button
+                              onClick={() => handleUpdateValues(i, cond.values.filter((x) => x !== s))}
+                              style={{
+                                background: 'none',
+                                border: 'none',
+                                cursor: 'pointer',
+                                padding: 0,
+                                fontSize: '13px',
+                                lineHeight: 1,
+                                color: 'var(--rev-color-textTertiary)',
+                              }}
+                            >
+                              &times;
+                            </button>
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </Stack>
+                ) : (
+                  <Text size="caption" color="tertiary">
+                    Value picker not yet implemented for this field
+                  </Text>
+                )}
+              </Stack>
+            </div>
+            <button
+              onClick={() => handleRemoveCondition(i)}
+              style={{
+                all: 'unset',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '24px',
+                height: '24px',
+                borderRadius: 'var(--rev-borderRadius-8)',
+                color: 'var(--rev-color-textTertiary)',
+                flexShrink: 0,
+                marginTop: '2px',
+              }}
+            >
+              <CloseIcon />
+            </button>
+          </div>
+        );
+      })}
+
+      {/* Implicit data conditions */}
+      {implicitConditions.map((text, i) => (
+        <div
+          key={`implicit-${i}`}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            padding: '8px 12px',
+            background: 'var(--rev-color-backgroundSecondary)',
+            borderRadius: 'var(--rev-borderRadius-10)',
+            border: '1px dashed var(--rev-color-separatorTertiary)',
+          }}
+        >
+          <span
+            style={{
+              fontSize: '10px',
+              fontWeight: 600,
+              fontFamily: 'var(--rev-fontFamily)',
+              padding: '2px 6px',
+              borderRadius: '4px',
+              background: 'color-mix(in oklch, var(--rev-color-textTertiary) 15%, transparent)',
+              color: 'var(--rev-color-textTertiary)',
+              textTransform: 'uppercase',
+              letterSpacing: '0.04em',
+            }}
+          >
+            data required
+          </span>
+          <Text size="bodySmall" color="tertiary">{text}</Text>
+        </div>
+      ))}
+
+      {/* Add condition button -- grouped picker with Vehicle / Order sections */}
+      <GroupedFilterPicker
+        availableFields={new Set(availableFields)}
+        onSelect={handleAddCondition}
+      />
+    </Stack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Pricing source editor (Section 2 of the modal: "Fee calculation")
+// ---------------------------------------------------------------------------
+function PricingSourceEditor({
+  pricingSource,
+  onSourceChange,
+  ekhoFieldName,
+  shopRate,
+  // DMS
+  dmsFieldName,
+  onDmsFieldNameChange,
+  dmsIsLabor,
+  onDmsIsLaborChange,
+  // Ekho
+  ekhoIsLabor,
+  onEkhoIsLaborChange,
+  // Fixed
+  amountModel,
+  amount,
+  onAmountModelChange,
+  onAmountChange,
+  // Labor hours
+  hours,
+  onHoursChange,
+  // Stepped
+  brackets,
+  onBracketsChange,
+  bracketField,
+  onBracketFieldChange,
+  bracketIsLabor,
+  onBracketIsLaborChange,
+  // Markup
+  markupType,
+  onMarkupTypeChange,
+  markupAmount,
+  onMarkupAmountChange,
+}: {
+  pricingSource: PricingSource;
+  onSourceChange: (s: PricingSource) => void;
+  ekhoFieldName: string;
+  shopRate: number;
+  dmsFieldName: string;
+  onDmsFieldNameChange: (v: string) => void;
+  dmsIsLabor: boolean;
+  onDmsIsLaborChange: (v: boolean) => void;
+  ekhoIsLabor: boolean;
+  onEkhoIsLaborChange: (v: boolean) => void;
+  amountModel: AmountModel;
+  amount: number;
+  onAmountModelChange: (m: AmountModel) => void;
+  onAmountChange: (n: number) => void;
+  hours: number;
+  onHoursChange: (n: number) => void;
+  brackets: SteppedBracket[];
+  onBracketsChange: (b: SteppedBracket[]) => void;
+  bracketField: string;
+  onBracketFieldChange: (f: string) => void;
+  bracketIsLabor: boolean;
+  onBracketIsLaborChange: (v: boolean) => void;
+  markupType: 'flat' | 'percentage';
+  onMarkupTypeChange: (t: 'flat' | 'percentage') => void;
+  markupAmount: number;
+  onMarkupAmountChange: (n: number) => void;
+}) {
+  const sourceOptions = (Object.keys(PRICING_SOURCE_LABELS) as PricingSource[]).map((k) => ({
+    id: k,
+    label: PRICING_SOURCE_LABELS[k],
+  }));
+
+  const bracketFieldOptions = [
+    { id: 'cc', label: 'Engine size (CC)' },
+    { id: 'inventory_age', label: 'Days in stock' },
+    { id: 'delivery_distance', label: 'Delivery distance' },
+  ];
+
+  return (
+    <Stack itemsSpacing="12">
+      <Stack itemsSpacing="2">
+        <Text size="bodySmall" weight="semibold">How it's calculated</Text>
+        <Text size="caption" color="tertiary">
+          How the fee amount is determined when this rule matches.
+        </Text>
+      </Stack>
+
+      <Dropdown
+        options={sourceOptions}
+        value={pricingSource}
+        onSelectionChange={(val) => onSourceChange(val as PricingSource)}
+        size="medium"
+        buttonVariant="outline"
+      />
+
+      {/* Source-specific config */}
+      {pricingSource === 'dms_field' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="12">
+            <Stack itemsSpacing="8">
+              <Text size="footnote" color="secondary" weight="medium">Field name in your DMS</Text>
+              <input
+                type="text"
+                value={dmsFieldName}
+                onChange={(e) => onDmsFieldNameChange(e.target.value)}
+                placeholder="e.g., doc_fee, setup_hrs"
+                style={INPUT_STYLE}
+              />
+            </Stack>
+            <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
+              <Stack itemsSpacing="2">
+                <Text size="caption" weight="medium">This field contains labor hours</Text>
+                <Text size="caption" color="tertiary">
+                  The value will be multiplied by your ${shopRate}/hr shop rate
+                </Text>
+              </Stack>
+              <Switch isSelected={dmsIsLabor} onChange={onDmsIsLaborChange} />
+            </Group>
+            <Text size="caption" color="tertiary">
+              If this field is blank or missing for a vehicle, this rule is skipped and the next one is checked.
+            </Text>
+          </Stack>
+        </Box>
+      )}
+
+      {pricingSource === 'ekho_per_unit' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="12">
+            <Stack itemsSpacing="8">
+              <Text size="footnote" color="secondary" weight="medium">Inventory field</Text>
+              <div
+                style={{
+                  ...INPUT_STYLE,
+                  background: 'var(--rev-color-backgroundSecondary)',
+                  color: 'var(--rev-color-textSecondary)',
+                  cursor: 'default',
+                }}
+              >
+                {ekhoFieldName}
+              </div>
+            </Stack>
+            <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
+              <Stack itemsSpacing="2">
+                <Text size="caption" weight="medium">This field contains labor hours</Text>
+                <Text size="caption" color="tertiary">
+                  The value will be multiplied by your ${shopRate}/hr shop rate
+                </Text>
+              </Stack>
+              <Switch isSelected={ekhoIsLabor} onChange={onEkhoIsLaborChange} />
+            </Group>
+            <Text size="caption" color="tertiary">
+              Set individually on each vehicle in Ekho. Skipped if not set.
+            </Text>
+          </Stack>
+        </Box>
+      )}
+
+      {pricingSource === 'fixed' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="8">
+            <Text size="footnote" color="secondary" weight="medium">Fee amount</Text>
+            <AmountEditor
+              amountModel={amountModel}
+              amount={amount}
+              onModelChange={onAmountModelChange}
+              onAmountChange={onAmountChange}
+            />
+          </Stack>
+        </Box>
+      )}
+
+      {pricingSource === 'labor_hours' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="8">
+            <Text size="footnote" color="secondary" weight="medium">Labor hours</Text>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <input
+                type="text"
+                value={hours}
+                onChange={(e) => {
+                  const num = parseFloat(e.target.value);
+                  if (!isNaN(num)) onHoursChange(num);
+                }}
+                style={{ ...INPUT_STYLE, width: '80px', fontSize: '16px', fontWeight: 600 }}
+              />
+              <Text size="body" weight="semibold" color="secondary">hrs</Text>
+            </div>
+            <Text size="caption" color="tertiary">
+              {hours} hrs x ${shopRate}/hr = <strong>${(hours * shopRate).toFixed(2)}</strong>
+            </Text>
+          </Stack>
+        </Box>
+      )}
+
+      {pricingSource === 'stepped' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="12">
+            <Stack itemsSpacing="8">
+              <Text size="footnote" color="secondary" weight="medium">Price varies by</Text>
+              <Dropdown
+                options={bracketFieldOptions}
+                value={bracketField}
+                onSelectionChange={(val) => onBracketFieldChange(val)}
+                size="medium"
+                buttonVariant="outline"
+              />
+            </Stack>
+            <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
+              <Text size="caption" weight="medium">Tier amounts are labor hours</Text>
+              <Switch isSelected={bracketIsLabor} onChange={onBracketIsLaborChange} />
+            </Group>
+            <BracketEditor
+              brackets={brackets}
+              onChange={onBracketsChange}
+              unitLabel={BRACKET_FIELD_UNITS[bracketField] ?? ''}
+              isLabor={bracketIsLabor}
+              shopRate={shopRate}
+            />
+          </Stack>
+        </Box>
+      )}
+
+      {pricingSource === 'markup' && (
+        <Box padding="16" background="secondary" rounding="12">
+          <Stack itemsSpacing="12">
+            <Stack itemsSpacing="8">
+              <Text size="footnote" color="secondary" weight="medium">Markup type</Text>
+              <SegmentedControl
+                size="small"
+                items={[
+                  { value: 'flat', label: 'Flat $' },
+                  { value: 'percentage', label: '% of cost' },
+                ]}
+                value={markupType}
+                onChange={(val) => onMarkupTypeChange(val as 'flat' | 'percentage')}
+              />
+            </Stack>
+            <Stack itemsSpacing="8">
+              <Text size="footnote" color="secondary" weight="medium">
+                {markupType === 'flat' ? 'Flat markup amount' : 'Markup percentage'}
+              </Text>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                {markupType === 'flat' && <Text size="body" weight="semibold" color="secondary">$</Text>}
+                <input
+                  type="text"
+                  value={markupAmount}
+                  onChange={(e) => {
+                    const num = parseFloat(e.target.value);
+                    if (!isNaN(num)) onMarkupAmountChange(num);
+                  }}
+                  style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
+                />
+                {markupType === 'percentage' && <Text size="body" weight="semibold" color="secondary">%</Text>}
+              </div>
+            </Stack>
+          </Stack>
+        </Box>
+      )}
+    </Stack>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Rule modal (V2: split into Conditions + Pricing Source)
+// ---------------------------------------------------------------------------
 function RuleModal({
   rule,
   ekhoFieldName,
@@ -660,137 +1030,73 @@ function RuleModal({
 }) {
   const isEditing = rule?.id != null;
 
-  const [isLabor, setIsLabor] = useState(rule?.isLabor ?? false);
-  const [ruleType, setRuleType] = useState<RuleType>(rule?.type ?? 'dms');
+  // Conditions state
+  const [conditions, setConditions] = useState<ConditionFilter[]>(rule?.conditions ?? []);
+
+  // Pricing source state
+  const [pricingSource, setPricingSource] = useState<PricingSource>(rule?.pricingSource ?? 'fixed');
+
+  // DMS
   const [dmsFieldName, setDmsFieldName] = useState(rule?.dmsFieldName ?? '');
-  const [inventoryAttribute, setInventoryAttribute] = useState<InventoryAttribute>(
-    rule?.inventoryAttribute ?? 'vehicle_condition'
-  );
-  const [attributeValue, setAttributeValue] = useState<string>(rule?.attributeValue ?? '');
-  const [orderAttribute, setOrderAttribute] = useState<OrderAttribute>(
-    rule?.orderAttribute ?? 'delivery_distance'
-  );
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(
-    rule?.paymentMethod ?? 'card'
-  );
-  const [states, setStates] = useState<string[]>(rule?.states ?? []);
-  const [feeModel, setFeeModel] = useState<FeeModel>(rule?.feeModel ?? 'flat');
-  const [markupType, setMarkupType] = useState<'flat' | 'percentage'>(rule?.markupType ?? 'percentage');
+  const [dmsIsLabor, setDmsIsLabor] = useState(rule?.dmsIsLabor ?? false);
+
+  // Ekho
+  const [ekhoIsLabor, setEkhoIsLabor] = useState(rule?.ekhoIsLabor ?? false);
+
+  // Fixed
+  const [amountModel, setAmountModel] = useState<AmountModel>(rule?.amountModel ?? 'flat');
+  const [amount, setAmount] = useState(rule?.amount ?? 0);
+
+  // Labor hours
+  const [hours, setHours] = useState(rule?.hours ?? 0);
+
+  // Stepped
   const [brackets, setBrackets] = useState<SteppedBracket[]>(
     rule?.brackets ?? [{ from: 0, to: 25, amount: 0 }, { from: 25, to: 50, amount: 199 }, { from: 50, to: null, amount: 349 }]
   );
-  const [amountModel, setAmountModel] = useState<AmountModel>(rule?.amountModel ?? 'flat');
-  const [amount, setAmount] = useState(rule?.amount ?? 0);
-  const [hours, setHours] = useState(rule?.hours ?? 0);
+  const [bracketField, setBracketField] = useState(rule?.bracketField ?? 'delivery_distance');
+  const [bracketIsLabor, setBracketIsLabor] = useState(rule?.bracketIsLabor ?? false);
 
-  const ruleTypeOptions = (Object.keys(RULE_TYPE_LABELS) as RuleType[]).map((k) => ({
-    id: k,
-    label: RULE_TYPE_LABELS[k],
-  }));
-
-  const inventoryOptions = (Object.keys(INVENTORY_ATTRIBUTE_LABELS) as InventoryAttribute[]).map((k) => ({
-    id: k,
-    label: INVENTORY_ATTRIBUTE_LABELS[k],
-  }));
-
-  const orderOptions = (Object.keys(ORDER_ATTRIBUTE_LABELS) as OrderAttribute[]).map((k) => ({
-    id: k,
-    label: ORDER_ATTRIBUTE_LABELS[k],
-  }));
-
-  const paymentMethodOptions = (Object.keys(PAYMENT_METHOD_LABELS) as PaymentMethod[]).map((k) => ({
-    id: k,
-    label: PAYMENT_METHOD_LABELS[k],
-  }));
-
-  const isDeliveryDistance = !isLabor && ruleType === 'order_attributes' && orderAttribute === 'delivery_distance';
-  const isPaymentOption = !isLabor && ruleType === 'order_attributes' && orderAttribute === 'payment_option';
-  const isDeliveryState = !isLabor && ruleType === 'order_attributes' && orderAttribute === 'delivery_state';
+  // Markup
+  const [markupType, setMarkupType] = useState<'flat' | 'percentage'>(rule?.markupType ?? 'percentage');
+  const [markupAmount, setMarkupAmount] = useState(rule?.amount ?? 0);
 
   const handleSave = () => {
     const newRule: FeeRule = {
       id: rule?.id ?? `r_${Date.now()}`,
-      type: ruleType,
+      conditions,
+      pricingSource,
     };
 
-    if (isLabor) newRule.isLabor = true;
-
-    if (ruleType === 'dms') {
-      newRule.dmsFieldName = dmsFieldName;
-    } else if (ruleType === 'ekho_single_unit') {
-      newRule.ekhoFieldName = ekhoFieldName;
-    } else if (ruleType === 'inventory_attributes') {
-      newRule.inventoryAttribute = inventoryAttribute;
-      if (BRACKETED_INVENTORY_ATTRIBUTES.has(inventoryAttribute)) {
-        newRule.brackets = brackets;
-        if (isLabor) newRule.isLabor = true;
-      } else {
-        if (attributeValue) newRule.attributeValue = attributeValue;
-        if (isLabor) {
-          newRule.hours = hours;
-        } else {
-          newRule.amountModel = amountModel;
-          newRule.amount = amount;
-        }
-      }
-    } else if (ruleType === 'order_attributes') {
-      newRule.orderAttribute = orderAttribute;
-      if (isLabor) {
+    switch (pricingSource) {
+      case 'dms_field':
+        newRule.dmsFieldName = dmsFieldName;
+        if (dmsIsLabor) newRule.dmsIsLabor = true;
+        break;
+      case 'ekho_per_unit':
+        newRule.ekhoFieldName = ekhoFieldName;
+        if (ekhoIsLabor) newRule.ekhoIsLabor = true;
+        break;
+      case 'fixed':
+        newRule.amountModel = amountModel;
+        newRule.amount = amount;
+        break;
+      case 'labor_hours':
         newRule.hours = hours;
-      } else if (isPaymentOption) {
-        newRule.paymentMethod = paymentMethod;
-        newRule.amountModel = amountModel;
-        newRule.amount = amount;
-      } else if (isDeliveryState) {
-        newRule.states = states;
-        newRule.feeModel = feeModel;
-        newRule.amount = amount;
-        if (feeModel === 'markup') {
-          newRule.markupType = markupType;
-        } else {
-          newRule.amountModel = amountModel;
-        }
-      } else if (isDeliveryDistance) {
-        newRule.feeModel = feeModel;
-        newRule.amount = amount;
-        if (feeModel === 'stepped') {
-          newRule.brackets = brackets;
-        }
-        if (feeModel === 'markup') {
-          newRule.markupType = markupType;
-        }
-      } else {
-        newRule.amountModel = amountModel;
-        newRule.amount = amount;
-      }
+        break;
+      case 'stepped':
+        newRule.brackets = brackets;
+        newRule.bracketField = bracketField;
+        if (bracketIsLabor) newRule.bracketIsLabor = true;
+        break;
+      case 'markup':
+        newRule.markupType = markupType;
+        newRule.amount = markupAmount;
+        break;
     }
 
     onSave(newRule);
   };
-
-  // Hours editor shared between labor inventory/order attribute rules
-  const laborHoursEditor = (
-    <Box padding="16" background="secondary" rounding="12">
-      <Stack itemsSpacing="8">
-        <Text size="bodySmall" weight="semibold">Labor hours</Text>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <input
-            type="text"
-            value={hours}
-            onChange={(e) => {
-              const num = parseFloat(e.target.value);
-              if (!isNaN(num)) setHours(num);
-            }}
-            style={{ ...INPUT_STYLE, width: '80px', fontSize: '16px', fontWeight: 600 }}
-          />
-          <Text size="body" weight="semibold" color="secondary">hrs</Text>
-        </div>
-        <Text size="caption" color="tertiary">
-          {hours} hrs x ${shopRate}/hr = <strong>${(hours * shopRate).toFixed(2)}</strong>
-        </Text>
-      </Stack>
-    </Box>
-  );
 
   return (
     <Modal
@@ -805,328 +1111,54 @@ function RuleModal({
         </>
       }
     >
-      <Stack itemsSpacing="20">
-        {/* Labor toggle */}
-        <Box padding="16" background="secondary" rounding="10">
-          <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
-            <Stack itemsSpacing="2">
-              <Text size="bodySmall" weight="semibold">Labor hours</Text>
-              <Text size="caption" color="tertiary">
-                Map labor hours instead of a fee amount
-              </Text>
-            </Stack>
-            <Switch isSelected={isLabor} onChange={setIsLabor} />
-          </Group>
-        </Box>
-
-        {/* Rule type */}
-        <Stack itemsSpacing="8">
-          <Text size="footnote" color="secondary" weight="medium">Source / driver</Text>
-          <Dropdown
-            options={ruleTypeOptions}
-            value={ruleType}
-            onSelectionChange={(val) => setRuleType(val as RuleType)}
-            size="medium"
-            buttonVariant="outline"
-          />
-        </Stack>
+      <Stack itemsSpacing="24">
+        {/* Section 1: Conditions */}
+        <ConditionsEditor
+          conditions={conditions}
+          onChange={setConditions}
+          pricingSource={pricingSource}
+          dmsFieldName={dmsFieldName}
+          bracketField={bracketField}
+        />
 
         <Divider />
 
-        {/* Type-specific configuration */}
-        {ruleType === 'dms' && (
-          <Stack itemsSpacing="8">
-            <Text size="footnote" color="secondary" weight="medium">DMS field name</Text>
-            <input
-              type="text"
-              value={dmsFieldName}
-              onChange={(e) => setDmsFieldName(e.target.value)}
-              placeholder={isLabor ? 'e.g., assembly_hrs, labor_hrs' : 'e.g., doc_fee, setup_fee'}
-              style={INPUT_STYLE}
-            />
-            <Text size="caption" color="tertiary">
-              {isLabor
-                ? `The DMS field that contains the labor hours for this vehicle. Fee = hours x $${shopRate}/hr shop rate.`
-                : 'The field name in your DMS that contains this fee amount per vehicle. If the field is blank or missing for a given vehicle, this rule will be skipped and the next rule in the priority list will be evaluated.'}
-            </Text>
-          </Stack>
-        )}
-
-        {ruleType === 'ekho_single_unit' && (
-          <Stack itemsSpacing="8">
-            <Text size="footnote" color="secondary" weight="medium">Ekho field</Text>
-            <div
-              style={{
-                ...INPUT_STYLE,
-                background: 'var(--rev-color-backgroundSecondary)',
-                color: 'var(--rev-color-textSecondary)',
-                cursor: 'default',
-              }}
-            >
-              {ekhoFieldName}
-            </div>
-            <Text size="caption" color="tertiary">
-              {isLabor
-                ? `Per-vehicle labor hours set in the inventory drawer. Fee = hours x $${shopRate}/hr shop rate.`
-                : 'This value is set per vehicle in the inventory drawer.'}
-            </Text>
-          </Stack>
-        )}
-
-        {ruleType === 'inventory_attributes' && (() => {
-          const isBracketed = BRACKETED_INVENTORY_ATTRIBUTES.has(inventoryAttribute);
-          const valueOptions = INVENTORY_ATTRIBUTE_VALUES[inventoryAttribute];
-          const unitLabel = INVENTORY_BRACKET_UNITS[inventoryAttribute] ?? '';
-          return (
-          <>
-            <Stack itemsSpacing="8">
-              <Text size="footnote" color="secondary" weight="medium">Attribute</Text>
-              <Dropdown
-                options={inventoryOptions}
-                value={inventoryAttribute}
-                onSelectionChange={(val) => {
-                  setInventoryAttribute(val as InventoryAttribute);
-                  setAttributeValue('');
-                }}
-                size="medium"
-                buttonVariant="outline"
-              />
-            </Stack>
-            {isBracketed ? (
-              <>
-                <InventoryBracketEditor
-                  brackets={brackets}
-                  onChange={setBrackets}
-                  unitLabel={unitLabel}
-                  isLabor={isLabor}
-                  shopRate={shopRate}
-                />
-              </>
-            ) : (
-              <>
-                {valueOptions && (
-                  <Stack itemsSpacing="8">
-                    <Text size="footnote" color="secondary" weight="medium">Match value</Text>
-                    <Dropdown
-                      options={Object.entries(valueOptions).map(([k, v]) => ({ id: k, label: v }))}
-                      value={attributeValue}
-                      onSelectionChange={(val) => setAttributeValue(val)}
-                      size="medium"
-                      buttonVariant="outline"
-                      placeholder="Select value..."
-                    />
-                  </Stack>
-                )}
-                {isLabor ? laborHoursEditor : (
-                  <AmountEditor
-                    amountModel={amountModel}
-                    amount={amount}
-                    onModelChange={setAmountModel}
-                    onAmountChange={setAmount}
-                  />
-                )}
-              </>
-            )}
-          </>
-          );
-        })()}
-
-        {ruleType === 'order_attributes' && (
-          <>
-            <Stack itemsSpacing="8">
-              <Text size="footnote" color="secondary" weight="medium">Attribute</Text>
-              <Dropdown
-                options={orderOptions}
-                value={orderAttribute}
-                onSelectionChange={(val) => setOrderAttribute(val as OrderAttribute)}
-                size="medium"
-                buttonVariant="outline"
-              />
-            </Stack>
-            {isLabor ? laborHoursEditor : isPaymentOption ? (
-              <>
-                <Stack itemsSpacing="8">
-                  <Text size="footnote" color="secondary" weight="medium">Payment method</Text>
-                  <Dropdown
-                    options={paymentMethodOptions}
-                    value={paymentMethod}
-                    onSelectionChange={(val) => setPaymentMethod(val as PaymentMethod)}
-                    size="medium"
-                    buttonVariant="outline"
-                  />
-                </Stack>
-                <Stack itemsSpacing="8">
-                  <Text size="footnote" color="secondary" weight="medium">Fee type</Text>
-                  <Dropdown
-                    options={(Object.keys(AMOUNT_MODEL_LABELS) as AmountModel[]).map((k) => ({
-                      id: k,
-                      label: AMOUNT_MODEL_LABELS[k],
-                    }))}
-                    value={amountModel}
-                    onSelectionChange={(val) => setAmountModel(val as AmountModel)}
-                    size="medium"
-                    buttonVariant="outline"
-                  />
-                </Stack>
-                <Box padding="16" background="secondary" rounding="12">
-                  <Stack itemsSpacing="8">
-                    <Text size="bodySmall" weight="semibold">Fee amount</Text>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      {amountModel === 'flat' && <Text size="body" weight="semibold" color="tertiary">$</Text>}
-                      <input
-                        type="text"
-                        value={amount}
-                        onChange={(e) => {
-                          const num = parseFloat(e.target.value);
-                          if (!isNaN(num)) setAmount(num);
-                        }}
-                        style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
-                      />
-                      {amountModel !== 'flat' && <Text size="body" weight="semibold" color="tertiary">%</Text>}
-                    </div>
-                    {amountModel !== 'flat' && (
-                      <Text size="caption" color="tertiary">
-                        {AMOUNT_MODEL_LABELS[amountModel].toLowerCase()}
-                      </Text>
-                    )}
-                  </Stack>
-                </Box>
-              </>
-            ) : isDeliveryState ? (
-              <>
-                <Stack itemsSpacing="8">
-                  <Text size="footnote" color="secondary" weight="medium">States</Text>
-                  <Dropdown
-                    options={US_STATES.filter((s) => !states.includes(s.id))}
-                    placeholder="Add a state..."
-                    onSelectionChange={(val) => {
-                      if (val && !states.includes(val)) setStates([...states, val]);
-                    }}
-                    size="medium"
-                    buttonVariant="outline"
-                  />
-                  {states.length > 0 && (
-                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                      {states.map((s) => (
-                        <span
-                          key={s}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '4px',
-                            padding: '4px 10px',
-                            borderRadius: '999px',
-                            background: 'var(--rev-color-backgroundSecondary)',
-                            fontSize: '13px',
-                            fontWeight: 500,
-                            color: 'var(--rev-color-textPrimary)',
-                          }}
-                        >
-                          {s}
-                          <button
-                            onClick={() => setStates(states.filter((x) => x !== s))}
-                            style={{
-                              background: 'none',
-                              border: 'none',
-                              cursor: 'pointer',
-                              padding: 0,
-                              fontSize: '14px',
-                              lineHeight: 1,
-                              color: 'var(--rev-color-textTertiary)',
-                            }}
-                          >
-                            &times;
-                          </button>
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </Stack>
-                <Box padding="16" background="secondary" rounding="12">
-                  <Stack itemsSpacing="8">
-                    <Text size="bodySmall" weight="semibold">Fee amount</Text>
-                    <Stack itemsSpacing="8">
-                      <Text size="footnote" color="secondary" weight="medium">Fee model</Text>
-                      <SegmentedControl
-                        size="small"
-                        items={[
-                          { value: 'flat', label: 'Flat fee' },
-                          { value: 'markup', label: 'Markup on cost' },
-                        ]}
-                        value={feeModel === 'markup' ? 'markup' : 'flat'}
-                        onChange={(val) => setFeeModel(val as FeeModel)}
-                      />
-                    </Stack>
-                    {feeModel === 'markup' ? (
-                      <>
-                        <SegmentedControl
-                          size="small"
-                          items={[
-                            { value: 'percentage', label: '% of cost' },
-                            { value: 'flat', label: 'Flat $' },
-                          ]}
-                          value={markupType}
-                          onChange={(val) => setMarkupType(val as 'flat' | 'percentage')}
-                        />
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                          {markupType === 'flat' && <Text size="body" weight="semibold" color="secondary">$</Text>}
-                          <input
-                            type="text"
-                            value={amount}
-                            onChange={(e) => {
-                              const num = parseFloat(e.target.value);
-                              if (!isNaN(num)) setAmount(num);
-                            }}
-                            style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
-                          />
-                          {markupType === 'percentage' && <Text size="body" weight="semibold" color="secondary">%</Text>}
-                        </div>
-                      </>
-                    ) : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                        <Text size="body" weight="semibold" color="secondary">$</Text>
-                        <input
-                          type="text"
-                          value={amount}
-                          onChange={(e) => {
-                            const num = parseFloat(e.target.value);
-                            if (!isNaN(num)) setAmount(num);
-                          }}
-                          style={{ ...INPUT_STYLE, width: '120px', fontSize: '16px', fontWeight: 600 }}
-                        />
-                      </div>
-                    )}
-                  </Stack>
-                </Box>
-              </>
-            ) : isDeliveryDistance ? (
-              <DeliveryDistanceAmountEditor
-                feeModel={feeModel}
-                amount={amount}
-                brackets={brackets}
-                markupType={markupType}
-                onModelChange={setFeeModel}
-                onAmountChange={setAmount}
-                onBracketsChange={setBrackets}
-                onMarkupTypeChange={setMarkupType}
-              />
-            ) : (
-              <AmountEditor
-                amountModel={amountModel}
-                amount={amount}
-                onModelChange={setAmountModel}
-                onAmountChange={setAmount}
-              />
-            )}
-          </>
-        )}
+        {/* Section 2: Fee Calculation */}
+        <PricingSourceEditor
+          pricingSource={pricingSource}
+          onSourceChange={setPricingSource}
+          ekhoFieldName={ekhoFieldName}
+          shopRate={shopRate}
+          dmsFieldName={dmsFieldName}
+          onDmsFieldNameChange={setDmsFieldName}
+          dmsIsLabor={dmsIsLabor}
+          onDmsIsLaborChange={setDmsIsLabor}
+          ekhoIsLabor={ekhoIsLabor}
+          onEkhoIsLaborChange={setEkhoIsLabor}
+          amountModel={amountModel}
+          amount={amount}
+          onAmountModelChange={setAmountModel}
+          onAmountChange={setAmount}
+          hours={hours}
+          onHoursChange={setHours}
+          brackets={brackets}
+          onBracketsChange={setBrackets}
+          bracketField={bracketField}
+          onBracketFieldChange={setBracketField}
+          bracketIsLabor={bracketIsLabor}
+          onBracketIsLaborChange={setBracketIsLabor}
+          markupType={markupType}
+          onMarkupTypeChange={setMarkupType}
+          markupAmount={markupAmount}
+          onMarkupAmountChange={setMarkupAmount}
+        />
       </Stack>
     </Modal>
   );
 }
 
 // ---------------------------------------------------------------------------
-// Fallback modal
+// Fallback modal (unchanged from V1)
 // ---------------------------------------------------------------------------
 function FallbackModal({
   fallback,
@@ -1169,13 +1201,12 @@ function FallbackModal({
           The fallback applies when no rule in the priority list matches.
         </Text>
 
-        {/* Labor toggle */}
         <Box padding="16" background="secondary" rounding="10">
           <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
             <Stack itemsSpacing="2">
               <Text size="bodySmall" weight="semibold">Labor hours</Text>
               <Text size="caption" color="tertiary">
-                Fallback to labor hours instead of a fee amount
+                Use labor hours instead of a fixed amount
               </Text>
             </Stack>
             <Switch isSelected={isLabor} onChange={setIsLabor} />
@@ -1217,6 +1248,46 @@ function FallbackModal({
 }
 
 // ---------------------------------------------------------------------------
+// Condition chips (displayed on rule rows in the priority list)
+// ---------------------------------------------------------------------------
+function ConditionChips({ chips }: { chips: { label: string; implicit: boolean }[] }) {
+  if (chips.length === 0) return null;
+
+  return (
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginBottom: '2px' }}>
+      {chips.map((chip, i) => (
+        <span
+          key={i}
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            padding: '2px 8px',
+            borderRadius: '999px',
+            fontSize: '11px',
+            fontWeight: 500,
+            fontFamily: 'var(--rev-fontFamily)',
+            lineHeight: '16px',
+            ...(chip.implicit
+              ? {
+                  background: 'transparent',
+                  color: 'var(--rev-color-textTertiary)',
+                  border: '1px dashed color-mix(in oklch, var(--rev-color-textTertiary) 40%, transparent)',
+                }
+              : {
+                  background: 'color-mix(in oklch, var(--rev-color-textPrimary) 8%, transparent)',
+                  color: 'var(--rev-color-textPrimary)',
+                  border: '1px solid transparent',
+                }),
+          }}
+        >
+          {chip.label}
+        </span>
+      ))}
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
 // Priority list (numbered column + bordered items, drag-to-reorder)
 // ---------------------------------------------------------------------------
 function PriorityList({
@@ -1226,7 +1297,7 @@ function PriorityList({
   onEditFallback,
   onReorder,
 }: {
-  items: { label: string; sublabel?: string; isFallback?: boolean; ruleId?: string }[];
+  items: { chips: { label: string; implicit: boolean }[]; sublabel?: string; isFallback?: boolean; ruleId?: string }[];
   onEdit: (ruleId: string) => void;
   onDelete: (ruleId: string) => void;
   onEditFallback: () => void;
@@ -1236,17 +1307,14 @@ function PriorityList({
   const [overIndex, setOverIndex] = useState<number | null>(null);
   const dragNodeRef = useRef<HTMLDivElement | null>(null);
 
-  // Only rules (not fallback) count for drag boundaries
   const ruleCount = items.filter((it) => !it.isFallback).length;
 
   const handleDragStart = (e: React.DragEvent, index: number) => {
     setDragIndex(index);
     dragNodeRef.current = e.currentTarget as HTMLDivElement;
-    // Make the drag image slightly transparent
     if (e.dataTransfer) {
       e.dataTransfer.effectAllowed = 'move';
     }
-    // Need a timeout so the dragged element renders before we style it
     setTimeout(() => {
       dragNodeRef.current?.style.setProperty('opacity', '0.4');
     }, 0);
@@ -1266,7 +1334,6 @@ function PriorityList({
     if (e.dataTransfer) {
       e.dataTransfer.dropEffect = 'move';
     }
-    // Only allow dropping onto rule positions (not fallback)
     if (index < ruleCount) {
       setOverIndex(index);
     }
@@ -1299,7 +1366,6 @@ function PriorityList({
 
         return (
           <Fragment key={item.ruleId ?? 'fallback'}>
-            {/* Number cell — sits in left column, auto-matches row height */}
             <div
               style={{
                 display: 'flex',
@@ -1310,7 +1376,6 @@ function PriorityList({
               <Text size="bodySmall" weight="semibold" color="secondary">{i + 1}</Text>
             </div>
 
-            {/* Rule row */}
             <div
               draggable={!item.isFallback}
               onDragStart={(e) => !item.isFallback && handleDragStart(e, i)}
@@ -1340,7 +1405,6 @@ function PriorityList({
                 };
               })()}
             >
-              {/* Drag handle or placeholder */}
               {item.isFallback ? (
                 <div style={{ width: '24px', height: '24px' }} />
               ) : (
@@ -1358,7 +1422,11 @@ function PriorityList({
                 </span>
               )}
               <div style={{ flex: 1, minWidth: 0 }}>
-                <Text size="bodySmall">{item.label}</Text>
+                {item.isFallback ? (
+                  <Text size="bodySmall">Fallback</Text>
+                ) : (
+                  <ConditionChips chips={item.chips} />
+                )}
                 {item.sublabel && (
                   <Text size="footnote" color="secondary">{item.sublabel}</Text>
                 )}
@@ -1458,19 +1526,20 @@ export function FeeSection({
     setFee((prev) => ({ ...prev, ...partial }));
   };
 
-  // Build rules list items
-  const priorityItems: { label: string; sublabel?: string; isFallback?: boolean; ruleId?: string }[] = [];
+  // Build rules list items with chips
+  const priorityItems: { chips: { label: string; implicit: boolean }[]; sublabel?: string; isFallback?: boolean; ruleId?: string }[] = [];
 
   fee.rules.forEach((rule) => {
+    const chips = getRuleChips(rule);
     priorityItems.push({
-      label: getRuleLabel(rule),
+      chips: chips.length > 0 ? chips : [{ label: 'All vehicles', implicit: false }],
       sublabel: getRuleSublabel(rule, shopRate),
       ruleId: rule.id,
     });
   });
 
   priorityItems.push({
-    label: 'Fallback',
+    chips: [],
     sublabel: getFallbackSublabel(fee.fallback, shopRate),
     isFallback: true,
   });
@@ -1510,7 +1579,6 @@ export function FeeSection({
     setModalState({ type: 'closed' });
   };
 
-  // Get rule for edit modal
   const editingRule =
     modalState.type === 'edit_rule'
       ? fee.rules.find((r) => r.id === modalState.ruleId) ?? null
@@ -1521,7 +1589,6 @@ export function FeeSection({
       <Box padding="24" background="secondary" rounding="12">
         <div style={{ opacity: fee.enabled ? 1 : 0.45, pointerEvents: fee.enabled ? 'auto' : 'none', transition: 'opacity 200ms ease' }}>
         <Stack itemsSpacing="16">
-          {/* Card header */}
           <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
             <Text size="bodySmall" weight="semibold">{fee.label}</Text>
             <div style={{ pointerEvents: 'auto' }}>
@@ -1534,7 +1601,6 @@ export function FeeSection({
 
           <Divider />
 
-          {/* Rules */}
           <Stack itemsSpacing="8">
             <Group itemsAlignX="space-between" itemsAlignY="center" noWrap>
               <Text size="bodySmall" weight="semibold">Rules</Text>
@@ -1559,7 +1625,7 @@ export function FeeSection({
               </button>
             </Group>
             <Text size="bodySmall" color="secondary">
-              The first matching rule wins. Drag to reorder.
+              Checked top to bottom. First match is used. Drag to reorder.
             </Text>
             <PriorityList
               items={priorityItems}
@@ -1570,7 +1636,6 @@ export function FeeSection({
             />
           </Stack>
 
-          {/* Save / Clear bar (visible when dirty) */}
           {isDirty && (
             <>
               <Divider />
@@ -1584,7 +1649,6 @@ export function FeeSection({
         </div>
       </Box>
 
-      {/* Rule modal */}
       {(modalState.type === 'add_rule' || modalState.type === 'edit_rule') && (
         <RuleModal
           rule={modalState.type === 'edit_rule' ? editingRule : null}
@@ -1595,7 +1659,6 @@ export function FeeSection({
         />
       )}
 
-      {/* Fallback modal */}
       {modalState.type === 'edit_fallback' && (
         <FallbackModal
           fallback={fee.fallback}
