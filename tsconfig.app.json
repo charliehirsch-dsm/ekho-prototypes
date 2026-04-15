@@ -19,7 +19,18 @@
     /* Path aliases */
     "baseUrl": ".",
     "paths": {
-      "@rev-source/*": ["../../Repos/ekho/packages/ekho-common/src/rev/*"]
+      "@rev-source/*": ["../../Repos/ekho/packages/ekho-common/src/rev/*"],
+      "@admin/*": ["../../Repos/ekho/apps/admin-portal/src/*"],
+      "@carthage/*": ["../../Repos/ekho/apps/carthage/src/*"],
+      "@grader/*": ["../../Repos/ekho/apps/grader/src/*"],
+      "@ops/*": ["../../Repos/ekho/apps/ops-portal/src/*"],
+      "@ekhodealer/ekho-common/rev": ["../../Repos/ekho/packages/ekho-common/src/rev"],
+      "@ekhodealer/ekho-common/rev/*": ["../../Repos/ekho/packages/ekho-common/src/rev/*"],
+      "@ekhodealer/ekho-common/utils": ["../../Repos/ekho/packages/ekho-common/src/utils"],
+      "@ekhodealer/ekho-common/utils/*": ["../../Repos/ekho/packages/ekho-common/src/utils/*"],
+      "@ekhodealer/ekho-common/auth-client": ["../../Repos/ekho/packages/ekho-common/src/auth-client"],
+      "@ekhodealer/ekho-common": ["../../Repos/ekho/packages/ekho-common/src"],
+      "@common/*": ["../../Repos/ekho/packages/ekho-common/src/*"]
     },
 
     /* Relaxed for prototype use - importing raw Rev source with different TS settings */
