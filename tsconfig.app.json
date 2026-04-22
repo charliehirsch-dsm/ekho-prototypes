@@ -20,6 +20,12 @@
     "baseUrl": ".",
     "paths": {
       "@rev-source/*": ["../../Repos/ekho/packages/ekho-common/src/rev/*"],
+      "@config/*": ["../../Repos/ekho/apps/admin-portal/src/config/*"],
+      "@features/*": ["../../Repos/ekho/apps/admin-portal/src/features/*"],
+      "@pages/*": ["../../Repos/ekho/apps/admin-portal/src/pages/*"],
+      "@app/*": ["../../Repos/ekho/apps/admin-portal/src/app/*"],
+      "@assets/*": ["../../Repos/ekho/apps/admin-portal/src/assets/*"],
+      "@common/*": ["../../Repos/ekho/apps/admin-portal/src/common/*"],
       "@admin/*": ["../../Repos/ekho/apps/admin-portal/src/*"],
       "@carthage/*": ["../../Repos/ekho/apps/carthage/src/*"],
       "@grader/*": ["../../Repos/ekho/apps/grader/src/*"],
@@ -29,8 +35,12 @@
       "@ekhodealer/ekho-common/utils": ["../../Repos/ekho/packages/ekho-common/src/utils"],
       "@ekhodealer/ekho-common/utils/*": ["../../Repos/ekho/packages/ekho-common/src/utils/*"],
       "@ekhodealer/ekho-common/auth-client": ["../../Repos/ekho/packages/ekho-common/src/auth-client"],
-      "@ekhodealer/ekho-common": ["../../Repos/ekho/packages/ekho-common/src"],
-      "@common/*": ["../../Repos/ekho/packages/ekho-common/src/*"]
+      "@ekhodealer/ekho-common/auth-client/*": ["../../Repos/ekho/packages/ekho-common/src/auth-client/*"],
+      "@ekhodealer/ekho-common/server": ["../../Repos/ekho/packages/ekho-common/src/server"],
+      "@ekhodealer/ekho-common/server/*": ["../../Repos/ekho/packages/ekho-common/src/server/*"],
+      "@ekhodealer/ekho-common/components": ["../../Repos/ekho/packages/ekho-common/src/components"],
+      "@ekhodealer/ekho-common/components/*": ["../../Repos/ekho/packages/ekho-common/src/components/*"],
+      "@ekhodealer/ekho-common": ["../../Repos/ekho/packages/ekho-common/src"]
     },
 
     /* Relaxed for prototype use - importing raw Rev source with different TS settings */

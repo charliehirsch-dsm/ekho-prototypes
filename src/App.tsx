@@ -1,9 +1,14 @@
+import { lazy, Suspense } from 'react';
 import { Routes, Route } from 'react-router-dom';
 
 import { ToastContainer } from './rev';
 import { SandboxLauncher } from './sandbox/SandboxLauncher';
 import { PrototypesIndex } from './prototypes/PrototypesIndex';
-import { AdminShell } from './shells/admin/AdminShell';
+
+// Lazy-load app shells so import failures in one don't block the other.
+// e.g. if AdminRouter has a stale import, Carthage still renders fine.
+const AdminShell = lazy(() => import('./shells/admin/AdminShell').then(m => ({ default: m.AdminShell })));
+const CarthageShell = lazy(() => import('./shells/carthage/CarthageShell').then(m => ({ default: m.CarthageShell })));
 
 // Standalone prototype imports (legacy routes)
 import { FeesPrototype } from './prototypes/fees/FeesPrototype';
@@ -19,17 +24,22 @@ function App() {
         {/* Sandbox launcher */}
         <Route path="/" element={<SandboxLauncher />} />
 
-        {/* App shells */}
-        <Route path="/admin/*" element={<AdminShell />} />
-        {/* Future shells:
-        <Route path="/checkout/*" element={<CheckoutShell />} />
-        <Route path="/buyer/*" element={<BuyerShell />} />
-        <Route path="/carthage/*" element={<CarthageShell />} />
-        <Route path="/grader/*" element={<GraderShell />} />
-        <Route path="/ops/*" element={<OpsShell />} />
-        <Route path="/ai-agent/*" element={<AIAgentShell />} />
-        <Route path="/corporate/*" element={<CorporateShell />} />
-        */}
+        {/* Carthage shell: dealer website (SRP + VDP) */}
+        <Route path="/carthage/*" element={
+          <Suspense fallback={<div>Loading Carthage...</div>}>
+            <CarthageShell />
+          </Suspense>
+        } />
+
+        {/* Admin shell as catch-all: production components navigate to absolute
+            paths like /${spId}/orders/all, so the shell must mount at root.
+            React Router ranks more-specific routes higher, so /prototypes/*
+            still matches before the splat. */}
+        <Route path="*" element={
+          <Suspense fallback={<div>Loading Admin Portal...</div>}>
+            <AdminShell />
+          </Suspense>
+        } />
 
         {/* Standalone prototype listing */}
         <Route path="/prototypes" element={<PrototypesIndex />} />

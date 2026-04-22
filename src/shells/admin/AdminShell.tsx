@@ -1,39 +1,36 @@
 /**
- * AdminShell: Recreates the Admin Portal layout using Rev components.
- * Provides the sidebar + topbar + content area shell for prototyping.
+ * AdminShell: Renders production Admin Portal components with MSW mocking.
+ *
+ * Uses the production AppLayout, AppSideNav, and AppTopBar directly.
+ * Auth/guards are stubbed via Vite alias overrides. API calls are
+ * intercepted by MSW.
+ *
+ * The prototype's BrowserRouter (in main.tsx) is incompatible with
+ * createBrowserRouter (used in production AppRouter), so we create a
+ * Routes-based router that imports production page components directly.
  */
 
-import { useState } from 'react';
-import type { ReactNode } from 'react';
-import { Outlet } from 'react-router-dom';
+import { Provider as JotaiProvider } from 'jotai';
+import { QueryClientProvider } from '@tanstack/react-query';
+import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 
-import { SandboxProviders } from '../../sandbox/providers/SandboxProviders';
-import { AdminSideNav } from './AdminSideNav';
-import { AdminTopBar } from './AdminTopBar';
+import type { ReactNode } from 'react';
+
+import { queryClient } from '@config/server/queryClient';
+import { MockAuthSessionWrapper } from '../../stubs/MockAuthBootstrap';
 import { AdminRouter } from './AdminRouter';
 
 import './AdminShell.scss';
 
-function AdminLayout(): ReactNode {
-  const [isSideNavOpen, setIsSideNavOpen] = useState(true);
-
-  return (
-    <div className="admin-layout">
-      <AdminTopBar onToggleSideNav={() => setIsSideNavOpen(prev => !prev)} />
-      <div className="admin-body">
-        <AdminSideNav isOpen={isSideNavOpen} />
-        <main className="admin-content">
-          <Outlet />
-        </main>
-      </div>
-    </div>
-  );
-}
-
 export function AdminShell(): ReactNode {
   return (
-    <SandboxProviders initialRole="dealer_admin">
-      <AdminRouter layout={<AdminLayout />} />
-    </SandboxProviders>
+    <JotaiProvider>
+      <QueryClientProvider client={queryClient}>
+        <MockAuthSessionWrapper>
+          <AdminRouter />
+        </MockAuthSessionWrapper>
+        <ReactQueryDevtools initialIsOpen={false} />
+      </QueryClientProvider>
+    </JotaiProvider>
   );
 }

@@ -1,0 +1,31 @@
+/*
+ * Carthage Shell styles.
+ *
+ * Imports Carthage's CSS layer ordering and base styles, then applies
+ * the same body/html resets that production main.tsx + main.scss provide.
+ *
+ * AppLayout.scss is imported by AppLayout.tsx directly, so we don't need
+ * to import it here.
+ */
+
+/* CSS layer ordering (must come before any component CSS) */
+@import 'src/app/css-layers.scss';
+
+/* Production main.scss (Rev component styles + body resets) */
+@import 'src/app/main.scss';
+
+/* Ensure body and root fill the viewport */
+body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+}
+
+#root {
+  min-height: 100vh;
+}
+
+/* Toast z-index fix (matches production) */
+.toast-placement-container--rev {
+  z-index: 1 !important;
+}
