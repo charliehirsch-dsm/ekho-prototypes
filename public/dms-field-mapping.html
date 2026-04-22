@@ -1,0 +1,2369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>DMS Field Mapping — Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
+<style>
+:root {
+  --rev-color-textPrimary: #000;
+  --rev-color-textSecondary: #666;
+  --rev-color-textTertiary: #999;
+  --rev-color-textSuccess: #00805e;
+  --rev-color-textDestructive: #d92d20;
+  --rev-color-backgroundPrimary: #fff;
+  --rev-color-backgroundSecondary: #fafafa;
+  --rev-color-backgroundTertiary: #f3f3f3;
+  --rev-color-controlOutline: rgba(0,0,0,0.1);
+  --rev-color-accent5Bold: #ff6333;
+  --rev-color-accent5Light: #ffefeb;
+  --rev-color-accent5Outline: rgba(255,99,51,0.25);
+  --rev-color-separatorTertiary: rgba(0,0,0,0.08);
+  --rev-color-brand: #000;
+  --rev-color-accent1Bold: #0066cc;
+  --rev-color-accent1Light: #e6f0ff;
+  --rev-elevation-0: 0 0 0 1px rgba(0,0,0,0.1);
+  --rev-elevation-1: 0 1px 3px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.06);
+  --rev-elevation-2: 0 2px 8px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.06);
+  --rev-elevation-3: 0 8px 24px rgba(0,0,0,0.12), 0 0 0 1px rgba(0,0,0,0.06);
+  --rev-radius-8: 8px;
+  --rev-radius-10: 10px;
+  --rev-radius-12: 12px;
+  --rev-radius-pill: 999rem;
+  --rev-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+body {
+  font-family: var(--rev-font-family);
+  background: var(--rev-color-backgroundPrimary);
+  color: var(--rev-color-textPrimary);
+  font-size: 13px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: 20px;
+  vertical-align: middle;
+}
+
+/* Page layout: main content left, commentary rail fixed right */
+.page-layout {
+  display: flex;
+  padding: 32px 24px;
+  padding-right: 312px; /* reserve space for fixed rail: 280px + 32px gap */
+  justify-content: center;
+}
+
+/* Page shell */
+.page-shell {
+  max-width: 860px;
+  width: 100%;
+  min-width: 0;
+}
+
+/* Commentary rail: fixed right sidebar */
+.commentary-rail {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 280px;
+  height: 100vh;
+  overflow-y: auto;
+  padding: 32px 16px;
+  background: var(--rev-color-backgroundSecondary);
+  border-left: 1px solid var(--rev-color-separatorTertiary);
+  z-index: 100;
+}
+.commentary-rail__inner {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Breadcrumb */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+.breadcrumb a {
+  color: var(--rev-color-textSecondary);
+  text-decoration: none;
+}
+.breadcrumb a:hover { text-decoration: underline; }
+.breadcrumb .separator { color: var(--rev-color-textTertiary); font-size: 12px; }
+.breadcrumb .current { font-weight: 700; color: var(--rev-color-textPrimary); }
+
+/* Tabs */
+.tabs-bar {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+  margin-bottom: 32px;
+}
+.tab-item {
+  padding: 10px 16px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rev-color-textSecondary);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s;
+  user-select: none;
+}
+.tab-item:hover { color: var(--rev-color-textPrimary); }
+.tab-item.active {
+  color: var(--rev-color-textPrimary);
+  font-weight: 600;
+  border-bottom-color: var(--rev-color-textPrimary);
+}
+
+/* Tab content */
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* Settings section (left description + right card) */
+.settings-section {
+  display: flex;
+  gap: 32px;
+  padding: 32px 0;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.settings-section:last-child { border-bottom: none; }
+.settings-section__header {
+  width: 200px;
+  flex-shrink: 0;
+}
+.settings-section__title {
+  font-size: 16px;
+  font-weight: 700;
+  margin-bottom: 6px;
+}
+.settings-section__description {
+  font-size: 13px;
+  color: var(--rev-color-textSecondary);
+  line-height: 1.6;
+}
+.settings-section__content {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Card */
+.card {
+  background: var(--rev-color-backgroundSecondary);
+  border-radius: var(--rev-radius-12);
+  padding: 24px;
+}
+
+/* Form fields */
+.form-field { margin-bottom: 16px; }
+.form-field:last-child { margin-bottom: 0; }
+.form-field__label {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 13px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: var(--rev-color-textPrimary);
+}
+.form-field__label .info-icon {
+  color: var(--rev-color-textTertiary);
+  font-size: 16px;
+  cursor: help;
+}
+.form-field__input {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 14px;
+  background: var(--rev-color-backgroundPrimary);
+  outline: none;
+  transition: border-color 0.15s;
+}
+.form-field__input:focus {
+  border-color: var(--rev-color-textPrimary);
+}
+
+/* Select / dropdown */
+.form-field__select {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 14px;
+  background: var(--rev-color-backgroundPrimary);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 12px center;
+  cursor: pointer;
+  outline: none;
+}
+.form-field__select:focus { border-color: var(--rev-color-textPrimary); }
+
+/* Checkbox */
+.checkbox-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  cursor: pointer;
+}
+.checkbox-field input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  margin-top: 2px;
+  accent-color: var(--rev-color-textPrimary);
+  cursor: pointer;
+}
+
+/* Toggle/Switch */
+.toggle {
+  position: relative;
+  display: block;
+  width: 36px;
+  height: 20px;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.toggle input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+  pointer-events: none;
+}
+.toggle__track {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #d1d5db;
+  border-radius: 10px;
+  transition: background 0.2s;
+}
+.toggle input:checked + .toggle__track {
+  background: var(--rev-color-textPrimary);
+}
+.toggle__thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 16px;
+  height: 16px;
+  background: white;
+  border-radius: 50%;
+  transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+  pointer-events: none;
+  z-index: 1;
+}
+.toggle input:checked ~ .toggle__thumb {
+  transform: translateX(16px);
+}
+
+/* Field mapping section */
+.field-mapping {
+  margin-top: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+/* Mapping card (individual gray cards per section) */
+.mapping-card {
+  overflow: visible;
+  padding: 0;
+}
+.mapping-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+  margin-bottom: 0;
+}
+.mapping-card__header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.mapping-card__icon {
+  color: var(--rev-color-textSecondary);
+  font-size: 20px;
+}
+.mapping-card__title {
+  font-size: 14px;
+  font-weight: 600;
+}
+.mapping-card__count {
+  font-size: 12px;
+  color: var(--rev-color-textTertiary);
+}
+.mapping-card__description {
+  font-size: 13px;
+  color: var(--rev-color-textSecondary);
+  line-height: 1.5;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+
+/* Mapping column headers */
+.mapping-headers {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 10px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+  background: var(--rev-color-backgroundTertiary);
+}
+.mapping-headers span {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+}
+.mapping-headers .col-formula { flex: 1; min-width: 0; }
+.mapping-headers .col-arrow { width: 20px; flex-shrink: 0; }
+.mapping-headers .col-field { width: 170px; flex-shrink: 0; }
+.mapping-headers .col-sync { width: 36px; flex-shrink: 0; text-align: center; }
+.mapping-headers .col-status { width: 20px; flex-shrink: 0; }
+.mapping-headers .col-remove { width: 28px; flex-shrink: 0; }
+
+/* Mapping row */
+.mapping-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 10px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.mapping-row:last-child { border-bottom: none; }
+
+.mapping-row--locked {
+  opacity: 0.7;
+}
+
+.formula-trigger--static {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid transparent;
+  border-radius: var(--rev-radius-8);
+  background: var(--rev-color-backgroundTertiary);
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  cursor: default;
+}
+.formula-trigger__lock {
+  flex-shrink: 0;
+  color: var(--rev-color-textTertiary);
+  font-size: 16px;
+  display: flex;
+}
+
+.mapping-row__formula {
+  flex: 1;
+  min-width: 0;
+}
+
+/* Formula trigger button (replaces old dropdown) */
+.formula-trigger {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  background: var(--rev-color-backgroundPrimary);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  text-align: left;
+}
+.formula-trigger:hover {
+  border-color: var(--rev-color-textSecondary);
+}
+.formula-trigger:focus {
+  border-color: var(--rev-color-textPrimary);
+  outline: none;
+}
+.formula-trigger.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  background: var(--rev-color-backgroundTertiary);
+  pointer-events: none;
+}
+.formula-trigger__text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.formula-trigger__text.placeholder {
+  color: var(--rev-color-textTertiary);
+}
+.formula-trigger__icon {
+  flex-shrink: 0;
+  color: var(--rev-color-textTertiary);
+  font-size: 16px;
+  display: flex;
+}
+
+/* Formula expression tag styling */
+.formula-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 12px;
+  line-height: 1;
+}
+.formula-tag__field {
+  background: var(--rev-color-backgroundTertiary);
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: 4px;
+  padding: 2px 6px;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+.formula-tag__op {
+  font-weight: 600;
+  color: var(--rev-color-textSecondary);
+  padding: 0 2px;
+  font-size: 13px;
+}
+
+.mapping-row__arrow {
+  flex-shrink: 0;
+  color: var(--rev-color-textTertiary);
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+}
+.mapping-row__field-name {
+  width: 170px;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 500;
+  overflow: visible;
+}
+.mapping-row__field-label {
+  overflow: visible;
+  white-space: nowrap;
+}
+/* Info icon tooltip (Ekho style) */
+.field-info-trigger {
+  display: inline-flex;
+  align-items: center;
+  cursor: default;
+  position: relative;
+  vertical-align: middle;
+  margin-left: 4px;
+}
+.field-info-trigger .material-symbols-outlined {
+  font-size: 15px;
+  color: var(--rev-color-textTertiary);
+  transition: color 0.15s;
+}
+.field-info-trigger:hover .material-symbols-outlined {
+  color: var(--rev-color-textSecondary);
+}
+.field-info-trigger__tip {
+  display: none;
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--rev-color-textPrimary);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 400;
+  line-height: 1.4;
+  padding: 6px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  z-index: 200;
+  pointer-events: none;
+}
+.field-info-trigger__tip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--rev-color-textPrimary);
+}
+.field-info-trigger:hover .field-info-trigger__tip {
+  display: block;
+}
+.mapping-row__field-name--editable {
+  overflow: visible;
+}
+.mapping-row__field-name--editable input,
+.mapping-row__field-name--editable select {
+  width: 100%;
+  padding: 4px 8px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  font-weight: 500;
+  background: transparent;
+  outline: none;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+}
+.mapping-row__field-name--editable input:hover,
+.mapping-row__field-name--editable select:hover {
+  border-color: var(--rev-color-controlOutline);
+  background: var(--rev-color-backgroundPrimary);
+}
+.mapping-row__field-name--editable input:focus,
+.mapping-row__field-name--editable select:focus {
+  border-color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundPrimary);
+}
+.mapping-row__toggle {
+  flex-shrink: 0;
+}
+.mapping-row__status {
+  flex-shrink: 0;
+  width: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.status-mapped {
+  color: var(--rev-color-textSuccess);
+  font-size: 18px;
+}
+.status-unmapped {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #d1d5db;
+}
+
+/* Fee mapping rows */
+.fee-mapping-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  gap: 10px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.fee-mapping-row:last-child:not(.fee-mapping-add) { border-bottom: 1px solid var(--rev-color-separatorTertiary); }
+
+.fee-mapping-row__source {
+  flex: 1;
+  min-width: 0;
+}
+.fee-mapping-row__source select {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  background: var(--rev-color-backgroundPrimary);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  outline: none;
+}
+
+.fee-mapping-row__name {
+  flex: 1;
+  min-width: 0;
+}
+.fee-mapping-row__name input {
+  width: 100%;
+  padding: 7px 10px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  background: var(--rev-color-backgroundPrimary);
+  outline: none;
+}
+.fee-mapping-row__name input:focus {
+  border-color: var(--rev-color-textPrimary);
+}
+
+.fee-mapping-row__remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--rev-color-textTertiary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.fee-mapping-row__remove:hover {
+  background: #fee2e2;
+  color: var(--rev-color-textDestructive);
+}
+
+.fee-mapping-add {
+  padding: 10px 16px;
+}
+.fee-mapping-add__button {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px dashed var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  background: none;
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rev-color-textSecondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+}
+.fee-mapping-add__button:hover {
+  border-color: var(--rev-color-textPrimary);
+  color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundTertiary);
+}
+
+.fee-mapping-note {
+  padding: 8px 16px 12px;
+  font-size: 11px;
+  color: var(--rev-color-textTertiary);
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+}
+.fee-mapping-note .material-symbols-outlined {
+  font-size: 14px;
+  margin-top: 1px;
+  flex-shrink: 0;
+}
+
+/* Column headers for fee mapping */
+.fee-mapping-headers {
+  display: flex;
+  align-items: center;
+  padding: 8px 16px;
+  gap: 10px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+  background: var(--rev-color-backgroundTertiary);
+}
+.fee-mapping-headers span {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+}
+.fee-mapping-headers .col-source { flex: 1; }
+.fee-mapping-headers .col-arrow { width: 20px; flex-shrink: 0; }
+.fee-mapping-headers .col-name { flex: 1; }
+.fee-mapping-headers .col-remove { width: 28px; flex-shrink: 0; }
+
+/* Action bar */
+.action-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid var(--rev-color-separatorTertiary);
+}
+.action-bar__left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Buttons */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  border: none;
+}
+.btn--primary {
+  background: var(--rev-color-textPrimary);
+  color: white;
+}
+.btn--primary:hover { opacity: 0.85; }
+.btn--outline {
+  background: none;
+  border: 1px solid var(--rev-color-controlOutline);
+  color: var(--rev-color-textPrimary);
+}
+.btn--outline:hover { background: var(--rev-color-backgroundTertiary); }
+.btn--ghost {
+  background: none;
+  color: var(--rev-color-textSecondary);
+  border: none;
+  padding: 8px 12px;
+}
+.btn--ghost:hover { color: var(--rev-color-textPrimary); background: var(--rev-color-backgroundTertiary); }
+
+/* Preview panel */
+.preview-panel {
+  margin-top: 16px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-12);
+  overflow: hidden;
+  display: none;
+}
+.preview-panel.visible { display: block; }
+.preview-panel__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 16px;
+  background: var(--rev-color-backgroundTertiary);
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.preview-panel__title {
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.preview-panel__close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--rev-color-textTertiary);
+  padding: 4px;
+  border-radius: 4px;
+}
+.preview-panel__close:hover { background: var(--rev-color-controlOutline); }
+.preview-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.preview-table th {
+  text-align: left;
+  padding: 8px 16px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+  background: var(--rev-color-backgroundSecondary);
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.preview-table td {
+  padding: 10px 16px;
+  font-size: 13px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.preview-table tr:last-child td { border-bottom: none; }
+.preview-value { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; }
+.preview-value--mapped { color: var(--rev-color-textSuccess); }
+.preview-value--unmapped { color: var(--rev-color-textTertiary); font-style: italic; }
+
+/* Demo switcher */
+.demo-switcher {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--rev-color-backgroundTertiary);
+  border-radius: var(--rev-radius-pill);
+  margin-bottom: 24px;
+  width: fit-content;
+}
+.demo-switcher__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+}
+.demo-switcher__btn {
+  padding: 4px 10px;
+  border-radius: var(--rev-radius-pill);
+  font-family: var(--rev-font-family);
+  font-size: 12px;
+  font-weight: 500;
+  border: none;
+  cursor: pointer;
+  background: none;
+  color: var(--rev-color-textSecondary);
+  transition: all 0.15s;
+}
+.demo-switcher__btn.active {
+  background: var(--rev-color-textPrimary);
+  color: white;
+}
+
+/* Commentary */
+.commentary-card {
+  background: var(--rev-color-backgroundPrimary);
+  border-radius: var(--rev-radius-12);
+  border: 1.5px solid var(--rev-color-accent5Outline);
+  padding: 16px;
+  font-size: 12px;
+  line-height: 1.6;
+  color: var(--rev-color-textSecondary);
+}
+.commentary-card__title {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-accent5Bold);
+  margin-bottom: 12px;
+}
+.commentary-item { margin-bottom: 10px; }
+.commentary-item:last-child { margin-bottom: 0; }
+.commentary-tag {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 5px;
+  border-radius: 3px;
+  margin-bottom: 3px;
+}
+.commentary-tag.new { background: #dcfce7; color: #166534; }
+.commentary-tag.changed { background: #fef3c7; color: #92400e; }
+.commentary-tag.removed { background: #fee2e2; color: #991b1b; }
+.commentary-tag.methodology { background: #f3f4f6; color: #374151; }
+.commentary-tag.scope { background: #f3f4f6; color: #374151; }
+.commentary-item__title {
+  font-weight: 600;
+  color: var(--rev-color-textPrimary);
+  font-size: 12px;
+}
+.commentary-item__body {
+  font-size: 12px;
+  color: var(--rev-color-textSecondary);
+  line-height: 1.5;
+}
+
+/* Commentary visibility: show all notes */
+.commentary-tab-group { display: block; }
+
+/* ========================================
+   FORMULA MODAL
+   ======================================== */
+.modal-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-backdrop.open {
+  display: flex;
+}
+
+.modal {
+  background: var(--rev-color-backgroundPrimary);
+  border-radius: var(--rev-radius-12);
+  box-shadow: var(--rev-elevation-3);
+  width: 520px;
+  max-width: calc(100vw - 48px);
+  max-height: calc(100vh - 96px);
+  overflow-y: auto;
+}
+
+.modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20px 24px 16px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.modal__title {
+  font-size: 16px;
+  font-weight: 700;
+}
+.modal__subtitle {
+  font-size: 12px;
+  color: var(--rev-color-textTertiary);
+  margin-top: 2px;
+}
+.modal__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  cursor: pointer;
+  border-radius: 6px;
+  color: var(--rev-color-textTertiary);
+  transition: background 0.15s;
+}
+.modal__close:hover {
+  background: var(--rev-color-backgroundTertiary);
+  color: var(--rev-color-textPrimary);
+}
+
+.modal__body {
+  padding: 20px 24px;
+}
+
+.modal__footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--rev-color-separatorTertiary);
+}
+
+/* Source category selector (Upgrades group) */
+.source-selector {
+  padding: 16px 16px 12px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.source-selector__label {
+  font-size: 13px;
+  font-weight: 600;
+  margin-bottom: 2px;
+}
+.source-selector__hint {
+  font-size: 11px;
+  color: var(--rev-color-textTertiary);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+.source-selector__options {
+  display: flex;
+  gap: 10px;
+}
+.source-selector__option {
+  flex: 1;
+  padding: 10px 14px;
+  font-family: var(--rev-font-family);
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  background: var(--rev-color-backgroundPrimary);
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  text-align: left;
+}
+.source-selector__option:hover {
+  border-color: var(--rev-color-textSecondary);
+}
+.source-selector__option.active {
+  border-color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundTertiary);
+}
+.source-selector__option-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--rev-color-textPrimary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.source-selector__option-label .material-symbols-outlined {
+  font-size: 16px;
+  color: var(--rev-color-textTertiary);
+}
+.source-selector__option.active .source-selector__option-label .material-symbols-outlined {
+  color: var(--rev-color-textPrimary);
+}
+.source-selector__option-desc {
+  font-size: 11px;
+  color: var(--rev-color-textTertiary);
+  margin-top: 2px;
+  line-height: 1.3;
+}
+
+/* Formula terms list */
+.formula-terms {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.formula-term {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background: var(--rev-color-backgroundSecondary);
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+}
+
+.formula-term__operator {
+  flex-shrink: 0;
+}
+.formula-term__operator select {
+  padding: 4px 6px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: 4px;
+  font-family: var(--rev-font-family);
+  font-size: 14px;
+  font-weight: 600;
+  background: var(--rev-color-backgroundPrimary);
+  cursor: pointer;
+  outline: none;
+  width: 44px;
+  text-align: center;
+  appearance: none;
+}
+.formula-term__operator select:focus { border-color: var(--rev-color-textPrimary); }
+
+.formula-term__field {
+  flex: 1;
+  min-width: 0;
+}
+.formula-term__field select {
+  width: 100%;
+  padding: 6px 10px;
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  background: var(--rev-color-backgroundPrimary);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  cursor: pointer;
+  outline: none;
+}
+
+.formula-term__remove {
+  flex-shrink: 0;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: none;
+  color: var(--rev-color-textTertiary);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s, color 0.15s;
+}
+.formula-term__remove:hover {
+  background: #fee2e2;
+  color: var(--rev-color-textDestructive);
+}
+
+.formula-term:first-child .formula-term__operator select,
+.formula-term:first-child .formula-term__operator-static {
+  visibility: hidden;
+}
+
+/* Locked term (required/pre-configured) */
+.formula-term--locked {
+  background: var(--rev-color-backgroundTertiary);
+  border-color: transparent;
+}
+.formula-term__operator-static {
+  width: 44px;
+  padding: 4px 6px;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: center;
+  color: var(--rev-color-textSecondary);
+  flex-shrink: 0;
+}
+.formula-term__field-static {
+  flex: 1;
+  min-width: 0;
+  padding: 6px 10px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rev-color-textPrimary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.formula-term__lock-icon {
+  color: var(--rev-color-textTertiary);
+  font-size: 14px;
+  flex-shrink: 0;
+}
+.formula-term__field-info {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+.formula-term__hint {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--rev-color-textTertiary);
+  line-height: 1.3;
+  margin-top: 4px;
+}
+.formula-term--locked .formula-term__hint {
+  margin-top: 0;
+}
+
+.formula-add-term {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 12px;
+  border: 1px dashed var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8);
+  background: none;
+  font-family: var(--rev-font-family);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--rev-color-textSecondary);
+  cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  margin-bottom: 20px;
+}
+.formula-add-term:hover {
+  border-color: var(--rev-color-textPrimary);
+  color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundTertiary);
+}
+
+/* Formula preview in modal */
+.formula-preview {
+  padding: 12px 16px;
+  background: var(--rev-color-backgroundTertiary);
+  border-radius: var(--rev-radius-8);
+  border: 1px solid var(--rev-color-controlOutline);
+}
+.formula-preview__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+  margin-bottom: 6px;
+}
+.formula-preview__expression {
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--rev-color-textPrimary);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.formula-preview__expression .op {
+  font-weight: 700;
+  color: var(--rev-color-textSecondary);
+  font-size: 16px;
+}
+.formula-preview__expression .field-name {
+  background: var(--rev-color-backgroundPrimary);
+  border: 1px solid var(--rev-color-controlOutline);
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-size: 13px;
+  font-weight: 500;
+}
+.formula-preview__empty {
+  font-size: 13px;
+  color: var(--rev-color-textTertiary);
+  font-style: italic;
+}
+
+/* Required field notice in modal */
+.formula-required-notice {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: var(--rev-radius-8);
+  margin-bottom: 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #92400e;
+}
+.formula-required-notice .material-symbols-outlined {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+  color: #d97706;
+}
+.formula-required-notice__text strong {
+  font-weight: 600;
+}
+
+/* Sample calculation in modal */
+.formula-sample {
+  margin-top: 12px;
+  padding: 10px 16px;
+  background: var(--rev-color-backgroundSecondary);
+  border-radius: var(--rev-radius-8);
+  border: 1px solid var(--rev-color-controlOutline);
+  font-size: 12px;
+  color: var(--rev-color-textSecondary);
+}
+.formula-sample__label {
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary);
+  margin-bottom: 4px;
+}
+.formula-sample__calc {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 13px;
+  color: var(--rev-color-textPrimary);
+}
+.formula-sample__result {
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--rev-color-textSuccess);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .settings-section { flex-direction: column; gap: 16px; }
+  .settings-section__header { width: 100%; }
+  .mapping-row { flex-wrap: wrap; }
+  .mapping-row__field-name { width: 100%; }
+}
+</style>
+</head>
+<body>
+
+<div class="page-layout">
+  <div class="page-shell">
+    <!-- Demo switcher -->
+    <div class="demo-switcher">
+      <span class="demo-switcher__label">State:</span>
+      <button class="demo-switcher__btn active" onclick="switchState('connected')">Lightspeed connected</button>
+      <button class="demo-switcher__btn" onclick="switchState('no-provider')">No provider</button>
+      <button class="demo-switcher__btn" onclick="switchState('other-dms')">Other DMS</button>
+    </div>
+
+    <!-- Breadcrumb -->
+    <div class="breadcrumb">
+      <a href="#">Settings</a>
+      <span class="separator">
+        <span class="material-symbols-outlined" style="font-size:14px">chevron_right</span>
+      </span>
+      <span class="current">Integrations</span>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-bar">
+      <div class="tab-item" data-tab="crm" onclick="switchTab('crm')">CRM</div>
+      <div class="tab-item active" data-tab="dms" onclick="switchTab('dms')">DMS</div>
+      <div class="tab-item" data-tab="google" onclick="switchTab('google')">Google</div>
+    </div>
+
+    <!-- CRM Tab -->
+    <div class="tab-content" data-tab-content="crm">
+      <div class="settings-section" style="border-bottom:none; padding-top:0;">
+        <div class="settings-section__header">
+          <div class="settings-section__title">CRM forwarding</div>
+          <div class="settings-section__description">Forward captured lead data to your CRM via ADF/XML email.</div>
+        </div>
+        <div class="settings-section__content">
+          <div class="card">
+            <div class="form-field">
+              <label class="form-field__label">
+                CRM email address
+                <span class="material-symbols-outlined info-icon">info</span>
+              </label>
+              <input class="form-field__input" type="email" placeholder="crm-intake@dealer.com" value="crm-intake@dealer.com">
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DMS Tab -->
+    <div class="tab-content active" data-tab-content="dms">
+        <!-- DMS Connection Section -->
+        <div class="settings-section" style="padding-top:0;" id="dms-connection-section">
+          <div class="settings-section__header">
+            <div class="settings-section__title">DMS connection</div>
+            <div class="settings-section__description">Connect your Dealer Management System to sync inventory and customer data.</div>
+          </div>
+          <div class="settings-section__content">
+            <div class="card">
+              <div class="form-field">
+                <label class="form-field__label">DMS Provider</label>
+                <select class="form-field__select" id="dms-provider-select" onchange="handleProviderChange()">
+                  <option value="">Select DMS provider</option>
+                  <option value="lightspeed" selected>Lightspeed DMS</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div class="form-field" id="cmf-field">
+                <label class="form-field__label">
+                  CMF Number
+                  <span class="material-symbols-outlined info-icon" title="Your Customer Master File number from Lightspeed">info</span>
+                </label>
+                <input class="form-field__input" type="text" value="76217246" placeholder="Enter CMF number">
+              </div>
+              <div class="form-field" id="other-dms-field" style="display:none">
+                <label class="form-field__label">DMS Name</label>
+                <input class="form-field__input" type="text" placeholder="Enter DMS name">
+              </div>
+              <div class="checkbox-field">
+                <input type="checkbox" id="auth-consent" checked>
+                <label for="auth-consent" style="font-size:13px">I authorize Ekho to access my DMS data</label>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Field Mapping Sections (only visible when Lightspeed is selected) -->
+        <div id="field-mapping-section">
+
+        <!-- Pricing section -->
+        <div class="settings-section">
+          <div class="settings-section__header">
+            <div class="settings-section__title">Pricing</div>
+            <div class="settings-section__description">Map Lightspeed price fields to Ekho. Build formulas using one or more fields with add/subtract operators.</div>
+          </div>
+          <div class="settings-section__content">
+            <div class="field-mapping">
+              <div class="card mapping-card" id="group-pricing">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">attach_money</span>
+                    <span class="mapping-card__title">Pricing</span>
+                    <span class="mapping-card__count" id="pricing-count">3 of 3 mapped</span>
+                  </div>
+                </div>
+                <div class="mapping-headers">
+                  <span class="col-formula">Lightspeed source</span>
+                  <span class="col-arrow"></span>
+                  <span class="col-field">Ekho field</span>
+                  <span class="col-sync">Sync</span>
+                  <span class="col-status"></span>
+                </div>
+
+                <div class="mapping-row" data-field="dealer-retail-price" data-ekho-label="Dealer Retail Price">
+                  <div class="mapping-row__formula">
+                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">MSRP</span>
+                        </span>
+                      </span>
+                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Dealer Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Highest price, struck through when Advertised Price is lower</span></span></div>
+                  </div>
+                  <div class="mapping-row__toggle">
+                    <label class="toggle">
+                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <span class="toggle__track"></span>
+                      <span class="toggle__thumb"></span>
+                    </label>
+                  </div>
+                  <div class="mapping-row__status">
+                    <span class="material-symbols-outlined status-mapped">check_circle</span>
+                  </div>
+                </div>
+
+                <div class="mapping-row" data-field="advertised-price" data-ekho-label="Advertised Price">
+                  <div class="mapping-row__formula">
+                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">Web Price</span>
+                        </span>
+                      </span>
+                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Advertised Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Selling price shown on website and VDP</span></span></div>
+                  </div>
+                  <div class="mapping-row__toggle">
+                    <label class="toggle">
+                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <span class="toggle__track"></span>
+                      <span class="toggle__thumb"></span>
+                    </label>
+                  </div>
+                  <div class="mapping-row__status">
+                    <span class="material-symbols-outlined status-mapped">check_circle</span>
+                  </div>
+                </div>
+
+                <div class="mapping-row" data-field="retail-price" data-ekho-label="Retail Price">
+                  <div class="mapping-row__formula">
+                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">Web Price</span>
+                        </span>
+                      </span>
+                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">The selling price of the unit</span></span></div>
+                  </div>
+                  <div class="mapping-row__toggle">
+                    <label class="toggle">
+                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <span class="toggle__track"></span>
+                      <span class="toggle__thumb"></span>
+                    </label>
+                  </div>
+                  <div class="mapping-row__status">
+                    <span class="material-symbols-outlined status-mapped">check_circle</span>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- Fees section -->
+        <div class="settings-section">
+          <div class="settings-section__header">
+            <div class="settings-section__title">Inventory fees</div>
+            <div class="settings-section__description">Map Lightspeed fee fields to Ekho inventory. Fee configuration (amounts, taxability, display rules) lives in <a href="#" style="color:var(--rev-color-accent1Bold); text-decoration:underline;">Fee settings</a>.</div>
+          </div>
+          <div class="settings-section__content">
+            <div class="field-mapping">
+              <div class="card mapping-card" id="group-fees">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">receipt_long</span>
+                    <span class="mapping-card__title">Fees</span>
+                    <span class="mapping-card__count" id="fees-count">2 of 2 mapped</span>
+                  </div>
+                </div>
+                <div class="mapping-headers">
+                  <span class="col-formula">Lightspeed source</span>
+                  <span class="col-arrow"></span>
+                  <span class="col-field">Ekho field</span>
+                  <span class="col-sync">Sync</span>
+                  <span class="col-status"></span>
+                  <span class="col-remove"></span>
+                </div>
+                <div id="fee-rows">
+                  <div class="mapping-row" data-field="fee" data-ekho-label="Freight" data-is-fee="true">
+                    <div class="mapping-row__formula">
+                      <button class="formula-trigger" onclick="openFormulaModal(this)">
+                        <span class="formula-trigger__text">
+                          <span class="formula-tag">
+                            <span class="formula-tag__field">Freight / Setup</span>
+                          </span>
+                        </span>
+                        <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                      </button>
+                    </div>
+                    <div class="mapping-row__arrow">
+                      <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                    </div>
+                    <div class="mapping-row__field-name mapping-row__field-name--editable">
+                      <select onchange="updateFeeLabel(this)">
+                        <option value="">Select fee...</option>
+                        <option value="Freight" selected>Freight</option>
+                        <option value="PDI">PDI</option>
+                        <option value="Prep">Prep</option>
+                        <option value="Setup">Setup</option>
+                        <option value="Assembly">Assembly</option>
+                        <option value="Crating">Crating</option>
+                        <option value="Destination">Destination</option>
+                        <option value="Labor prep">Labor prep</option>
+                      </select>
+                    </div>
+                    <div class="mapping-row__toggle">
+                      <label class="toggle">
+                        <input type="checkbox" checked onchange="handleToggle(this)">
+                        <span class="toggle__track"></span>
+                        <span class="toggle__thumb"></span>
+                      </label>
+                    </div>
+                    <div class="mapping-row__status">
+                      <span class="material-symbols-outlined status-mapped">check_circle</span>
+                    </div>
+                    <button class="fee-mapping-row__remove" onclick="removeFeeRow(this)" title="Remove mapping">
+                      <span class="material-symbols-outlined" style="font-size:18px">close</span>
+                    </button>
+                  </div>
+                </div>
+                <div class="fee-mapping-add">
+                  <button class="fee-mapping-add__button" onclick="addFeeRow()">
+                    <span class="material-symbols-outlined" style="font-size:16px">add</span>
+                    Add fee mapping
+                  </button>
+                </div>
+                <div class="fee-mapping-note">
+                  <span class="material-symbols-outlined">info</span>
+                  Fee mappings created here will also appear in your Fees settings. Changes to fee names sync both ways.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Rebates section -->
+        <div class="settings-section">
+          <div class="settings-section__header">
+            <div class="settings-section__title">Rebates</div>
+            <div class="settings-section__description">Map Lightspeed rebate fields to Ekho. Combine multiple rebate sources into a single total.</div>
+          </div>
+          <div class="settings-section__content">
+            <div class="field-mapping">
+              <div class="card mapping-card" id="group-rebates">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">sell</span>
+                    <span class="mapping-card__title">Rebates</span>
+                    <span class="mapping-card__count" id="rebates-count">1 of 1 mapped</span>
+                  </div>
+                </div>
+                <div class="mapping-headers">
+                  <span class="col-formula">Lightspeed source</span>
+                  <span class="col-arrow"></span>
+                  <span class="col-field">Ekho field</span>
+                  <span class="col-sync">Sync</span>
+                  <span class="col-status"></span>
+                </div>
+                <div class="mapping-row" data-field="rebates" data-ekho-label="Rebates">
+                  <div class="mapping-row__formula">
+                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">Rebate Amount</span>
+                          <span class="formula-tag__op">+</span>
+                          <span class="formula-tag__field">Mfr Rebate</span>
+                        </span>
+                      </span>
+                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Rebates <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">OEM and dealer rebates</span></span></div>
+                  </div>
+                  <div class="mapping-row__toggle">
+                    <label class="toggle">
+                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <span class="toggle__track"></span>
+                      <span class="toggle__thumb"></span>
+                    </label>
+                  </div>
+                  <div class="mapping-row__status">
+                    <span class="material-symbols-outlined status-mapped">check_circle</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Floor builds section -->
+        <div class="settings-section" style="border-bottom:none;">
+          <div class="settings-section__header">
+            <div class="settings-section__title">Floor builds</div>
+            <div class="settings-section__description">Controls upgrade pricing, line-item sources, and assembly labor calculation for floor-built units.</div>
+          </div>
+          <div class="settings-section__content">
+            <div class="field-mapping">
+              <!-- Upgrades: Pricing card -->
+              <div class="card mapping-card" id="group-upgrades">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">add_circle</span>
+                    <span class="mapping-card__title">Upgrade pricing</span>
+                    <span class="mapping-card__count" id="upgrades-count">1 of 1 mapped</span>
+                  </div>
+                </div>
+                <div class="mapping-headers">
+                  <span class="col-formula">Lightspeed source</span>
+                  <span class="col-arrow"></span>
+                  <span class="col-field">Ekho field</span>
+                  <span class="col-sync">Sync</span>
+                  <span class="col-status"></span>
+                </div>
+                <div class="mapping-row" data-field="included-upgrades" data-ekho-label="Included Upgrades">
+                  <div class="mapping-row__formula">
+                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">Options Total</span>
+                        </span>
+                      </span>
+                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    </button>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Included Upgrades <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Total value of dealer-installed upgrades</span></span></div>
+                  </div>
+                  <div class="mapping-row__toggle">
+                    <label class="toggle">
+                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <span class="toggle__track"></span>
+                      <span class="toggle__thumb"></span>
+                    </label>
+                  </div>
+                  <div class="mapping-row__status">
+                    <span class="material-symbols-outlined status-mapped">check_circle</span>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upgrades: Parts breakdown card -->
+              <div class="card mapping-card" id="group-upgrades-breakdown">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">category</span>
+                    <span class="mapping-card__title">Upgrade breakdown</span>
+                  </div>
+                </div>
+                <div class="mapping-card__description">
+                  Choose which Lightspeed line-item category to pull individual upgrade items from.
+                </div>
+                <div class="source-selector">
+                  <div class="source-selector__label">Line-item source</div>
+                  <div class="source-selector__hint">Select which Lightspeed category contains the individual upgrade line items for this unit.</div>
+                  <div class="source-selector__options">
+                    <button class="source-selector__option active" onclick="selectUpgradeSource(this, 'options')">
+                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--rev-color-textPrimary);">radio_button_checked</span>
+                        <span class="source-selector__option-label">Options</span>
+                      </div>
+                      <div class="source-selector__option-desc">Line items from the Options category in Lightspeed</div>
+                    </button>
+                    <button class="source-selector__option" onclick="selectUpgradeSource(this, 'parts')">
+                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
+                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--rev-color-textSecondary);">radio_button_unchecked</span>
+                        <span class="source-selector__option-label">Parts</span>
+                      </div>
+                      <div class="source-selector__option-desc">Line items from the Parts category in Lightspeed</div>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="card mapping-card" id="group-assembly">
+                <div class="mapping-card__header">
+                  <div class="mapping-card__header-left">
+                    <span class="material-symbols-outlined mapping-card__icon">construction</span>
+                    <span class="mapping-card__title">Floor build labor price</span>
+                  </div>
+                </div>
+                <div class="mapping-card__description">
+                  Calculates the assembly/labor cost for floor-built units. This is the difference between the total options value and the sum of individual parts costs.
+                </div>
+                <div class="mapping-row mapping-row--locked">
+                  <div class="mapping-row__formula">
+                    <div class="formula-trigger formula-trigger--static">
+                      <span class="formula-trigger__text">
+                        <span class="formula-tag">
+                          <span class="formula-tag__field">Options Total</span>
+                          <span class="formula-tag__op">&minus;</span>
+                          <span class="formula-tag__field">Parts Total</span>
+                        </span>
+                      </span>
+                      <span class="material-symbols-outlined formula-trigger__lock">lock</span>
+                    </div>
+                  </div>
+                  <div class="mapping-row__arrow">
+                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+                  </div>
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Assembly</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        </div>
+
+    <!-- Google Tab -->
+    <div class="tab-content" data-tab-content="google">
+      <div class="settings-section" style="border-bottom:none; padding-top:0;">
+        <div class="settings-section__header">
+          <div class="settings-section__title">Google Business Profile</div>
+          <div class="settings-section__description">Connect your Google Business Profile to display Google reviews on your vehicle detail pages.</div>
+        </div>
+        <div class="settings-section__content">
+          <div class="card">
+            <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:16px;">
+              <span style="font-size:14px; font-weight:600;">Google Business Profile</span>
+              <div style="display:flex; gap:8px;">
+                <button class="btn btn--outline" style="padding:6px 12px; font-size:12px;">Remove</button>
+                <button class="btn btn--outline" style="padding:6px 12px; font-size:12px;">Update</button>
+              </div>
+            </div>
+            <div style="border-top:1px solid var(--rev-color-separatorTertiary);">
+              <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--rev-color-separatorTertiary);">
+                <span style="color:var(--rev-color-textSecondary); font-size:13px;">Business name</span>
+                <span style="font-size:13px;">Aiken, SC</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:12px 0; border-bottom:1px solid var(--rev-color-separatorTertiary);">
+                <span style="color:var(--rev-color-textSecondary); font-size:13px;">Address</span>
+                <span style="font-size:13px;">1044 E Pine Log Rd, Aiken, SC 29803</span>
+              </div>
+              <div style="display:flex; justify-content:space-between; padding:12px 0;">
+                <span style="color:var(--rev-color-textSecondary); font-size:13px;">Status</span>
+                <span style="display:flex; align-items:center; gap:6px; font-size:13px;">
+                  <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textSuccess);">check_circle</span>
+                  Connected
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div><!-- end page-shell -->
+
+  <!-- Commentary rail -->
+  <div class="commentary-rail">
+    <div class="commentary-rail__inner">
+      <!-- CRM commentary -->
+      <div class="commentary-tab-group" data-commentary-tab="crm">
+        <div class="commentary-card">
+          <div class="commentary-card__title">Design notes</div>
+          <div class="commentary-item">
+            <span class="commentary-tag changed">NAV CHANGE</span>
+            <div class="commentary-item__title">Moved to own tab</div>
+            <div class="commentary-item__body">CRM forwarding was previously a section on the Integrations page. Now lives in its own tab for cleaner navigation.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DMS commentary -->
+      <div class="commentary-tab-group active" data-commentary-tab="dms">
+        <div class="commentary-card" style="margin-bottom:16px;">
+          <div class="commentary-card__title">Design notes</div>
+          <div class="commentary-item">
+            <span class="commentary-tag new">NEW INTERACTION</span>
+            <div class="commentary-item__title">Formula builder</div>
+            <div class="commentary-item__body">Each Ekho field opens a modal where dealers build formulas using multiple Lightspeed fields with + and &minus; operators. Supports complex calculations like "MSRP &minus; Rebate Amount".</div>
+          </div>
+          <div class="commentary-item">
+            <span class="commentary-tag new">NEW UI PATTERN</span>
+            <div class="commentary-item__title">Inline formula preview</div>
+            <div class="commentary-item__body">Each mapping row shows the formula expression as styled tags. Dealers can see at a glance whether a field uses a single source or a multi-field calculation.</div>
+          </div>
+          <div class="commentary-item">
+            <span class="commentary-tag new">NEW VALIDATION</span>
+            <div class="commentary-item__title">Sample calculation</div>
+            <div class="commentary-item__body">The modal shows a live calculation preview using sample Lightspeed data, so dealers can validate their formula produces the right result before saving.</div>
+          </div>
+        </div>
+        <div class="commentary-card" style="margin-bottom:16px;">
+          <div class="commentary-card__title">Architecture</div>
+          <div class="commentary-item">
+            <span class="commentary-tag methodology">LAYOUT DECISION</span>
+            <div class="commentary-item__title">Consistent left-to-right flow</div>
+            <div class="commentary-item__body">All rows read left to right: Lightspeed formula on the left, arrow, Ekho destination on the right. Arrow reinforces the data flow direction.</div>
+          </div>
+          <div class="commentary-item">
+            <span class="commentary-tag methodology">UX PRINCIPLE</span>
+            <div class="commentary-item__title">Progressive complexity</div>
+            <div class="commentary-item__body">Simple 1:1 mappings look simple (just a field name). Multi-field formulas show the full expression. Dealers only see complexity when they need it.</div>
+          </div>
+        </div>
+        <div class="commentary-card">
+          <div class="commentary-card__title">Scope</div>
+          <div class="commentary-item">
+            <span class="commentary-tag scope">V1 SCOPE LIMIT</span>
+            <div class="commentary-item__title">Add/subtract only</div>
+            <div class="commentary-item__body">V1 supports addition and subtraction operators only. Multiplication/division and conditional logic are out of scope.</div>
+          </div>
+          <div class="commentary-item">
+            <span class="commentary-tag scope">PLACEHOLDER DATA</span>
+            <div class="commentary-item__title">Lightspeed fields are placeholders</div>
+            <div class="commentary-item__body">Using realistic placeholder field names. Will swap in actual Lightspeed API field names when available.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Google commentary -->
+      <div class="commentary-tab-group" data-commentary-tab="google">
+        <div class="commentary-card">
+          <div class="commentary-card__title">Design notes</div>
+          <div class="commentary-item">
+            <span class="commentary-tag changed">NAV CHANGE</span>
+            <div class="commentary-item__title">Moved to own tab</div>
+            <div class="commentary-item__body">Google Business Profile was previously a section on the Integrations page. Now lives in its own tab. Content is unchanged.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- end page-layout -->
+
+<!-- Formula Modal -->
+<div class="modal-backdrop" id="formula-modal">
+  <div class="modal">
+    <div class="modal__header">
+      <div>
+        <div class="modal__title" id="modal-title">Configure Dealer Retail Price</div>
+        <div class="modal__subtitle">Build a formula using Lightspeed fields</div>
+      </div>
+      <button class="modal__close" onclick="closeFormulaModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="modal__body">
+      <!-- Required field notice (shown only for Assembly) -->
+      <div class="formula-required-notice" id="formula-required-notice" style="display:none;">
+        <span class="material-symbols-outlined">lock</span>
+        <div class="formula-required-notice__text">
+          <strong>Assembly is a required fee.</strong> The base formula is pre-configured based on how Lightspeed structures assembly costs. You can add additional Lightspeed fields to the calculation, but the base terms cannot be changed or removed.
+        </div>
+      </div>
+      <div class="formula-terms" id="formula-terms">
+        <!-- Terms are populated dynamically -->
+      </div>
+      <button class="formula-add-term" onclick="addFormulaTerm()">
+        <span class="material-symbols-outlined" style="font-size:16px">add</span>
+        Add Lightspeed field
+      </button>
+
+      <!-- Formula preview -->
+      <div class="formula-preview">
+        <div class="formula-preview__label">Formula preview</div>
+        <div class="formula-preview__expression" id="formula-preview-expr">
+          <span class="formula-preview__empty">Select at least one Lightspeed field</span>
+        </div>
+      </div>
+
+      <!-- Sample calculation -->
+      <div class="formula-sample" id="formula-sample" style="display:none;">
+        <div class="formula-sample__label">Sample calculation</div>
+        <div class="formula-sample__calc" id="formula-sample-calc"></div>
+        <div style="margin-top:4px;">
+          Result: <span class="formula-sample__result" id="formula-sample-result"></span>
+        </div>
+      </div>
+    </div>
+    <div class="modal__footer">
+      <button class="btn btn--outline" onclick="closeFormulaModal()">Cancel</button>
+      <button class="btn btn--primary" onclick="saveFormula()">Save formula</button>
+    </div>
+  </div>
+</div>
+
+<script>
+// Available Lightspeed fields with sample values
+const LIGHTSPEED_FIELDS = [
+  { value: 'unitSellingPrice', label: 'Unit Selling Price', sample: 14299 },
+  { value: 'msrp', label: 'MSRP', sample: 14999 },
+  { value: 'internetPrice', label: 'Internet Price', sample: 13499 },
+  { value: 'webPrice', label: 'Web Price', sample: 13299 },
+  { value: 'listPrice', label: 'List Price', sample: 15499 },
+  { value: 'invoicePrice', label: 'Invoice Price', sample: 12100 },
+  { value: 'dealerCost', label: 'Dealer Cost', sample: 11800 },
+  { value: 'accessoriesTotal', label: 'Accessories Total', sample: 1200 },
+  { value: 'partsTotal', label: 'Parts Total', sample: 450, hint: 'Sum of all part line item prices' },
+  { value: 'optionsTotal', label: 'Options Total', sample: 850, hint: 'Sum of all option line item prices' },
+  { value: 'addOnsList', label: 'Add-Ons List', sample: 600 },
+  { value: 'rebateAmount', label: 'Rebate Amount', sample: 500 },
+  { value: 'mfrRebate', label: 'Mfr Rebate', sample: 250 },
+  { value: 'dealerRebate', label: 'Dealer Rebate', sample: 100 },
+  { value: 'promoDiscount', label: 'Promo Discount', sample: 200 },
+  { value: 'freightSetup', label: 'Freight / Setup', sample: 799 },
+  { value: 'assemblyFee', label: 'Assembly Fee', sample: 250 },
+  { value: 'pdiFee', label: 'PDI Fee', sample: 199 },
+  { value: 'destCharge', label: 'Destination Charge', sample: 450 },
+  { value: 'handlingFee', label: 'Handling Fee', sample: 150 },
+  { value: 'envFee', label: 'Environmental Fee', sample: 25 },
+  { value: 'dmvFee', label: 'DMV / Title Fee', sample: 75 },
+];
+
+// Current modal state
+let activeFormulaRow = null;
+let formulaTerms = [];
+
+function fieldOptionsHtml(selectedValue) {
+  let html = '<option value="">Select field...</option>';
+  LIGHTSPEED_FIELDS.forEach(f => {
+    html += `<option value="${f.value}"${f.value === selectedValue ? ' selected' : ''}>${f.label}</option>`;
+  });
+  return html;
+}
+
+function openFormulaModal(triggerBtn) {
+  activeFormulaRow = triggerBtn.closest('.mapping-row');
+  const ekhoLabel = activeFormulaRow.getAttribute('data-ekho-label');
+  const isRequired = activeFormulaRow.getAttribute('data-required') === 'true';
+  document.getElementById('modal-title').textContent = 'Configure ' + ekhoLabel;
+
+  // Show/hide required notice
+  const notice = document.getElementById('formula-required-notice');
+  notice.style.display = isRequired ? '' : 'none';
+
+  // Parse existing formula from the trigger button's tags
+  const tags = triggerBtn.querySelectorAll('.formula-tag__field');
+  const ops = triggerBtn.querySelectorAll('.formula-tag__op');
+
+  formulaTerms = [];
+  tags.forEach((tag, i) => {
+    const label = tag.textContent.trim();
+    const field = LIGHTSPEED_FIELDS.find(f => f.label === label);
+    const op = i === 0 ? '+' : (ops[i - 1] ? ops[i - 1].textContent.trim() : '+');
+    formulaTerms.push({
+      operator: op === '\u2212' ? '-' : (op === '+' ? '+' : op),
+      fieldValue: field ? field.value : '',
+      locked: isRequired,
+    });
+  });
+
+  if (formulaTerms.length === 0) {
+    formulaTerms.push({ operator: '+', fieldValue: '', locked: false });
+  }
+
+  renderFormulaTerms();
+  updateFormulaPreview();
+  document.getElementById('formula-modal').classList.add('open');
+}
+
+function closeFormulaModal() {
+  document.getElementById('formula-modal').classList.remove('open');
+  activeFormulaRow = null;
+}
+
+function renderFormulaTerms() {
+  const container = document.getElementById('formula-terms');
+  container.innerHTML = '';
+  formulaTerms.forEach((term, i) => {
+    const div = document.createElement('div');
+    div.className = 'formula-term' + (term.locked ? ' formula-term--locked' : '');
+
+    if (term.locked) {
+      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+      const fieldLabel = field ? field.label : term.fieldValue;
+      const hint = field && field.hint ? `<span class="formula-term__hint">${field.hint}</span>` : '';
+      div.innerHTML = `
+        <div class="formula-term__operator-static">${term.operator === '-' ? '&minus;' : '+'}</div>
+        <div class="formula-term__field-static">
+          <span class="material-symbols-outlined formula-term__lock-icon">lock</span>
+          <div class="formula-term__field-info">
+            <span>${fieldLabel}</span>
+            ${hint}
+          </div>
+        </div>
+      `;
+    } else {
+      const removable = formulaTerms.filter(t => !t.locked).length > 1 || formulaTerms.some(t => t.locked);
+      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+      const hintText = field && field.hint ? field.hint : '';
+      div.innerHTML = `
+        <div class="formula-term__operator">
+          <select onchange="updateTermOperator(${i}, this.value)">
+            <option value="+"${term.operator === '+' ? ' selected' : ''}>+</option>
+            <option value="-"${term.operator === '-' ? ' selected' : ''}>&minus;</option>
+          </select>
+        </div>
+        <div class="formula-term__field">
+          <select onchange="updateTermField(${i}, this.value)">
+            ${fieldOptionsHtml(term.fieldValue)}
+          </select>
+          <div class="formula-term__hint" id="term-hint-${i}"${hintText ? '' : ' style="display:none"'}>${hintText}</div>
+        </div>
+        ${removable ? `
+          <button class="formula-term__remove" onclick="removeFormulaTerm(${i})" title="Remove">
+            <span class="material-symbols-outlined" style="font-size:18px">close</span>
+          </button>
+        ` : ''}
+      `;
+    }
+
+    container.appendChild(div);
+  });
+}
+
+function addFormulaTerm() {
+  formulaTerms.push({ operator: '+', fieldValue: '', locked: false });
+  renderFormulaTerms();
+  updateFormulaPreview();
+}
+
+function removeFormulaTerm(index) {
+  if (formulaTerms[index] && formulaTerms[index].locked) return;
+  formulaTerms.splice(index, 1);
+  renderFormulaTerms();
+  updateFormulaPreview();
+}
+
+function updateTermOperator(index, value) {
+  formulaTerms[index].operator = value;
+  updateFormulaPreview();
+}
+
+function updateTermField(index, value) {
+  formulaTerms[index].fieldValue = value;
+  const hintEl = document.getElementById('term-hint-' + index);
+  if (hintEl) {
+    const field = LIGHTSPEED_FIELDS.find(f => f.value === value);
+    if (field && field.hint) {
+      hintEl.textContent = field.hint;
+      hintEl.style.display = '';
+    } else {
+      hintEl.textContent = '';
+      hintEl.style.display = 'none';
+    }
+  }
+  updateFormulaPreview();
+}
+
+function updateFormulaPreview() {
+  const exprContainer = document.getElementById('formula-preview-expr');
+  const sampleContainer = document.getElementById('formula-sample');
+  const calcEl = document.getElementById('formula-sample-calc');
+  const resultEl = document.getElementById('formula-sample-result');
+
+  const validTerms = formulaTerms.filter(t => t.fieldValue);
+
+  if (validTerms.length === 0) {
+    exprContainer.innerHTML = '<span class="formula-preview__empty">Select at least one Lightspeed field</span>';
+    sampleContainer.style.display = 'none';
+    return;
+  }
+
+  // Build expression preview
+  let exprHtml = '';
+  validTerms.forEach((term, i) => {
+    const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+    if (!field) return;
+    if (i > 0) {
+      exprHtml += `<span class="op">${term.operator === '-' ? '\u2212' : '+'}</span>`;
+    }
+    exprHtml += `<span class="field-name">${field.label}</span>`;
+  });
+  exprContainer.innerHTML = exprHtml;
+
+  // Build sample calculation
+  let calcParts = [];
+  let total = 0;
+  validTerms.forEach((term, i) => {
+    const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+    if (!field) return;
+    const val = field.sample;
+    if (i === 0) {
+      total = val;
+      calcParts.push('$' + val.toLocaleString());
+    } else {
+      if (term.operator === '-') {
+        total -= val;
+        calcParts.push('\u2212 $' + val.toLocaleString());
+      } else {
+        total += val;
+        calcParts.push('+ $' + val.toLocaleString());
+      }
+    }
+  });
+
+  sampleContainer.style.display = '';
+  calcEl.textContent = calcParts.join(' ');
+  resultEl.textContent = '= $' + total.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+}
+
+function saveFormula() {
+  if (!activeFormulaRow) return;
+  const trigger = activeFormulaRow.querySelector('.formula-trigger');
+  const textSpan = trigger.querySelector('.formula-trigger__text');
+  const statusEl = activeFormulaRow.querySelector('.mapping-row__status');
+
+  const validTerms = formulaTerms.filter(t => t.fieldValue);
+
+  if (validTerms.length === 0) {
+    textSpan.innerHTML = '<span class="placeholder">Click to configure formula...</span>';
+    textSpan.classList.add('placeholder');
+    statusEl.innerHTML = '<span class="status-unmapped"></span>';
+  } else {
+    let tagHtml = '<span class="formula-tag">';
+    validTerms.forEach((term, i) => {
+      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+      if (!field) return;
+      if (i > 0) {
+        const opSymbol = term.operator === '-' ? '\u2212' : '+';
+        tagHtml += `<span class="formula-tag__op">${opSymbol}</span>`;
+      }
+      tagHtml += `<span class="formula-tag__field">${field.label}</span>`;
+    });
+    tagHtml += '</span>';
+    textSpan.innerHTML = tagHtml;
+    textSpan.classList.remove('placeholder');
+    statusEl.innerHTML = '<span class="material-symbols-outlined status-mapped">check_circle</span>';
+  }
+
+  updateGroupCounts();
+  closeFormulaModal();
+}
+
+// Tab switching
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.commentary-tab-group').forEach(c => c.classList.remove('active'));
+  document.querySelector(`.tab-item[data-tab="${tabId}"]`).classList.add('active');
+  document.querySelector(`.tab-content[data-tab-content="${tabId}"]`).classList.add('active');
+  const commentaryGroup = document.querySelector(`.commentary-tab-group[data-commentary-tab="${tabId}"]`);
+  if (commentaryGroup) commentaryGroup.classList.add('active');
+}
+
+// State switching
+function switchState(state) {
+  document.querySelectorAll('.demo-switcher__btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+
+  const provider = document.getElementById('dms-provider-select');
+  const cmfField = document.getElementById('cmf-field');
+  const otherField = document.getElementById('other-dms-field');
+  const fieldMapping = document.getElementById('field-mapping-section');
+
+  if (state === 'connected') {
+    provider.value = 'lightspeed';
+    cmfField.style.display = '';
+    otherField.style.display = 'none';
+    fieldMapping.style.display = '';
+    document.getElementById('auth-consent').checked = true;
+  } else if (state === 'no-provider') {
+    provider.value = '';
+    cmfField.style.display = 'none';
+    otherField.style.display = 'none';
+    fieldMapping.style.display = 'none';
+    document.getElementById('auth-consent').checked = false;
+  } else if (state === 'other-dms') {
+    provider.value = 'other';
+    cmfField.style.display = 'none';
+    otherField.style.display = '';
+    fieldMapping.style.display = 'none';
+    document.getElementById('auth-consent').checked = true;
+  }
+}
+
+// Provider change
+function handleProviderChange() {
+  const provider = document.getElementById('dms-provider-select').value;
+  const cmfField = document.getElementById('cmf-field');
+  const otherField = document.getElementById('other-dms-field');
+  const fieldMapping = document.getElementById('field-mapping-section');
+
+  cmfField.style.display = provider === 'lightspeed' ? '' : 'none';
+  otherField.style.display = provider === 'other' ? '' : 'none';
+  fieldMapping.style.display = provider === 'lightspeed' ? '' : 'none';
+}
+
+// Accordion toggle
+// Upgrade source selector (Options vs Parts)
+function selectUpgradeSource(btn, source) {
+  const container = btn.closest('.source-selector__options');
+  container.querySelectorAll('.source-selector__option').forEach(o => {
+    o.classList.remove('active');
+    o.querySelector('.material-symbols-outlined').textContent = 'radio_button_unchecked';
+  });
+  btn.classList.add('active');
+  btn.querySelector('.material-symbols-outlined').textContent = 'radio_button_checked';
+
+  // Update the formula trigger in the upgrade pricing card
+  const upgradePricingCard = document.getElementById('group-upgrades');
+  if (upgradePricingCard) {
+    const trigger = upgradePricingCard.querySelector('.formula-trigger');
+    const fieldEl = trigger ? trigger.querySelector('.formula-tag__field') : null;
+    if (fieldEl) {
+      fieldEl.textContent = source === 'options' ? 'Options Total' : 'Parts Total';
+    }
+  }
+}
+
+// Toggle sync on/off
+function handleToggle(checkbox) {
+  const row = checkbox.closest('.mapping-row');
+  const trigger = row.querySelector('.formula-trigger');
+  const arrow = row.querySelector('.mapping-row__arrow');
+  const status = row.querySelector('.mapping-row__status');
+
+  if (checkbox.checked) {
+    trigger.classList.remove('disabled');
+    arrow.style.opacity = '1';
+    // Check if there's a formula set
+    const hasFormula = !trigger.querySelector('.placeholder');
+    if (hasFormula) {
+      status.innerHTML = '<span class="material-symbols-outlined status-mapped">check_circle</span>';
+    }
+  } else {
+    trigger.classList.add('disabled');
+    arrow.style.opacity = '0.3';
+    status.innerHTML = '<span class="status-unmapped"></span>';
+  }
+  updateGroupCounts();
+}
+
+// Update group mapped counts
+function updateGroupCounts() {
+  ['pricing', 'upgrades', 'rebates', 'fees'].forEach(groupId => {
+    const group = document.getElementById('group-' + groupId);
+    if (!group) return;
+    const rows = group.querySelectorAll('.mapping-row');
+    let mapped = 0;
+    let total = rows.length;
+    rows.forEach(row => {
+      const toggle = row.querySelector('.toggle input');
+      const trigger = row.querySelector('.formula-trigger');
+      const hasFormula = trigger && !trigger.querySelector('.placeholder');
+      if (toggle && toggle.checked && hasFormula) mapped++;
+    });
+    const countEl = document.getElementById(groupId + '-count');
+    if (countEl) countEl.textContent = `${mapped} of ${total} mapped`;
+  });
+}
+
+// Add fee row
+function addFeeRow() {
+  const container = document.getElementById('fee-rows');
+  const row = document.createElement('div');
+  row.className = 'mapping-row';
+  row.setAttribute('data-field', 'fee');
+  row.setAttribute('data-ekho-label', 'New Fee');
+  row.setAttribute('data-is-fee', 'true');
+  row.innerHTML = `
+    <div class="mapping-row__formula">
+      <button class="formula-trigger" onclick="openFormulaModal(this)">
+        <span class="formula-trigger__text placeholder">Click to configure formula...</span>
+        <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+      </button>
+    </div>
+    <div class="mapping-row__arrow">
+      <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+    </div>
+    <div class="mapping-row__field-name mapping-row__field-name--editable">
+      <select onchange="updateFeeLabel(this)">
+        <option value="">Select fee...</option>
+        <option value="Freight">Freight</option>
+        <option value="PDI">PDI</option>
+        <option value="Prep">Prep</option>
+        <option value="Setup">Setup</option>
+        <option value="Assembly">Assembly</option>
+        <option value="Crating">Crating</option>
+        <option value="Destination">Destination</option>
+        <option value="Labor prep">Labor prep</option>
+      </select>
+    </div>
+    <div class="mapping-row__toggle">
+      <label class="toggle">
+        <input type="checkbox" checked onchange="handleToggle(this)">
+        <span class="toggle__track"></span>
+        <span class="toggle__thumb"></span>
+      </label>
+    </div>
+    <div class="mapping-row__status">
+      <span class="status-unmapped"></span>
+    </div>
+    <button class="fee-mapping-row__remove" onclick="removeFeeRow(this)" title="Remove mapping">
+      <span class="material-symbols-outlined" style="font-size:18px">close</span>
+    </button>
+  `;
+  container.appendChild(row);
+  updateGroupCounts();
+}
+
+// Update fee label from editable select/input
+function updateFeeLabel(el) {
+  const row = el.closest('.mapping-row');
+  row.setAttribute('data-ekho-label', el.value || 'New Fee');
+}
+
+// Remove fee row
+function removeFeeRow(button) {
+  const row = button.closest('.mapping-row');
+  row.remove();
+  updateGroupCounts();
+}
+
+// Toggle preview panel
+function togglePreview() {
+  const panel = document.getElementById('preview-panel');
+  panel.classList.toggle('visible');
+}
+
+// Save handler
+function handleSave() {
+  const btn = event.target.closest('.btn');
+  const original = btn.textContent;
+  btn.textContent = 'Saved!';
+  btn.style.background = 'var(--rev-color-textSuccess)';
+  setTimeout(() => {
+    btn.textContent = original;
+    btn.style.background = '';
+  }, 1500);
+}
+
+// Close modal on backdrop click
+document.getElementById('formula-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeFormulaModal();
+});
+
+// Close modal on Escape key
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeFormulaModal();
+});
+</script>
+
+</body>
+</html>
