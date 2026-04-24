@@ -373,6 +373,15 @@ body {
   font-size: 13px;
   cursor: default;
 }
+.formula-trigger--static .formula-trigger__text {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  align-items: center;
+}
 .formula-trigger__lock {
   flex-shrink: 0;
   color: var(--rev-color-textTertiary);
@@ -1293,8 +1302,10 @@ body {
 
     <!-- Tabs -->
     <div class="tabs-bar">
-      <div class="tab-item" data-tab="crm" onclick="switchTab('crm')">CRM</div>
-      <div class="tab-item active" data-tab="dms" onclick="switchTab('dms')">DMS</div>
+      <div class="tab-item" data-tab="dp360" onclick="switchTab('dp360')">DP 360</div>
+      <div class="tab-item" data-tab="hubspot" onclick="switchTab('hubspot')">HubSpot</div>
+      <div class="tab-item active" data-tab="dms" onclick="switchTab('dms')">Lightspeed</div>
+      <div class="tab-item" data-tab="blackpurl" onclick="switchTab('blackpurl')">Blackpurl</div>
       <div class="tab-item" data-tab="google" onclick="switchTab('google')">Google</div>
     </div>
 
@@ -1412,26 +1423,30 @@ body {
                   </div>
                 </div>
 
-                <div class="mapping-row" data-field="advertised-price" data-ekho-label="Advertised Price">
+                <div class="mapping-row mapping-row--locked" data-field="advertised-price" data-ekho-label="Advertised Price">
                   <div class="mapping-row__formula">
-                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                    <div class="formula-trigger--static">
                       <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">Web Price</span>
-                        </span>
+                        <span class="formula-tag"><span class="formula-tag__field">MSRP</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">+</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Options</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Rebates</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Discount</span></span>
                       </span>
-                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
-                    </button>
+                      <span class="formula-trigger__lock material-symbols-outlined">lock</span>
+                    </div>
                   </div>
                   <div class="mapping-row__arrow">
                     <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
                   </div>
                   <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Advertised Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Selling price shown on website and VDP</span></span></div>
+                    <div class="mapping-row__field-label">Advertised Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Selling price shown on website and VDP. Calculated automatically.</span></span></div>
                   </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
-                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <input type="checkbox" checked disabled>
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
@@ -1441,26 +1456,30 @@ body {
                   </div>
                 </div>
 
-                <div class="mapping-row" data-field="retail-price" data-ekho-label="Retail Price">
+                <div class="mapping-row mapping-row--locked" data-field="retail-price" data-ekho-label="Retail Price">
                   <div class="mapping-row__formula">
-                    <button class="formula-trigger" onclick="openFormulaModal(this)">
+                    <div class="formula-trigger--static">
                       <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">Web Price</span>
-                        </span>
+                        <span class="formula-tag"><span class="formula-tag__field">MSRP</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">+</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Options</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Rebates</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__field">Discount</span></span>
                       </span>
-                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
-                    </button>
+                      <span class="formula-trigger__lock material-symbols-outlined">lock</span>
+                    </div>
                   </div>
                   <div class="mapping-row__arrow">
                     <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
                   </div>
                   <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">The selling price of the unit</span></span></div>
+                    <div class="mapping-row__field-label">Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">The selling price of the unit. Calculated automatically.</span></span></div>
                   </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
-                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <input type="checkbox" checked disabled>
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
@@ -1525,6 +1544,11 @@ body {
                         <option value="Crating">Crating</option>
                         <option value="Destination">Destination</option>
                         <option value="Labor prep">Labor prep</option>
+                        <option value="Custom 1">Custom 1</option>
+                        <option value="Custom 2">Custom 2</option>
+                        <option value="Custom 3">Custom 3</option>
+                        <option value="Custom 4">Custom 4</option>
+                        <option value="Custom 5">Custom 5</option>
                       </select>
                     </div>
                     <div class="mapping-row__toggle">
@@ -1615,123 +1639,95 @@ body {
           </div>
         </div>
 
-        <!-- Floor builds section -->
+        <!-- Parts and labor section -->
         <div class="settings-section" style="border-bottom:none;">
           <div class="settings-section__header">
-            <div class="settings-section__title">Floor builds</div>
-            <div class="settings-section__description">Controls upgrade pricing, line-item sources, and assembly labor calculation for floor-built units.</div>
+            <div class="settings-section__title" style="display:flex; align-items:center; gap:8px;">Parts and labor <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; color:var(--rev-color-textTertiary); background:var(--rev-color-backgroundTertiary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-pill); padding:2px 10px;"><span class="material-symbols-outlined" style="font-size:14px;">lock</span>Automatic</span></div>
+            <div class="settings-section__description">Ekho automatically syncs parts and labor breakdowns from each Lightspeed option. No configuration needed. Use price fields (not cost fields) in Lightspeed.</div>
           </div>
           <div class="settings-section__content">
             <div class="field-mapping">
-              <!-- Upgrades: Pricing card -->
-              <div class="card mapping-card" id="group-upgrades">
-                <div class="mapping-card__header">
-                  <div class="mapping-card__header-left">
-                    <span class="material-symbols-outlined mapping-card__icon">add_circle</span>
-                    <span class="mapping-card__title">Upgrade pricing</span>
-                    <span class="mapping-card__count" id="upgrades-count">1 of 1 mapped</span>
-                  </div>
-                </div>
-                <div class="mapping-headers">
-                  <span class="col-formula">Lightspeed source</span>
-                  <span class="col-arrow"></span>
-                  <span class="col-field">Ekho field</span>
-                  <span class="col-sync">Sync</span>
-                  <span class="col-status"></span>
-                </div>
-                <div class="mapping-row" data-field="included-upgrades" data-ekho-label="Included Upgrades">
-                  <div class="mapping-row__formula">
-                    <button class="formula-trigger" onclick="openFormulaModal(this)">
-                      <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">Options Total</span>
-                        </span>
-                      </span>
-                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
-                    </button>
-                  </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                  </div>
-                  <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Included Upgrades <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Total value of dealer-installed upgrades</span></span></div>
-                  </div>
-                  <div class="mapping-row__toggle">
-                    <label class="toggle">
-                      <input type="checkbox" checked onchange="handleToggle(this)">
-                      <span class="toggle__track"></span>
-                      <span class="toggle__thumb"></span>
-                    </label>
-                  </div>
-                  <div class="mapping-row__status">
-                    <span class="material-symbols-outlined status-mapped">check_circle</span>
-                  </div>
-                </div>
-              </div>
+              <div class="card" style="padding:24px; overflow:visible; border:1px dashed var(--rev-color-controlOutline); background:var(--rev-color-backgroundSecondary);">
 
-              <!-- Upgrades: Parts breakdown card -->
-              <div class="card mapping-card" id="group-upgrades-breakdown">
-                <div class="mapping-card__header">
-                  <div class="mapping-card__header-left">
-                    <span class="material-symbols-outlined mapping-card__icon">category</span>
-                    <span class="mapping-card__title">Upgrade breakdown</span>
-                  </div>
-                </div>
-                <div class="mapping-card__description">
-                  Choose which Lightspeed line-item category to pull individual upgrade items from.
-                </div>
-                <div class="source-selector">
-                  <div class="source-selector__label">Line-item source</div>
-                  <div class="source-selector__hint">Select which Lightspeed category contains the individual upgrade line items for this unit.</div>
-                  <div class="source-selector__options">
-                    <button class="source-selector__option active" onclick="selectUpgradeSource(this, 'options')">
-                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--rev-color-textPrimary);">radio_button_checked</span>
-                        <span class="source-selector__option-label">Options</span>
-                      </div>
-                      <div class="source-selector__option-desc">Line items from the Options category in Lightspeed</div>
-                    </button>
-                    <button class="source-selector__option" onclick="selectUpgradeSource(this, 'parts')">
-                      <div style="display:flex; align-items:center; gap:8px; margin-bottom:4px;">
-                        <span class="material-symbols-outlined" style="font-size:18px; color:var(--rev-color-textSecondary);">radio_button_unchecked</span>
-                        <span class="source-selector__option-label">Parts</span>
-                      </div>
-                      <div class="source-selector__option-desc">Line items from the Parts category in Lightspeed</div>
-                    </button>
-                  </div>
-                </div>
-              </div>
+                <!-- Flow diagram -->
+                <div style="display:flex; align-items:stretch; gap:0; position:relative;">
 
-              <div class="card mapping-card" id="group-assembly">
-                <div class="mapping-card__header">
-                  <div class="mapping-card__header-left">
-                    <span class="material-symbols-outlined mapping-card__icon">construction</span>
-                    <span class="mapping-card__title">Floor build labor price</span>
-                  </div>
-                </div>
-                <div class="mapping-card__description">
-                  Calculates the assembly/labor cost for floor-built units. This is the difference between the total options value and the sum of individual parts costs.
-                </div>
-                <div class="mapping-row mapping-row--locked">
-                  <div class="mapping-row__formula">
-                    <div class="formula-trigger formula-trigger--static">
-                      <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">Options Total</span>
-                          <span class="formula-tag__op">&minus;</span>
-                          <span class="formula-tag__field">Parts Total</span>
-                        </span>
-                      </span>
-                      <span class="material-symbols-outlined formula-trigger__lock">lock</span>
+                  <!-- Lightspeed side -->
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--rev-color-textTertiary); margin-bottom:12px;">Lightspeed Option</div>
+                    <div style="border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-10); padding:14px; background:var(--rev-color-backgroundSecondary);">
+                      <div style="font-weight:600; font-size:14px; margin-bottom:12px;">Windshield Install</div>
+                      <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
+                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Windshield (part price)</span>
+                          <span style="font-size:12px; font-weight:600;">$220</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
+                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Install labor (labor price)</span>
+                          <span style="font-size:12px; font-weight:600;">$80</span>
+                        </div>
+                        <div style="border-top:1px dashed var(--rev-color-controlOutline); margin:4px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px;">
+                          <span style="font-size:12px; font-weight:600;">Option price</span>
+                          <span style="font-size:13px; font-weight:700;">$350</span>
+                        </div>
+                      </div>
                     </div>
                   </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
+
+                  <!-- Arrow connector -->
+                  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:64px; flex-shrink:0; padding-top:28px;">
+                    <div style="width:100%; height:1px; background:var(--rev-color-controlOutline); position:relative;">
+                      <span class="material-symbols-outlined" style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--rev-color-textTertiary);">arrow_forward</span>
+                    </div>
+                    <div style="font-size:10px; color:var(--rev-color-textTertiary); margin-top:6px;">sync</div>
                   </div>
-                  <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Assembly</div>
+
+                  <!-- Ekho side -->
+                  <div style="flex:1; min-width:0;">
+                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--rev-color-textTertiary); margin-bottom:12px;">Ekho</div>
+                    <div style="border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-10); padding:14px; background:var(--rev-color-backgroundSecondary);">
+                      <div style="font-weight:600; font-size:14px; margin-bottom:12px;">Windshield Install</div>
+                      <div style="display:flex; flex-direction:column; gap:6px;">
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
+                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Parts</span>
+                          <span style="font-size:12px; font-weight:600;">$220</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
+                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Labor</span>
+                          <span style="font-size:12px; font-weight:600;">$80</span>
+                        </div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-accent5Light); border:1px solid var(--rev-color-accent5Outline); border-radius:var(--rev-radius-8);">
+                          <span style="font-size:12px; color:var(--rev-color-accent5Bold); font-weight:500;">Markup</span>
+                          <span style="font-size:12px; font-weight:600; color:var(--rev-color-accent5Bold);">$50</span>
+                        </div>
+                        <div style="border-top:1px dashed var(--rev-color-controlOutline); margin:4px 0;"></div>
+                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px;">
+                          <span style="font-size:12px; font-weight:600;">Buyer sees</span>
+                          <span style="font-size:13px; font-weight:700;">$350</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                </div>
+
+                <!-- Footnotes -->
+                <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px; padding-top:16px; border-top:1px solid var(--rev-color-separatorTertiary);">
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textTertiary);">lock</span>
+                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">This mapping is automatic. Ekho reads parts and labor from each Lightspeed option.</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textTertiary);">info</span>
+                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">Options with no parts or labor are treated as standalone parts.</span>
+                  </div>
+                  <div style="display:flex; align-items:center; gap:8px;">
+                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textDestructive);">warning</span>
+                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">Use <strong>price</strong> fields in Lightspeed, not cost fields. Cost fields represent dealer acquisition cost.</span>
                   </div>
                 </div>
+
               </div>
             </div>
           </div>
@@ -2211,7 +2207,7 @@ function handleProviderChange() {
 }
 
 // Accordion toggle
-// Upgrade source selector (Options vs Parts)
+// Options source selector (Options vs Parts)
 function selectUpgradeSource(btn, source) {
   const container = btn.closest('.source-selector__options');
   container.querySelectorAll('.source-selector__option').forEach(o => {
@@ -2221,7 +2217,7 @@ function selectUpgradeSource(btn, source) {
   btn.classList.add('active');
   btn.querySelector('.material-symbols-outlined').textContent = 'radio_button_checked';
 
-  // Update the formula trigger in the upgrade pricing card
+  // Update the formula trigger in the options pricing card
   const upgradePricingCard = document.getElementById('group-upgrades');
   if (upgradePricingCard) {
     const trigger = upgradePricingCard.querySelector('.formula-trigger');
@@ -2303,6 +2299,11 @@ function addFeeRow() {
         <option value="Crating">Crating</option>
         <option value="Destination">Destination</option>
         <option value="Labor prep">Labor prep</option>
+        <option value="Custom 1">Custom 1</option>
+        <option value="Custom 2">Custom 2</option>
+        <option value="Custom 3">Custom 3</option>
+        <option value="Custom 4">Custom 4</option>
+        <option value="Custom 5">Custom 5</option>
       </select>
     </div>
     <div class="mapping-row__toggle">
