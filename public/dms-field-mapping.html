@@ -8,6 +8,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap" rel="stylesheet">
 <style>
+html { scroll-behavior: smooth; }
 :root {
   --rev-color-textPrimary: #000;
   --rev-color-textSecondary: #666;
@@ -34,6 +35,17 @@
   --rev-radius-12: 12px;
   --rev-radius-pill: 999rem;
   --rev-font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --rev-fontWeight-light: 250;
+  --rev-fontWeight-regular: 350;
+  --rev-fontWeight-medium: 450;
+  --rev-fontWeight-semibold: 550;
+  --rev-fontWeight-bold: 650;
+  --rev-boxShadow-embossed: 0 1px 3px 0 rgb(0 0 0 / 10%), 0 1px 2px -1px rgb(0 0 0 / 10%);
+  --rev-borderRadius-brand: 10px;
+  --rev-borderRadius-full: 999rem;
+  --rev-color-tempfill2: rgba(0, 0, 0, 0.06);
+  --rev-duration-moderato: 250ms;
+  --rev-timing-slowThenZoom: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -53,38 +65,43 @@ body {
   vertical-align: middle;
 }
 
-/* Page layout: main content left, commentary rail fixed right */
+/* Page layout: main content + sticky anchor nav right */
 .page-layout {
   display: flex;
   padding: 32px 24px;
-  padding-right: 312px; /* reserve space for fixed rail: 280px + 32px gap */
+  gap: 32px;
   justify-content: center;
 }
 
-/* Page shell */
 .page-shell {
   max-width: 860px;
   width: 100%;
   min-width: 0;
 }
 
-/* Commentary rail: fixed right sidebar */
-.commentary-rail {
-  position: fixed;
-  top: 0;
-  right: 0;
-  width: 280px;
-  height: 100vh;
-  overflow-y: auto;
-  padding: 32px 16px;
-  background: var(--rev-color-backgroundSecondary);
-  border-left: 1px solid var(--rev-color-separatorTertiary);
-  z-index: 100;
+/* Anchor nav */
+.anchor-nav {
+  position: sticky;
+  top: 32px;
+  width: 180px;
+  flex-shrink: 0;
+  align-self: flex-start;
 }
-.commentary-rail__inner {
+.anchor-nav__list {
+  list-style: none;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 8px;
+}
+.anchor-nav__link {
+  font-size: 13px;
+  color: var(--rev-color-textSecondary);
+  text-decoration: none;
+  padding: 4px 0;
+  transition: color 0.15s;
+}
+.anchor-nav__link:hover {
+  color: var(--rev-color-textPrimary);
 }
 
 /* Breadcrumb */
@@ -95,10 +112,7 @@ body {
   margin-bottom: 24px;
   font-size: 14px;
 }
-.breadcrumb a {
-  color: var(--rev-color-textSecondary);
-  text-decoration: none;
-}
+.breadcrumb a { color: var(--rev-color-textSecondary); text-decoration: none; }
 .breadcrumb a:hover { text-decoration: underline; }
 .breadcrumb .separator { color: var(--rev-color-textTertiary); font-size: 12px; }
 .breadcrumb .current { font-weight: 700; color: var(--rev-color-textPrimary); }
@@ -128,11 +142,10 @@ body {
   border-bottom-color: var(--rev-color-textPrimary);
 }
 
-/* Tab content */
 .tab-content { display: none; }
 .tab-content.active { display: block; }
 
-/* Settings section (left description + right card) */
+/* Settings section */
 .settings-section {
   display: flex;
   gap: 32px;
@@ -140,24 +153,10 @@ body {
   border-bottom: 1px solid var(--rev-color-separatorTertiary);
 }
 .settings-section:last-child { border-bottom: none; }
-.settings-section__header {
-  width: 200px;
-  flex-shrink: 0;
-}
-.settings-section__title {
-  font-size: 16px;
-  font-weight: 700;
-  margin-bottom: 6px;
-}
-.settings-section__description {
-  font-size: 13px;
-  color: var(--rev-color-textSecondary);
-  line-height: 1.6;
-}
-.settings-section__content {
-  flex: 1;
-  min-width: 0;
-}
+.settings-section__header { width: 200px; flex-shrink: 0; }
+.settings-section__title { font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+.settings-section__description { font-size: 13px; color: var(--rev-color-textSecondary); line-height: 1.6; }
+.settings-section__content { flex: 1; min-width: 0; }
 
 /* Card */
 .card {
@@ -170,1112 +169,688 @@ body {
 .form-field { margin-bottom: 16px; }
 .form-field:last-child { margin-bottom: 0; }
 .form-field__label {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-size: 13px;
-  font-weight: 500;
-  margin-bottom: 6px;
+  display: flex; align-items: center; gap: 4px;
+  font-size: 13px; font-weight: 500; margin-bottom: 6px;
   color: var(--rev-color-textPrimary);
 }
-.form-field__label .info-icon {
-  color: var(--rev-color-textTertiary);
-  font-size: 16px;
-  cursor: help;
-}
+.form-field__label .info-icon { color: var(--rev-color-textTertiary); font-size: 16px; cursor: help; }
 .form-field__input {
-  width: 100%;
-  padding: 10px 12px;
+  width: 100%; padding: 10px 12px;
   border: 1px solid var(--rev-color-controlOutline);
   border-radius: var(--rev-radius-8);
-  font-family: var(--rev-font-family);
-  font-size: 14px;
+  font-family: var(--rev-font-family); font-size: 14px;
   background: var(--rev-color-backgroundPrimary);
-  outline: none;
-  transition: border-color 0.15s;
+  outline: none; transition: border-color 0.15s;
 }
-.form-field__input:focus {
-  border-color: var(--rev-color-textPrimary);
-}
-
-/* Select / dropdown */
-.form-field__select {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  font-family: var(--rev-font-family);
-  font-size: 14px;
-  background: var(--rev-color-backgroundPrimary);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  cursor: pointer;
-  outline: none;
-}
-.form-field__select:focus { border-color: var(--rev-color-textPrimary); }
+.form-field__input:focus { border-color: var(--rev-color-textPrimary); }
 
 /* Checkbox */
-.checkbox-field {
-  display: flex;
-  align-items: flex-start;
-  gap: 8px;
-  cursor: pointer;
-}
+.checkbox-field { display: flex; align-items: flex-start; gap: 8px; cursor: pointer; }
 .checkbox-field input[type="checkbox"] {
-  width: 16px;
-  height: 16px;
-  margin-top: 2px;
-  accent-color: var(--rev-color-textPrimary);
-  cursor: pointer;
+  width: 16px; height: 16px; margin-top: 2px;
+  accent-color: var(--rev-color-textPrimary); cursor: pointer;
 }
 
-/* Toggle/Switch */
-.toggle {
-  position: relative;
-  display: block;
-  width: 36px;
-  height: 20px;
-  flex-shrink: 0;
-  cursor: pointer;
-}
-.toggle input {
-  position: absolute;
-  opacity: 0;
-  width: 0;
-  height: 0;
-  pointer-events: none;
-}
+/* Toggle */
+.toggle { position: relative; display: block; width: 36px; height: 20px; flex-shrink: 0; cursor: pointer; }
+.toggle input { position: absolute; opacity: 0; width: 0; height: 0; pointer-events: none; }
 .toggle__track {
-  position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  background: #d1d5db;
-  border-radius: 10px;
-  transition: background 0.2s;
+  position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+  background: #d1d5db; border-radius: 10px; transition: background 0.2s;
 }
-.toggle input:checked + .toggle__track {
-  background: var(--rev-color-textPrimary);
-}
+.toggle input:checked + .toggle__track { background: #2563eb; }
 .toggle__thumb {
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 16px;
-  height: 16px;
-  background: white;
-  border-radius: 50%;
-  transition: transform 0.2s;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.2);
-  pointer-events: none;
-  z-index: 1;
+  position: absolute; top: 2px; left: 2px; width: 16px; height: 16px;
+  background: white; border-radius: 50%; transition: transform 0.2s;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.2); pointer-events: none; z-index: 1;
 }
-.toggle input:checked ~ .toggle__thumb {
-  transform: translateX(16px);
-}
+.toggle input:checked ~ .toggle__thumb { transform: translateX(16px); }
 
-/* Field mapping section */
-.field-mapping {
-  margin-top: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
+/* Field mapping */
+.field-mapping { margin-top: 0; display: flex; flex-direction: column; gap: 16px; }
 
-/* Mapping card (individual gray cards per section) */
-.mapping-card {
-  overflow: visible;
-  padding: 0;
-}
+/* Mapping card */
+.mapping-card { overflow: visible; padding: 0; }
 .mapping-card__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex; align-items: center; justify-content: space-between;
   padding: 16px 16px 12px;
   border-bottom: 1px solid var(--rev-color-separatorTertiary);
-  margin-bottom: 0;
 }
-.mapping-card__header-left {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-.mapping-card__icon {
-  color: var(--rev-color-textSecondary);
-  font-size: 20px;
-}
-.mapping-card__title {
-  font-size: 14px;
-  font-weight: 600;
-}
-.mapping-card__count {
-  font-size: 12px;
-  color: var(--rev-color-textTertiary);
-}
-.mapping-card__description {
-  font-size: 13px;
-  color: var(--rev-color-textSecondary);
-  line-height: 1.5;
-  padding: 12px 16px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
+.mapping-card__header-left { display: flex; align-items: center; gap: 10px; }
+.mapping-card__icon { color: var(--rev-color-textSecondary); font-size: 20px; }
+.mapping-card__title { font-size: 14px; font-weight: 600; }
+.mapping-card__count { font-size: 12px; color: var(--rev-color-textTertiary); }
 
-/* Mapping column headers */
+/* Mapping headers - new column order: Ekho field | Lightspeed source | Sync */
 .mapping-headers {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  gap: 10px;
+  display: flex; align-items: center; padding: 8px 16px; gap: 10px;
   border-bottom: 1px solid var(--rev-color-separatorTertiary);
   background: var(--rev-color-backgroundTertiary);
 }
 .mapping-headers span {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--rev-color-textTertiary);
 }
+.mapping-headers .col-field { flex: 0 0 170px; }
 .mapping-headers .col-formula { flex: 1; min-width: 0; }
-.mapping-headers .col-arrow { width: 20px; flex-shrink: 0; }
-.mapping-headers .col-field { width: 170px; flex-shrink: 0; }
 .mapping-headers .col-sync { width: 36px; flex-shrink: 0; text-align: center; }
-.mapping-headers .col-status { width: 20px; flex-shrink: 0; }
 .mapping-headers .col-remove { width: 28px; flex-shrink: 0; }
 
-/* Mapping row */
+/* Mapping row - new order: Ekho field | Lightspeed source | Sync */
 .mapping-row {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  gap: 10px;
+  display: flex; align-items: center; padding: 10px 16px; gap: 10px;
   border-bottom: 1px solid var(--rev-color-separatorTertiary);
 }
 .mapping-row:last-child { border-bottom: none; }
+.mapping-row--locked { opacity: 0.7; }
 
-.mapping-row--locked {
-  opacity: 0.7;
-}
+.mapping-row__field-name { flex: 0 0 170px; font-size: 13px; font-weight: 500; overflow: visible; }
+.mapping-row__field-label { overflow: visible; white-space: nowrap; }
 
-.formula-trigger--static {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid transparent;
-  border-radius: var(--rev-radius-8);
-  background: var(--rev-color-backgroundTertiary);
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  cursor: default;
-}
-.formula-trigger--static .formula-trigger__text {
-  white-space: normal;
-  overflow: visible;
-  text-overflow: clip;
-  display: flex;
-  flex-wrap: wrap;
-  gap: 3px;
-  align-items: center;
-}
-.formula-trigger__lock {
-  flex-shrink: 0;
-  color: var(--rev-color-textTertiary);
-  font-size: 16px;
-  display: flex;
-}
+.mapping-row__formula { flex: 1; min-width: 0; }
+.mapping-row__toggle { flex-shrink: 0; }
 
-.mapping-row__formula {
-  flex: 1;
-  min-width: 0;
-}
-
-/* Formula trigger button (replaces old dropdown) */
+/* Formula trigger */
 .formula-trigger {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  background: var(--rev-color-backgroundPrimary);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  text-align: left;
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 10px; border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8); background: var(--rev-color-backgroundPrimary);
+  cursor: pointer; transition: border-color 0.15s, background 0.15s;
+  font-family: var(--rev-font-family); font-size: 13px; text-align: left;
 }
-.formula-trigger:hover {
-  border-color: var(--rev-color-textSecondary);
-}
-.formula-trigger:focus {
-  border-color: var(--rev-color-textPrimary);
-  outline: none;
-}
+.formula-trigger:hover { border-color: var(--rev-color-textSecondary); }
+.formula-trigger:focus { border-color: var(--rev-color-textPrimary); outline: none; }
 .formula-trigger.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  background: var(--rev-color-backgroundTertiary);
-  pointer-events: none;
+  opacity: 0.4; cursor: not-allowed;
+  background: var(--rev-color-backgroundTertiary); pointer-events: none;
 }
 .formula-trigger__text {
-  flex: 1;
-  min-width: 0;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
 }
-.formula-trigger__text.placeholder {
-  color: var(--rev-color-textTertiary);
-}
+.formula-trigger__text.placeholder { color: var(--rev-color-textTertiary); }
 .formula-trigger__icon {
-  flex-shrink: 0;
-  color: var(--rev-color-textTertiary);
-  font-size: 16px;
-  display: flex;
+  flex-shrink: 0; color: var(--rev-color-textTertiary); font-size: 16px; display: flex;
 }
 
-/* Formula expression tag styling */
+/* Static formula trigger (locked rows) */
+.formula-trigger--static {
+  display: flex; align-items: center; gap: 8px; width: 100%;
+  padding: 7px 10px; border: 1px solid transparent;
+  border-radius: var(--rev-radius-8); background: var(--rev-color-backgroundTertiary);
+  font-family: var(--rev-font-family); font-size: 13px; cursor: default;
+}
+.formula-trigger--static .formula-trigger__text {
+  white-space: normal; overflow: visible; text-overflow: clip;
+  display: flex; flex-wrap: wrap; gap: 3px; align-items: center;
+}
+.formula-trigger__lock {
+  flex-shrink: 0; color: var(--rev-color-textTertiary); font-size: 16px; display: flex;
+}
+
+/* Formula tags */
 .formula-tag {
-  display: inline-flex;
-  align-items: center;
-  gap: 3px;
-  font-size: 12px;
-  line-height: 1;
+  display: inline-flex; align-items: center; gap: 3px; font-size: 12px; line-height: 1;
 }
 .formula-tag__field {
   background: var(--rev-color-backgroundTertiary);
   border: 1px solid var(--rev-color-controlOutline);
-  border-radius: 4px;
-  padding: 2px 6px;
-  font-size: 12px;
-  font-weight: 500;
-  white-space: nowrap;
+  border-radius: 4px; padding: 2px 6px; font-size: 12px; font-weight: 500; white-space: nowrap;
 }
-.formula-tag__op {
-  font-weight: 600;
-  color: var(--rev-color-textSecondary);
-  padding: 0 2px;
-  font-size: 13px;
-}
+.formula-tag__op { font-weight: 600; color: var(--rev-color-textSecondary); padding: 0 2px; font-size: 13px; }
 
-.mapping-row__arrow {
-  flex-shrink: 0;
-  color: var(--rev-color-textTertiary);
-  font-size: 18px;
-  display: flex;
-  align-items: center;
-}
-.mapping-row__field-name {
-  width: 170px;
-  flex-shrink: 0;
-  font-size: 13px;
-  font-weight: 500;
-  overflow: visible;
-}
-.mapping-row__field-label {
-  overflow: visible;
-  white-space: nowrap;
-}
-/* Info icon tooltip (Ekho style) */
+/* Info tooltip */
 .field-info-trigger {
-  display: inline-flex;
-  align-items: center;
-  cursor: default;
-  position: relative;
-  vertical-align: middle;
-  margin-left: 4px;
+  display: inline-flex; align-items: center; cursor: default;
+  position: relative; vertical-align: middle; margin-left: 4px;
 }
-.field-info-trigger .material-symbols-outlined {
-  font-size: 15px;
-  color: var(--rev-color-textTertiary);
-  transition: color 0.15s;
-}
-.field-info-trigger:hover .material-symbols-outlined {
-  color: var(--rev-color-textSecondary);
-}
+.field-info-trigger .material-symbols-outlined { font-size: 15px; color: var(--rev-color-textTertiary); transition: color 0.15s; }
+.field-info-trigger:hover .material-symbols-outlined { color: var(--rev-color-textSecondary); }
 .field-info-trigger__tip {
-  display: none;
-  position: absolute;
-  bottom: calc(100% + 6px);
-  left: 50%;
-  transform: translateX(-50%);
-  background: var(--rev-color-textPrimary);
-  color: #fff;
-  font-size: 11px;
-  font-weight: 400;
-  line-height: 1.4;
-  padding: 6px 10px;
-  border-radius: 6px;
-  white-space: nowrap;
-  z-index: 200;
-  pointer-events: none;
+  display: none; position: absolute; bottom: calc(100% + 6px); left: 50%; transform: translateX(-50%);
+  background: var(--rev-color-textPrimary); color: #fff; font-size: 11px; font-weight: 400;
+  line-height: 1.4; padding: 6px 10px; border-radius: 6px; white-space: nowrap; z-index: 200; pointer-events: none;
 }
 .field-info-trigger__tip::after {
-  content: '';
-  position: absolute;
-  top: 100%;
-  left: 50%;
-  transform: translateX(-50%);
-  border: 5px solid transparent;
-  border-top-color: var(--rev-color-textPrimary);
+  content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%);
+  border: 5px solid transparent; border-top-color: var(--rev-color-textPrimary);
 }
-.field-info-trigger:hover .field-info-trigger__tip {
-  display: block;
+.field-info-trigger:hover .field-info-trigger__tip { display: block; }
+
+/* + Add button style for unconfigured rows */
+.add-btn {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 6px 12px; border: 1px dashed var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8); background: none;
+  font-family: var(--rev-font-family); font-size: 13px; font-weight: 500;
+  color: var(--rev-color-textSecondary); cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s;
 }
-.mapping-row__field-name--editable {
-  overflow: visible;
-}
-.mapping-row__field-name--editable input,
-.mapping-row__field-name--editable select {
-  width: 100%;
-  padding: 4px 8px;
-  border: 1px solid transparent;
-  border-radius: 4px;
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  font-weight: 500;
-  background: transparent;
-  outline: none;
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-.mapping-row__field-name--editable input:hover,
-.mapping-row__field-name--editable select:hover {
-  border-color: var(--rev-color-controlOutline);
-  background: var(--rev-color-backgroundPrimary);
-}
-.mapping-row__field-name--editable input:focus,
-.mapping-row__field-name--editable select:focus {
-  border-color: var(--rev-color-textPrimary);
-  background: var(--rev-color-backgroundPrimary);
-}
-.mapping-row__toggle {
-  flex-shrink: 0;
-}
-.mapping-row__status {
-  flex-shrink: 0;
-  width: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-.status-mapped {
-  color: var(--rev-color-textSuccess);
-  font-size: 18px;
-}
-.status-unmapped {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background: #d1d5db;
+.add-btn:hover {
+  border-color: var(--rev-color-textPrimary); color: var(--rev-color-textPrimary);
+  background: var(--rev-color-backgroundTertiary);
 }
 
 /* Fee mapping rows */
-.fee-mapping-row {
-  display: flex;
-  align-items: center;
-  padding: 10px 16px;
-  gap: 10px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
-.fee-mapping-row:last-child:not(.fee-mapping-add) { border-bottom: 1px solid var(--rev-color-separatorTertiary); }
-
-.fee-mapping-row__source {
-  flex: 1;
-  min-width: 0;
-}
-.fee-mapping-row__source select {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  background: var(--rev-color-backgroundPrimary);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  cursor: pointer;
-  outline: none;
-}
-
-.fee-mapping-row__name {
-  flex: 1;
-  min-width: 0;
-}
-.fee-mapping-row__name input {
-  width: 100%;
-  padding: 7px 10px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  background: var(--rev-color-backgroundPrimary);
-  outline: none;
-}
-.fee-mapping-row__name input:focus {
-  border-color: var(--rev-color-textPrimary);
-}
-
 .fee-mapping-row__remove {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  color: var(--rev-color-textTertiary);
-  cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
+  flex-shrink: 0; width: 28px; height: 28px;
+  display: flex; align-items: center; justify-content: center;
+  border: none; background: none; color: var(--rev-color-textTertiary);
+  cursor: pointer; border-radius: 6px; transition: background 0.15s, color 0.15s;
 }
-.fee-mapping-row__remove:hover {
-  background: #fee2e2;
-  color: var(--rev-color-textDestructive);
-}
+.fee-mapping-row__remove:hover { background: #fee2e2; color: var(--rev-color-textDestructive); }
 
-.fee-mapping-add {
-  padding: 10px 16px;
-}
+.fee-mapping-add { padding: 10px 16px; }
 .fee-mapping-add__button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px dashed var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  background: none;
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--rev-color-textSecondary);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border: none; border-radius: var(--rev-radius-pill);
+  background: var(--rev-color-textPrimary); font-family: var(--rev-font-family);
+  font-size: 13px; font-weight: 600; color: white; cursor: pointer;
+  transition: opacity 0.15s;
 }
-.fee-mapping-add__button:hover {
-  border-color: var(--rev-color-textPrimary);
-  color: var(--rev-color-textPrimary);
-  background: var(--rev-color-backgroundTertiary);
-}
+.fee-mapping-add__button:hover { opacity: 0.85; }
 
 .fee-mapping-note {
-  padding: 8px 16px 12px;
-  font-size: 11px;
-  color: var(--rev-color-textTertiary);
-  display: flex;
-  align-items: flex-start;
-  gap: 6px;
+  padding: 8px 16px 12px; font-size: 11px; color: var(--rev-color-textTertiary);
+  display: flex; align-items: flex-start; gap: 6px;
 }
-.fee-mapping-note .material-symbols-outlined {
-  font-size: 14px;
-  margin-top: 1px;
-  flex-shrink: 0;
-}
-
-/* Column headers for fee mapping */
-.fee-mapping-headers {
-  display: flex;
-  align-items: center;
-  padding: 8px 16px;
-  gap: 10px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-  background: var(--rev-color-backgroundTertiary);
-}
-.fee-mapping-headers span {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
-}
-.fee-mapping-headers .col-source { flex: 1; }
-.fee-mapping-headers .col-arrow { width: 20px; flex-shrink: 0; }
-.fee-mapping-headers .col-name { flex: 1; }
-.fee-mapping-headers .col-remove { width: 28px; flex-shrink: 0; }
-
-/* Action bar */
-.action-bar {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-top: 20px;
-  padding-top: 20px;
-  border-top: 1px solid var(--rev-color-separatorTertiary);
-}
-.action-bar__left {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
+.fee-mapping-note .material-symbols-outlined { font-size: 14px; margin-top: 1px; flex-shrink: 0; }
 
 /* Buttons */
 .btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 8px 16px;
-  border-radius: var(--rev-radius-8);
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.15s;
-  border: none;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 16px; border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family); font-size: 13px; font-weight: 600;
+  cursor: pointer; transition: all 0.15s; border: none;
 }
-.btn--primary {
-  background: var(--rev-color-textPrimary);
-  color: white;
-}
+.btn--primary { background: var(--rev-color-textPrimary); color: white; }
 .btn--primary:hover { opacity: 0.85; }
-.btn--outline {
-  background: none;
-  border: 1px solid var(--rev-color-controlOutline);
-  color: var(--rev-color-textPrimary);
-}
+.btn--outline { background: none; border: 1px solid var(--rev-color-controlOutline); color: var(--rev-color-textPrimary); }
 .btn--outline:hover { background: var(--rev-color-backgroundTertiary); }
-.btn--ghost {
-  background: none;
-  color: var(--rev-color-textSecondary);
-  border: none;
-  padding: 8px 12px;
-}
+.btn--ghost { background: none; color: var(--rev-color-textSecondary); border: none; padding: 8px 12px; }
 .btn--ghost:hover { color: var(--rev-color-textPrimary); background: var(--rev-color-backgroundTertiary); }
 
-/* Preview panel */
-.preview-panel {
-  margin-top: 16px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-12);
-  overflow: hidden;
-  display: none;
+/* Preview trigger bar */
+.preview-trigger-bar {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; background: var(--rev-color-backgroundSecondary);
+  border: 1px solid var(--rev-color-controlOutline); border-radius: var(--rev-radius-12);
+  margin-bottom: 8px;
 }
-.preview-panel.visible { display: block; }
-.preview-panel__header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 12px 16px;
-  background: var(--rev-color-backgroundTertiary);
+.preview-trigger-bar__text { font-size: 13px; color: var(--rev-color-textSecondary); line-height: 1.5; }
+.preview-trigger-bar__text strong { color: var(--rev-color-textPrimary); font-weight: 600; }
+
+/* Parts & labor section */
+.pl-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 11px; font-weight: 500; color: #2563eb;
+  background: #eff6ff; border: 1px solid #bfdbfe;
+  border-radius: var(--rev-radius-pill); padding: 2px 10px;
+}
+.pl-badge__dot {
+  width: 6px; height: 6px; border-radius: 50%; background: #2563eb;
+}
+
+.pl-sync-card {
+  background: var(--rev-color-backgroundSecondary); border-radius: var(--rev-radius-12);
+  border: 1px solid var(--rev-color-controlOutline); overflow: hidden; margin-bottom: 16px;
+}
+.pl-sync-card__header {
+  padding: 14px 16px; font-size: 14px; font-weight: 600;
   border-bottom: 1px solid var(--rev-color-separatorTertiary);
 }
-.preview-panel__title {
-  font-size: 13px;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
+.pl-sync-card__row {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 10px 16px; border-bottom: 1px solid var(--rev-color-separatorTertiary);
 }
-.preview-panel__close {
-  background: none;
-  border: none;
-  cursor: pointer;
-  color: var(--rev-color-textTertiary);
-  padding: 4px;
-  border-radius: 4px;
+.pl-sync-card__row:last-child { border-bottom: none; }
+.pl-sync-card__label { font-size: 13px; font-weight: 500; }
+
+/* Parts & labor tabs */
+.pl-tabs {
+  display: flex; gap: 0;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
 }
-.preview-panel__close:hover { background: var(--rev-color-controlOutline); }
-.preview-table {
+.pl-tab {
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  color: var(--rev-color-textSecondary); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s; user-select: none;
+}
+.pl-tab:hover { color: var(--rev-color-textPrimary); }
+.pl-tab.active {
+  color: var(--rev-color-textPrimary); font-weight: 600;
+  border-bottom-color: var(--rev-color-textPrimary);
+}
+.pl-tab-content { display: none; }
+.pl-tab-content.active { display: block; }
+
+/* Parts & labor table */
+.pl-table { width: 100%; border-collapse: collapse; }
+.pl-table th {
+  text-align: left; padding: 8px 12px; font-size: 11px; font-weight: 600;
+  text-transform: uppercase; letter-spacing: 0.5px;
+  color: var(--rev-color-textTertiary); background: var(--rev-color-backgroundTertiary);
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.pl-table td {
+  padding: 10px 12px; font-size: 13px;
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.pl-table tr:last-child td { border-bottom: none; }
+.pl-table td.pl-table__num { color: var(--rev-color-textTertiary); font-size: 12px; }
+.pl-table td.pl-table__type { font-size: 12px; }
+.pl-type-badge {
+  display: inline-flex; align-items: center; padding: 2px 8px;
+  font-size: 11px; font-weight: 600; border-radius: var(--rev-radius-pill);
+  white-space: nowrap;
+}
+.pl-type-badge--installed { background: #eff6ff; color: #2563eb; border: 1px solid #bfdbfe; }
+.pl-type-badge--prep { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
+.pl-type-badge--warranty { background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0; }
+.pl-table td.pl-table__price { font-weight: 600; }
+[data-rev-component="dropdown"] {
+  display: grid;
+  position: relative;
+  min-width: 120px;
+  max-width: 180px;
+}
+[data-rev-component="dropdown"] .dropdown-button--rev {
   width: 100%;
-  border-collapse: collapse;
-}
-.preview-table th {
-  text-align: left;
-  padding: 8px 16px;
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
-  background: var(--rev-color-backgroundSecondary);
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
-.preview-table td {
-  padding: 10px 16px;
-  font-size: 13px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
-.preview-table tr:last-child td { border-bottom: none; }
-.preview-value { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 12px; }
-.preview-value--mapped { color: var(--rev-color-textSuccess); }
-.preview-value--unmapped { color: var(--rev-color-textTertiary); font-style: italic; }
-
-/* Demo switcher */
-.demo-switcher {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--rev-color-backgroundTertiary);
-  border-radius: var(--rev-radius-pill);
-  margin-bottom: 24px;
-  width: fit-content;
-}
-.demo-switcher__label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
-}
-.demo-switcher__btn {
-  padding: 4px 10px;
-  border-radius: var(--rev-radius-pill);
-  font-family: var(--rev-font-family);
-  font-size: 12px;
-  font-weight: 500;
-  border: none;
-  cursor: pointer;
-  background: none;
-  color: var(--rev-color-textSecondary);
-  transition: all 0.15s;
-}
-.demo-switcher__btn.active {
-  background: var(--rev-color-textPrimary);
-  color: white;
-}
-
-/* Commentary */
-.commentary-card {
-  background: var(--rev-color-backgroundPrimary);
-  border-radius: var(--rev-radius-12);
-  border: 1.5px solid var(--rev-color-accent5Outline);
-  padding: 16px;
-  font-size: 12px;
-  line-height: 1.6;
-  color: var(--rev-color-textSecondary);
-}
-.commentary-card__title {
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-accent5Bold);
-  margin-bottom: 12px;
-}
-.commentary-item { margin-bottom: 10px; }
-.commentary-item:last-child { margin-bottom: 0; }
-.commentary-tag {
-  display: inline-block;
-  font-size: 9px;
-  font-weight: 700;
-  text-transform: uppercase;
-  padding: 2px 5px;
-  border-radius: 3px;
-  margin-bottom: 3px;
-}
-.commentary-tag.new { background: #dcfce7; color: #166534; }
-.commentary-tag.changed { background: #fef3c7; color: #92400e; }
-.commentary-tag.removed { background: #fee2e2; color: #991b1b; }
-.commentary-tag.methodology { background: #f3f4f6; color: #374151; }
-.commentary-tag.scope { background: #f3f4f6; color: #374151; }
-.commentary-item__title {
-  font-weight: 600;
-  color: var(--rev-color-textPrimary);
-  font-size: 12px;
-}
-.commentary-item__body {
-  font-size: 12px;
-  color: var(--rev-color-textSecondary);
-  line-height: 1.5;
-}
-
-/* Commentary visibility: show all notes */
-.commentary-tab-group { display: block; }
-
-/* ========================================
-   FORMULA MODAL
-   ======================================== */
-.modal-backdrop {
-  display: none;
-  position: fixed;
-  inset: 0;
-  background: rgba(0,0,0,0.4);
-  z-index: 1000;
-  align-items: center;
-  justify-content: center;
-}
-.modal-backdrop.open {
-  display: flex;
-}
-
-.modal {
-  background: var(--rev-color-backgroundPrimary);
-  border-radius: var(--rev-radius-12);
-  box-shadow: var(--rev-elevation-3);
-  width: 520px;
-  max-width: calc(100vw - 48px);
-  max-height: calc(100vh - 96px);
-  overflow-y: auto;
-}
-
-.modal__header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 20px 24px 16px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
-.modal__title {
-  font-size: 16px;
-  font-weight: 700;
-}
-.modal__subtitle {
-  font-size: 12px;
-  color: var(--rev-color-textTertiary);
-  margin-top: 2px;
-}
-.modal__close {
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
-  background: none;
-  cursor: pointer;
-  border-radius: 6px;
-  color: var(--rev-color-textTertiary);
-  transition: background 0.15s;
-}
-.modal__close:hover {
-  background: var(--rev-color-backgroundTertiary);
-  color: var(--rev-color-textPrimary);
-}
-
-.modal__body {
-  padding: 20px 24px;
-}
-
-.modal__footer {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 10px;
-  padding: 16px 24px;
-  border-top: 1px solid var(--rev-color-separatorTertiary);
-}
-
-/* Source category selector (Upgrades group) */
-.source-selector {
-  padding: 16px 16px 12px;
-  border-bottom: 1px solid var(--rev-color-separatorTertiary);
-}
-.source-selector__label {
-  font-size: 13px;
-  font-weight: 600;
-  margin-bottom: 2px;
-}
-.source-selector__hint {
-  font-size: 11px;
-  color: var(--rev-color-textTertiary);
-  margin-bottom: 10px;
-  line-height: 1.4;
-}
-.source-selector__options {
-  display: flex;
-  gap: 10px;
-}
-.source-selector__option {
-  flex: 1;
-  padding: 10px 14px;
-  font-family: var(--rev-font-family);
+  gap: 8px;
+  padding: 6px 10px;
   border: 1px solid var(--rev-color-controlOutline);
   border-radius: var(--rev-radius-8);
+  font-family: var(--rev-font-family);
+  font-size: 12px;
+  line-height: 1.4;
   background: var(--rev-color-backgroundPrimary);
   cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
   text-align: left;
+  color: var(--rev-color-textPrimary);
 }
-.source-selector__option:hover {
+[data-rev-component="dropdown"] .dropdown-button--rev:hover {
   border-color: var(--rev-color-textSecondary);
 }
-.source-selector__option.active {
-  border-color: var(--rev-color-textPrimary);
-  background: var(--rev-color-backgroundTertiary);
-}
-.source-selector__option-label {
-  font-size: 13px;
-  font-weight: 600;
-  color: var(--rev-color-textPrimary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.source-selector__option-label .material-symbols-outlined {
-  font-size: 16px;
-  color: var(--rev-color-textTertiary);
-}
-.source-selector__option.active .source-selector__option-label .material-symbols-outlined {
-  color: var(--rev-color-textPrimary);
-}
-.source-selector__option-desc {
-  font-size: 11px;
-  color: var(--rev-color-textTertiary);
-  margin-top: 2px;
-  line-height: 1.3;
-}
-
-/* Formula terms list */
-.formula-terms {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  margin-bottom: 16px;
-}
-
-.formula-term {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 8px 12px;
-  background: var(--rev-color-backgroundSecondary);
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-}
-
-.formula-term__operator {
-  flex-shrink: 0;
-}
-.formula-term__operator select {
-  padding: 4px 6px;
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: 4px;
-  font-family: var(--rev-font-family);
-  font-size: 14px;
-  font-weight: 600;
-  background: var(--rev-color-backgroundPrimary);
-  cursor: pointer;
-  outline: none;
-  width: 44px;
-  text-align: center;
-  appearance: none;
-}
-.formula-term__operator select:focus { border-color: var(--rev-color-textPrimary); }
-
-.formula-term__field {
+[data-rev-component="dropdown"] .dropdown-button-text--rev {
+  white-space: normal;
+  word-wrap: break-word;
   flex: 1;
-  min-width: 0;
 }
-.formula-term__field select {
-  width: 100%;
-  padding: 6px 10px;
+[data-rev-component="dropdown"] .dropdown-chevron--rev {
+  flex: none;
+  width: 16px;
+  height: 16px;
+  transition: transform 0.2s ease;
+  color: var(--rev-color-textSecondary);
+}
+[data-rev-component="dropdown"][aria-expanded="true"] .dropdown-chevron--rev {
+  transform: rotate(180deg);
+}
+[data-rev-component="dropdown"] menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  min-width: 100%;
+  width: max-content;
+  max-width: 260px;
+  background: var(--rev-color-backgroundPrimary);
   border: 1px solid var(--rev-color-controlOutline);
   border-radius: var(--rev-radius-8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+  z-index: 100;
+  overflow: hidden;
+  margin: 0;
+  padding: 4px 0;
+  list-style: none;
+}
+[data-rev-component="dropdown"][aria-expanded="true"] menu {
+  display: block;
+}
+[data-rev-component="dropdown"] menu li {
+  list-style: none;
+}
+[data-rev-component="dropdown"] menu li button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 12px;
   font-family: var(--rev-font-family);
-  font-size: 13px;
-  background: var(--rev-color-backgroundPrimary);
-  appearance: none;
-  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 10px center;
-  cursor: pointer;
-  outline: none;
-}
-
-.formula-term__remove {
-  flex-shrink: 0;
-  width: 28px;
-  height: 28px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border: none;
+  line-height: 1.4;
   background: none;
-  color: var(--rev-color-textTertiary);
+  border: none;
   cursor: pointer;
-  border-radius: 6px;
-  transition: background 0.15s, color 0.15s;
+  text-align: left;
+  white-space: normal;
+  color: var(--rev-color-textPrimary);
 }
-.formula-term__remove:hover {
-  background: #fee2e2;
-  color: var(--rev-color-textDestructive);
+[data-rev-component="dropdown"] menu li button:hover {
+  background: var(--rev-color-backgroundSecondary);
 }
-
-.formula-term:first-child .formula-term__operator select,
-.formula-term:first-child .formula-term__operator-static {
-  visibility: hidden;
-}
-
-/* Locked term (required/pre-configured) */
-.formula-term--locked {
-  background: var(--rev-color-backgroundTertiary);
-  border-color: transparent;
-}
-.formula-term__operator-static {
-  width: 44px;
-  padding: 4px 6px;
-  font-size: 14px;
+[data-rev-component="dropdown"] menu li button[aria-selected="true"] {
+  background: var(--rev-color-backgroundSecondary);
   font-weight: 600;
-  text-align: center;
-  color: var(--rev-color-textSecondary);
-  flex-shrink: 0;
+}
+.pl-table__no-option { color: var(--rev-color-textTertiary); }
+.pl-dot {
+  width: 8px; height: 8px; border-radius: 50%; background: #2563eb; display: inline-block;
+}
+
+/* Modal */
+.modal-backdrop {
+  display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.4);
+  z-index: 1000; align-items: center; justify-content: center;
+}
+.modal-backdrop.open { display: flex; }
+.modal {
+  background: var(--rev-color-backgroundPrimary); border-radius: var(--rev-radius-12);
+  box-shadow: var(--rev-elevation-3); width: 520px;
+  max-width: calc(100vw - 48px); max-height: calc(100vh - 96px); overflow-y: auto;
+}
+.modal__header {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 20px 24px 16px; border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.modal__title { font-size: 16px; font-weight: 700; }
+.modal__subtitle { font-size: 12px; color: var(--rev-color-textTertiary); margin-top: 2px; }
+.modal__close {
+  width: 32px; height: 32px; display: flex; align-items: center; justify-content: center;
+  border: none; background: none; cursor: pointer; border-radius: 6px;
+  color: var(--rev-color-textTertiary); transition: background 0.15s;
+}
+.modal__close:hover { background: var(--rev-color-backgroundTertiary); color: var(--rev-color-textPrimary); }
+.modal__body { padding: 20px 24px; }
+.modal__footer {
+  display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+  padding: 16px 24px; border-top: 1px solid var(--rev-color-separatorTertiary);
+}
+
+/* Formula terms */
+.formula-terms { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.formula-term {
+  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
+  background: var(--rev-color-backgroundSecondary);
+  border: 1px solid var(--rev-color-controlOutline); border-radius: var(--rev-radius-8);
+}
+.formula-term__operator { flex-shrink: 0; }
+.formula-term__operator select {
+  padding: 4px 6px; border: 1px solid var(--rev-color-controlOutline);
+  border-radius: 4px; font-family: var(--rev-font-family); font-size: 14px; font-weight: 600;
+  background: var(--rev-color-backgroundPrimary); cursor: pointer; outline: none;
+  width: 44px; text-align: center; appearance: none;
+}
+.formula-term__field { flex: 1; min-width: 0; }
+.formula-term__field select {
+  width: 100%; padding: 6px 10px; border: 1px solid var(--rev-color-controlOutline);
+  border-radius: var(--rev-radius-8); font-family: var(--rev-font-family); font-size: 13px;
+  background: var(--rev-color-backgroundPrimary); appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg width='12' height='8' viewBox='0 0 12 8' fill='none' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1.5L6 6.5L11 1.5' stroke='%23666' stroke-width='1.5' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 10px center; cursor: pointer; outline: none;
+}
+.formula-term__remove {
+  flex-shrink: 0; width: 28px; height: 28px; display: flex; align-items: center; justify-content: center;
+  border: none; background: none; color: var(--rev-color-textTertiary);
+  cursor: pointer; border-radius: 6px; transition: background 0.15s, color 0.15s;
+}
+.formula-term__remove:hover { background: #fee2e2; color: var(--rev-color-textDestructive); }
+.formula-term:first-child .formula-term__operator select,
+.formula-term:first-child .formula-term__operator-static { visibility: hidden; }
+.formula-term--locked { background: var(--rev-color-backgroundTertiary); border-color: transparent; }
+.formula-term__operator-static {
+  width: 44px; padding: 4px 6px; font-size: 14px; font-weight: 600;
+  text-align: center; color: var(--rev-color-textSecondary); flex-shrink: 0;
 }
 .formula-term__field-static {
-  flex: 1;
-  min-width: 0;
-  padding: 6px 10px;
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--rev-color-textPrimary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
+  flex: 1; min-width: 0; padding: 6px 10px; font-size: 13px; font-weight: 500;
+  color: var(--rev-color-textPrimary); display: flex; align-items: center; gap: 6px;
 }
-.formula-term__lock-icon {
-  color: var(--rev-color-textTertiary);
-  font-size: 14px;
-  flex-shrink: 0;
-}
-.formula-term__field-info {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-}
+.formula-term__lock-icon { color: var(--rev-color-textTertiary); font-size: 14px; flex-shrink: 0; }
 .formula-term__hint {
-  font-size: 11px;
-  font-weight: 400;
-  color: var(--rev-color-textTertiary);
-  line-height: 1.3;
-  margin-top: 4px;
+  font-size: 11px; font-weight: 400; color: var(--rev-color-textTertiary); line-height: 1.3; margin-top: 4px;
 }
-.formula-term--locked .formula-term__hint {
-  margin-top: 0;
-}
+.formula-term--locked .formula-term__hint { margin-top: 0; }
 
 .formula-add-term {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 12px;
-  border: 1px dashed var(--rev-color-controlOutline);
-  border-radius: var(--rev-radius-8);
-  background: none;
-  font-family: var(--rev-font-family);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--rev-color-textSecondary);
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-  margin-bottom: 20px;
+  display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px;
+  border: 1px dashed var(--rev-color-controlOutline); border-radius: var(--rev-radius-8);
+  background: none; font-family: var(--rev-font-family); font-size: 13px; font-weight: 500;
+  color: var(--rev-color-textSecondary); cursor: pointer;
+  transition: border-color 0.15s, color 0.15s, background 0.15s; margin-bottom: 20px;
 }
 .formula-add-term:hover {
-  border-color: var(--rev-color-textPrimary);
-  color: var(--rev-color-textPrimary);
+  border-color: var(--rev-color-textPrimary); color: var(--rev-color-textPrimary);
   background: var(--rev-color-backgroundTertiary);
 }
 
-/* Formula preview in modal */
+/* Formula preview */
 .formula-preview {
-  padding: 12px 16px;
-  background: var(--rev-color-backgroundTertiary);
-  border-radius: var(--rev-radius-8);
-  border: 1px solid var(--rev-color-controlOutline);
+  padding: 12px 16px; background: var(--rev-color-backgroundTertiary);
+  border-radius: var(--rev-radius-8); border: 1px solid var(--rev-color-controlOutline);
 }
 .formula-preview__label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
-  margin-bottom: 6px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--rev-color-textTertiary); margin-bottom: 6px;
 }
 .formula-preview__expression {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--rev-color-textPrimary);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  flex-wrap: wrap;
+  font-size: 14px; font-weight: 500; color: var(--rev-color-textPrimary);
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
 }
-.formula-preview__expression .op {
-  font-weight: 700;
-  color: var(--rev-color-textSecondary);
-  font-size: 16px;
-}
+.formula-preview__expression .op { font-weight: 700; color: var(--rev-color-textSecondary); font-size: 16px; }
 .formula-preview__expression .field-name {
-  background: var(--rev-color-backgroundPrimary);
-  border: 1px solid var(--rev-color-controlOutline);
-  border-radius: 4px;
-  padding: 2px 8px;
-  font-size: 13px;
-  font-weight: 500;
+  background: var(--rev-color-backgroundPrimary); border: 1px solid var(--rev-color-controlOutline);
+  border-radius: 4px; padding: 2px 8px; font-size: 13px; font-weight: 500;
 }
-.formula-preview__empty {
-  font-size: 13px;
-  color: var(--rev-color-textTertiary);
-  font-style: italic;
-}
+.formula-preview__empty { font-size: 13px; color: var(--rev-color-textTertiary); font-style: italic; }
 
-/* Required field notice in modal */
 .formula-required-notice {
-  display: flex;
-  align-items: flex-start;
-  gap: 10px;
-  padding: 12px 14px;
-  background: #fffbeb;
-  border: 1px solid #fde68a;
-  border-radius: var(--rev-radius-8);
-  margin-bottom: 16px;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #92400e;
+  display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px;
+  background: #fffbeb; border: 1px solid #fde68a; border-radius: var(--rev-radius-8);
+  margin-bottom: 16px; font-size: 12px; line-height: 1.5; color: #92400e;
 }
-.formula-required-notice .material-symbols-outlined {
-  font-size: 18px;
-  flex-shrink: 0;
-  margin-top: 1px;
-  color: #d97706;
-}
-.formula-required-notice__text strong {
-  font-weight: 600;
-}
+.formula-required-notice .material-symbols-outlined { font-size: 18px; flex-shrink: 0; margin-top: 1px; color: #d97706; }
+.formula-required-notice__text strong { font-weight: 600; }
 
-/* Sample calculation in modal */
 .formula-sample {
-  margin-top: 12px;
-  padding: 10px 16px;
-  background: var(--rev-color-backgroundSecondary);
-  border-radius: var(--rev-radius-8);
-  border: 1px solid var(--rev-color-controlOutline);
-  font-size: 12px;
-  color: var(--rev-color-textSecondary);
+  margin-top: 12px; padding: 10px 16px; background: var(--rev-color-backgroundSecondary);
+  border-radius: var(--rev-radius-8); border: 1px solid var(--rev-color-controlOutline);
+  font-size: 12px; color: var(--rev-color-textSecondary);
 }
 .formula-sample__label {
-  font-size: 11px;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  color: var(--rev-color-textTertiary);
-  margin-bottom: 4px;
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.5px; color: var(--rev-color-textTertiary); margin-bottom: 4px;
 }
-.formula-sample__calc {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 13px;
-  color: var(--rev-color-textPrimary);
-}
-.formula-sample__result {
-  font-family: 'SF Mono', 'Fira Code', monospace;
-  font-size: 14px;
-  font-weight: 600;
-  color: var(--rev-color-textSuccess);
-}
+.formula-sample__calc { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 13px; color: var(--rev-color-textPrimary); }
+.formula-sample__result { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 14px; font-weight: 600; color: var(--rev-color-textSuccess); }
 
-/* Responsive */
+/* Preview modal */
+.preview-modal { width: 780px; max-width: calc(100vw - 48px); max-height: calc(100vh - 64px); overflow-y: auto; }
+.preview-tabs {
+  display: flex; gap: 0; border-bottom: 1px solid var(--rev-color-separatorTertiary);
+  padding: 0 24px; background: var(--rev-color-backgroundSecondary);
+}
+.preview-tab {
+  padding: 10px 16px; font-size: 13px; font-weight: 500;
+  color: var(--rev-color-textSecondary); cursor: pointer;
+  border-bottom: 2px solid transparent; margin-bottom: -1px;
+  transition: color 0.15s, border-color 0.15s; user-select: none;
+  display: flex; align-items: center; gap: 6px;
+}
+.preview-tab:hover { color: var(--rev-color-textPrimary); }
+.preview-tab.active { color: var(--rev-color-textPrimary); font-weight: 600; border-bottom-color: var(--rev-color-textPrimary); }
+.preview-tab .material-symbols-outlined { font-size: 16px; }
+.preview-tab-content { display: none; }
+.preview-tab-content.active { display: block; }
+
+/* Vehicle header */
+.preview-vehicle {
+  display: flex; align-items: center; gap: 16px; padding: 16px 24px;
+  background: var(--rev-color-backgroundTertiary);
+  border-bottom: 1px solid var(--rev-color-separatorTertiary);
+}
+.preview-vehicle__img {
+  width: 72px; height: 50px; border-radius: var(--rev-radius-8);
+  background: #e5e7eb; display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.preview-vehicle__img .material-symbols-outlined { font-size: 24px; color: var(--rev-color-textTertiary); }
+.preview-vehicle__info { flex: 1; min-width: 0; }
+.preview-vehicle__name { font-size: 14px; font-weight: 700; margin-bottom: 2px; }
+.preview-vehicle__meta { font-size: 11px; color: var(--rev-color-textSecondary); display: flex; gap: 12px; }
+
+/* VDP */
+.vdp-content { padding: 24px; display: flex; gap: 24px; }
+.vdp-main { flex: 1; min-width: 0; }
+.vdp-sidebar { width: 390px; flex-shrink: 0; }
+.vdp-purchase-card {
+  background: var(--rev-color-backgroundPrimary);
+  border: 1px solid var(--rev-color-separatorTertiary);
+  border-radius: var(--rev-borderRadius-brand);
+  box-shadow: var(--rev-boxShadow-embossed); padding: 24px;
+}
+.vdp-price-info { margin-bottom: 16px; }
+.vdp-price-info__row { display: flex; align-items: baseline; gap: 8px; margin-bottom: 4px; }
+.vdp-price-info__advertised { font-size: 24px; font-weight: var(--rev-fontWeight-bold); letter-spacing: -0.3px; line-height: 1.2; }
+.vdp-price-info__msrp { font-size: 14px; font-weight: var(--rev-fontWeight-regular); color: var(--rev-color-textTertiary); text-decoration: line-through; }
+.vdp-price-info__savings { font-size: 13px; font-weight: var(--rev-fontWeight-semibold); color: var(--rev-color-textSuccess); }
+.vdp-price-info__calc { font-size: 10px; color: var(--rev-color-textTertiary); margin-top: 6px; line-height: 1.4; }
+.vdp-price-info__calc code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; background: var(--rev-color-tempfill2); padding: 1px 3px; border-radius: 3px; }
+.vdp-segmented-control {
+  display: flex; background: var(--rev-color-tempfill2); border-radius: var(--rev-borderRadius-full);
+  padding: 4px; gap: 4px; margin-bottom: 20px;
+}
+.vdp-segmented-control__option {
+  flex: 1; padding: 0; min-height: 32px; font-family: var(--rev-font-family);
+  font-size: 14px; font-weight: var(--rev-fontWeight-semibold); border: none;
+  border-radius: var(--rev-borderRadius-full); cursor: pointer; background: transparent;
+  color: var(--rev-color-textSecondary); text-align: center;
+  transition: color var(--rev-duration-moderato), background var(--rev-duration-moderato), box-shadow var(--rev-duration-moderato);
+}
+.vdp-segmented-control__option.active {
+  background: var(--rev-color-backgroundPrimary); color: var(--rev-color-textPrimary);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.08), 0 1px 2px rgba(0,0,0,0.06);
+}
+.vdp-monthly-view { display: none; }
+.vdp-monthly-view.active { display: block; }
+.vdp-monthly-view__estimated { font-size: 13px; color: var(--rev-color-textSecondary); margin-bottom: 2px; }
+.vdp-monthly-view__price { font-size: 32px; font-weight: var(--rev-fontWeight-bold); letter-spacing: -0.5px; line-height: 1.1; }
+.vdp-monthly-view__unit { font-size: 16px; font-weight: var(--rev-fontWeight-medium); color: var(--rev-color-textSecondary); }
+.vdp-monthly-view__terms { display: flex; gap: 4px; margin-top: 8px; font-size: 13px; color: var(--rev-color-textTertiary); }
+.vdp-monthly-view__terms span::after { content: ' \00b7  '; }
+.vdp-monthly-view__terms span:last-child::after { content: ''; }
+.vdp-monthly-view__disclaimer { margin-top: 24px; font-size: 10px; color: var(--rev-color-textTertiary); line-height: 1.4; }
+.vdp-onetime-view { display: none; }
+.vdp-onetime-view.active { display: block; }
+.vdp-line-item { display: flex; align-items: flex-start; padding: 8px 0; gap: 8px; }
+.vdp-line-item__label { flex: 1; font-size: 14px; color: var(--rev-color-textSecondary); }
+.vdp-line-item__calc { font-size: 10px; color: var(--rev-color-textTertiary); margin-top: 1px; line-height: 1.3; }
+.vdp-line-item__calc code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; background: var(--rev-color-tempfill2); padding: 1px 3px; border-radius: 3px; }
+.vdp-line-item__value { font-size: 14px; font-weight: var(--rev-fontWeight-semibold); flex-shrink: 0; }
+.vdp-line-item__value--negative { color: var(--rev-color-textSuccess); }
+.vdp-line-item--total { border-top: 1px solid var(--rev-color-separatorTertiary); margin-top: 8px; padding-top: 12px; }
+.vdp-line-item--total .vdp-line-item__label { font-size: 16px; font-weight: var(--rev-fontWeight-bold); color: var(--rev-color-textPrimary); }
+.vdp-line-item--total .vdp-line-item__value { font-size: 16px; font-weight: var(--rev-fontWeight-bold); }
+.vdp-purchase-card__cta { margin-top: 20px; }
+.vdp-purchase-card__btn {
+  width: 100%; padding: 12px; background: var(--rev-color-textPrimary); color: white;
+  border: none; border-radius: var(--rev-borderRadius-brand);
+  font-family: var(--rev-font-family); font-size: 16px; font-weight: var(--rev-fontWeight-bold); cursor: default;
+}
+.vdp-upgrades__title { font-size: 16px; font-weight: var(--rev-fontWeight-bold); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.vdp-upgrades__count { font-size: 12px; font-weight: var(--rev-fontWeight-medium); color: var(--rev-color-textTertiary); background: var(--rev-color-tempfill2); border-radius: var(--rev-borderRadius-full); padding: 2px 8px; }
+.vdp-upgrade-item {
+  display: flex; align-items: flex-start; justify-content: space-between; padding: 12px;
+  background: var(--rev-color-backgroundPrimary); border: 1px solid var(--rev-color-separatorTertiary);
+  border-radius: var(--rev-borderRadius-brand); margin-bottom: 8px;
+}
+.vdp-upgrade-item:last-child { margin-bottom: 0; }
+.vdp-upgrade-item__name { font-size: 14px; font-weight: var(--rev-fontWeight-semibold); }
+.vdp-upgrade-item__meta { font-size: 12px; color: var(--rev-color-textTertiary); margin-top: 2px; }
+.vdp-upgrade-item__calc { font-size: 10px; color: var(--rev-color-textTertiary); margin-top: 3px; line-height: 1.3; }
+.vdp-upgrade-item__calc code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; background: var(--rev-color-tempfill2); padding: 1px 3px; border-radius: 3px; }
+.vdp-upgrade-item__right { display: flex; align-items: center; gap: 8px; flex-shrink: 0; margin-left: 12px; }
+.vdp-upgrade-item__price { font-size: 14px; font-weight: var(--rev-fontWeight-bold); }
+
+/* Checkout */
+.checkout-content { padding: 24px; }
+.checkout-collapsible { border: 1px solid var(--rev-color-controlOutline); border-radius: var(--rev-radius-10); margin-bottom: 10px; overflow: hidden; }
+.checkout-collapsible__header { display: flex; align-items: center; justify-content: space-between; padding: 12px 16px; cursor: pointer; user-select: none; transition: background 0.15s; }
+.checkout-collapsible__header:hover { background: var(--rev-color-backgroundSecondary); }
+.checkout-collapsible__left { display: flex; align-items: center; gap: 10px; }
+.checkout-collapsible__icon { color: var(--rev-color-textTertiary); font-size: 18px; }
+.checkout-collapsible__title { font-size: 13px; font-weight: 600; }
+.checkout-collapsible__count { font-size: 11px; color: var(--rev-color-textTertiary); }
+.checkout-collapsible__right { display: flex; align-items: center; gap: 10px; }
+.checkout-collapsible__subtotal { font-size: 13px; font-weight: 700; font-family: 'SF Mono', 'Fira Code', monospace; }
+.checkout-collapsible__chevron { color: var(--rev-color-textTertiary); font-size: 20px; transition: transform 0.2s; }
+.checkout-collapsible.open .checkout-collapsible__chevron { transform: rotate(180deg); }
+.checkout-collapsible__body { display: none; padding: 0 16px 12px; border-top: 1px solid var(--rev-color-separatorTertiary); }
+.checkout-collapsible.open .checkout-collapsible__body { display: block; }
+.checkout-line-item { display: flex; align-items: center; padding: 7px 0; gap: 8px; }
+.checkout-line-item__desc { flex: 1; min-width: 0; font-size: 12px; color: var(--rev-color-textSecondary); }
+.checkout-line-item__desc strong { color: var(--rev-color-textPrimary); font-weight: 500; }
+.checkout-line-item__detail { font-size: 10px; color: var(--rev-color-textTertiary); margin-top: 1px; }
+.checkout-line-item__calc { font-size: 10px; color: var(--rev-color-textTertiary); margin-top: 3px; line-height: 1.4; }
+.checkout-line-item__calc code { font-family: 'SF Mono', 'Fira Code', monospace; font-size: 10px; background: var(--rev-color-tempfill2); padding: 1px 4px; border-radius: 3px; }
+.checkout-line-item__amount { font-size: 12px; font-weight: 600; font-family: 'SF Mono', 'Fira Code', monospace; flex-shrink: 0; min-width: 80px; text-align: right; }
+.checkout-line-item__amount--negative { color: var(--rev-color-textSuccess); }
+.checkout-total { display: flex; align-items: center; padding: 16px 0 4px; gap: 10px; border-top: 2px solid var(--rev-color-textPrimary); margin-top: 16px; }
+.checkout-total__label { flex: 1; font-size: 16px; font-weight: 800; }
+.checkout-total__amount { font-size: 18px; font-weight: 800; font-family: 'SF Mono', 'Fira Code', monospace; }
+
+/* Source badges */
+.source-badge {
+  display: inline-flex; align-items: center; gap: 4px; font-size: 10px; font-weight: 600;
+  padding: 2px 7px; border-radius: var(--rev-radius-pill); cursor: pointer;
+  transition: opacity 0.15s; text-decoration: none; white-space: nowrap;
+}
+.source-badge:hover { opacity: 0.8; }
+.source-badge--lightspeed { background: var(--rev-color-accent1Light); color: var(--rev-color-accent1Bold); border: 1px solid rgba(0,102,204,0.2); }
+.source-badge--ekho { background: var(--rev-color-accent5Light); color: var(--rev-color-accent5Bold); border: 1px solid var(--rev-color-accent5Outline); }
+.source-badge--calculated { background: var(--rev-color-backgroundTertiary); color: var(--rev-color-textTertiary); border: 1px solid var(--rev-color-controlOutline); cursor: default; }
+.source-badge--calculated:hover { opacity: 1; }
+.source-badge .material-symbols-outlined { font-size: 11px; }
+
+.preview-legend {
+  display: flex; align-items: center; gap: 16px; padding: 12px 24px;
+  border-top: 1px solid var(--rev-color-separatorTertiary);
+  background: var(--rev-color-backgroundSecondary);
+  border-radius: 0 0 var(--rev-radius-12) var(--rev-radius-12);
+}
+.preview-legend__label { font-size: 11px; font-weight: 600; color: var(--rev-color-textTertiary); text-transform: uppercase; letter-spacing: 0.5px; }
+.preview-legend__item { display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--rev-color-textSecondary); }
+.preview-legend__dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.preview-legend__dot--lightspeed { background: var(--rev-color-accent1Bold); }
+.preview-legend__dot--ekho { background: var(--rev-color-accent5Bold); }
+.preview-legend__dot--calculated { background: #d1d5db; }
+
 @media (max-width: 768px) {
   .settings-section { flex-direction: column; gap: 16px; }
   .settings-section__header { width: 100%; }
-  .mapping-row { flex-wrap: wrap; }
-  .mapping-row__field-name { width: 100%; }
+  .anchor-nav { display: none; }
+}
+/* Toast notification */
+.pl-toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--rev-color-textPrimary);
+  color: var(--rev-color-backgroundPrimary);
+  padding: 10px 20px;
+  border-radius: var(--rev-radius-pill);
+  font-size: 13px;
+  font-family: var(--rev-font-family);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  opacity: 0;
+  transition: opacity 0.2s, transform 0.2s;
+  pointer-events: none;
+  z-index: 1000;
+}
+.pl-toast.show {
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
 }
 </style>
 </head>
@@ -1283,14 +858,6 @@ body {
 
 <div class="page-layout">
   <div class="page-shell">
-    <!-- Demo switcher -->
-    <div class="demo-switcher">
-      <span class="demo-switcher__label">State:</span>
-      <button class="demo-switcher__btn active" onclick="switchState('connected')">Lightspeed connected</button>
-      <button class="demo-switcher__btn" onclick="switchState('no-provider')">No provider</button>
-      <button class="demo-switcher__btn" onclick="switchState('other-dms')">Other DMS</button>
-    </div>
-
     <!-- Breadcrumb -->
     <div class="breadcrumb">
       <a href="#">Settings</a>
@@ -1319,10 +886,7 @@ body {
         <div class="settings-section__content">
           <div class="card">
             <div class="form-field">
-              <label class="form-field__label">
-                CRM email address
-                <span class="material-symbols-outlined info-icon">info</span>
-              </label>
+              <label class="form-field__label">CRM email address <span class="material-symbols-outlined info-icon">info</span></label>
               <input class="form-field__input" type="email" placeholder="crm-intake@dealer.com" value="crm-intake@dealer.com">
             </div>
           </div>
@@ -1332,8 +896,9 @@ body {
 
     <!-- DMS Tab -->
     <div class="tab-content active" data-tab-content="dms">
+
         <!-- DMS Connection Section -->
-        <div class="settings-section" style="padding-top:0;" id="dms-connection-section">
+        <div class="settings-section" style="padding-top:0;" id="section-connection">
           <div class="settings-section__header">
             <div class="settings-section__title">DMS connection</div>
             <div class="settings-section__description">Connect your Dealer Management System to sync inventory and customer data.</div>
@@ -1341,23 +906,11 @@ body {
           <div class="settings-section__content">
             <div class="card">
               <div class="form-field">
-                <label class="form-field__label">DMS Provider</label>
-                <select class="form-field__select" id="dms-provider-select" onchange="handleProviderChange()">
-                  <option value="">Select DMS provider</option>
-                  <option value="lightspeed" selected>Lightspeed DMS</option>
-                  <option value="other">Other</option>
-                </select>
-              </div>
-              <div class="form-field" id="cmf-field">
                 <label class="form-field__label">
                   CMF Number
                   <span class="material-symbols-outlined info-icon" title="Your Customer Master File number from Lightspeed">info</span>
                 </label>
-                <input class="form-field__input" type="text" value="76217246" placeholder="Enter CMF number">
-              </div>
-              <div class="form-field" id="other-dms-field" style="display:none">
-                <label class="form-field__label">DMS Name</label>
-                <input class="form-field__input" type="text" placeholder="Enter DMS name">
+                <input class="form-field__input" type="text" value="7582919" placeholder="Enter CMF number">
               </div>
               <div class="checkbox-field">
                 <input type="checkbox" id="auth-consent" checked>
@@ -1367,13 +920,24 @@ body {
           </div>
         </div>
 
-        <!-- Field Mapping Sections (only visible when Lightspeed is selected) -->
+        <!-- Field Mapping Sections -->
         <div id="field-mapping-section">
 
+        <!-- Preview trigger bar -->
+        <div class="preview-trigger-bar" style="margin-top:0; margin-bottom:24px;">
+          <div class="preview-trigger-bar__text">
+            <strong>See how your settings look to buyers.</strong> Preview a sample vehicle across the VDP and checkout.
+          </div>
+          <button class="btn btn--outline" onclick="openPreviewModal()" style="flex-shrink:0;">
+            <span class="material-symbols-outlined" style="font-size:18px">visibility</span>
+            Buyer preview
+          </button>
+        </div>
+
         <!-- Pricing section -->
-        <div class="settings-section">
+        <div class="settings-section" id="section-pricing">
           <div class="settings-section__header">
-            <div class="settings-section__title">Pricing</div>
+            <div class="settings-section__title">Pricing field mappings</div>
             <div class="settings-section__description">Map Lightspeed price fields to Ekho. Build formulas using one or more fields with add/subtract operators.</div>
           </div>
           <div class="settings-section__content">
@@ -1383,66 +947,52 @@ body {
                   <div class="mapping-card__header-left">
                     <span class="material-symbols-outlined mapping-card__icon">attach_money</span>
                     <span class="mapping-card__title">Pricing</span>
-                    <span class="mapping-card__count" id="pricing-count">3 of 3 mapped</span>
+                    <span class="mapping-card__count" id="pricing-count">2 of 3 mapped</span>
                   </div>
                 </div>
                 <div class="mapping-headers">
-                  <span class="col-formula">Lightspeed source</span>
-                  <span class="col-arrow"></span>
                   <span class="col-field">Ekho field</span>
+                  <span class="col-formula">Lightspeed source</span>
                   <span class="col-sync">Sync</span>
-                  <span class="col-status"></span>
                 </div>
 
+                <!-- Dealer retail price: unconfigured -->
                 <div class="mapping-row" data-field="dealer-retail-price" data-ekho-label="Dealer Retail Price">
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Dealer retail price</div>
+                  </div>
                   <div class="mapping-row__formula">
-                    <button class="formula-trigger" onclick="openFormulaModal(this)">
-                      <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">MSRP</span>
-                        </span>
-                      </span>
-                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                    <button class="add-btn" onclick="openFormulaModal(this)">
+                      <span class="material-symbols-outlined" style="font-size:16px">add</span> Add
                     </button>
                   </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                  </div>
-                  <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Dealer Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Highest price, struck through when Advertised Price is lower</span></span></div>
-                  </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
-                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <input type="checkbox" onchange="handleToggle(this)">
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
                   </div>
-                  <div class="mapping-row__status">
-                    <span class="material-symbols-outlined status-mapped">check_circle</span>
-                  </div>
                 </div>
 
+                <!-- Advertised price: locked -->
                 <div class="mapping-row mapping-row--locked" data-field="advertised-price" data-ekho-label="Advertised Price">
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Advertised price</div>
+                  </div>
                   <div class="mapping-row__formula">
                     <div class="formula-trigger--static">
                       <span class="formula-trigger__text">
                         <span class="formula-tag"><span class="formula-tag__field">MSRP</span></span>
                         <span class="formula-tag"><span class="formula-tag__op">+</span></span>
                         <span class="formula-tag"><span class="formula-tag__field">Options</span></span>
-                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">+</span></span>
                         <span class="formula-tag"><span class="formula-tag__field">Rebates</span></span>
-                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
+                        <span class="formula-tag"><span class="formula-tag__op">+</span></span>
                         <span class="formula-tag"><span class="formula-tag__field">Discount</span></span>
                       </span>
                       <span class="formula-trigger__lock material-symbols-outlined">lock</span>
                     </div>
-                  </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                  </div>
-                  <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Advertised Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">Selling price shown on website and VDP. Calculated automatically.</span></span></div>
                   </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
@@ -1450,32 +1000,23 @@ body {
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
-                  </div>
-                  <div class="mapping-row__status">
-                    <span class="material-symbols-outlined status-mapped">check_circle</span>
                   </div>
                 </div>
 
+                <!-- Retail price: locked -->
                 <div class="mapping-row mapping-row--locked" data-field="retail-price" data-ekho-label="Retail Price">
+                  <div class="mapping-row__field-name">
+                    <div class="mapping-row__field-label">Retail price</div>
+                  </div>
                   <div class="mapping-row__formula">
                     <div class="formula-trigger--static">
                       <span class="formula-trigger__text">
                         <span class="formula-tag"><span class="formula-tag__field">MSRP</span></span>
                         <span class="formula-tag"><span class="formula-tag__op">+</span></span>
-                        <span class="formula-tag"><span class="formula-tag__field">Options</span></span>
-                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
                         <span class="formula-tag"><span class="formula-tag__field">Rebates</span></span>
-                        <span class="formula-tag"><span class="formula-tag__op">&minus;</span></span>
-                        <span class="formula-tag"><span class="formula-tag__field">Discount</span></span>
                       </span>
                       <span class="formula-trigger__lock material-symbols-outlined">lock</span>
                     </div>
-                  </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                  </div>
-                  <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Retail Price <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">The selling price of the unit. Calculated automatically.</span></span></div>
                   </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
@@ -1483,21 +1024,17 @@ body {
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
-                  </div>
-                  <div class="mapping-row__status">
-                    <span class="material-symbols-outlined status-mapped">check_circle</span>
                   </div>
                 </div>
               </div>
-
             </div>
           </div>
         </div>
 
         <!-- Fees section -->
-        <div class="settings-section">
+        <div class="settings-section" id="section-fees">
           <div class="settings-section__header">
-            <div class="settings-section__title">Inventory fees</div>
+            <div class="settings-section__title">Fee field mappings</div>
             <div class="settings-section__description">Map Lightspeed fee fields to Ekho inventory. Fee configuration (amounts, taxability, display rules) lives in <a href="#" style="color:var(--rev-color-accent1Bold); text-decoration:underline;">Fee settings</a>.</div>
           </div>
           <div class="settings-section__content">
@@ -1507,59 +1044,34 @@ body {
                   <div class="mapping-card__header-left">
                     <span class="material-symbols-outlined mapping-card__icon">receipt_long</span>
                     <span class="mapping-card__title">Fees</span>
-                    <span class="mapping-card__count" id="fees-count">2 of 2 mapped</span>
+                    <span class="mapping-card__count" id="fees-count">0 of 1 mapped</span>
                   </div>
                 </div>
                 <div class="mapping-headers">
-                  <span class="col-formula">Lightspeed source</span>
-                  <span class="col-arrow"></span>
                   <span class="col-field">Ekho field</span>
+                  <span class="col-formula">Lightspeed source</span>
                   <span class="col-sync">Sync</span>
-                  <span class="col-status"></span>
                   <span class="col-remove"></span>
                 </div>
                 <div id="fee-rows">
-                  <div class="mapping-row" data-field="fee" data-ekho-label="Freight" data-is-fee="true">
-                    <div class="mapping-row__formula">
-                      <button class="formula-trigger" onclick="openFormulaModal(this)">
-                        <span class="formula-trigger__text">
-                          <span class="formula-tag">
-                            <span class="formula-tag__field">Freight / Setup</span>
-                          </span>
-                        </span>
-                        <span class="formula-trigger__icon material-symbols-outlined">edit</span>
+                  <!-- Empty starting row -->
+                  <div class="mapping-row" data-field="fee" data-ekho-label="New Fee" data-is-fee="true">
+                    <div class="mapping-row__field-name">
+                      <button class="add-btn" style="font-size:12px; padding:4px 10px;">
+                        <span class="material-symbols-outlined" style="font-size:14px">add</span> Add
                       </button>
                     </div>
-                    <div class="mapping-row__arrow">
-                      <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                    </div>
-                    <div class="mapping-row__field-name mapping-row__field-name--editable">
-                      <select onchange="updateFeeLabel(this)">
-                        <option value="">Select fee...</option>
-                        <option value="Freight" selected>Freight</option>
-                        <option value="PDI">PDI</option>
-                        <option value="Prep">Prep</option>
-                        <option value="Setup">Setup</option>
-                        <option value="Assembly">Assembly</option>
-                        <option value="Crating">Crating</option>
-                        <option value="Destination">Destination</option>
-                        <option value="Labor prep">Labor prep</option>
-                        <option value="Custom 1">Custom 1</option>
-                        <option value="Custom 2">Custom 2</option>
-                        <option value="Custom 3">Custom 3</option>
-                        <option value="Custom 4">Custom 4</option>
-                        <option value="Custom 5">Custom 5</option>
-                      </select>
+                    <div class="mapping-row__formula">
+                      <button class="add-btn" onclick="openFormulaModal(this)" style="font-size:12px; padding:4px 10px;">
+                        <span class="material-symbols-outlined" style="font-size:14px">add</span> Add
+                      </button>
                     </div>
                     <div class="mapping-row__toggle">
                       <label class="toggle">
-                        <input type="checkbox" checked onchange="handleToggle(this)">
+                        <input type="checkbox" onchange="handleToggle(this)">
                         <span class="toggle__track"></span>
                         <span class="toggle__thumb"></span>
                       </label>
-                    </div>
-                    <div class="mapping-row__status">
-                      <span class="material-symbols-outlined status-mapped">check_circle</span>
                     </div>
                     <button class="fee-mapping-row__remove" onclick="removeFeeRow(this)" title="Remove mapping">
                       <span class="material-symbols-outlined" style="font-size:18px">close</span>
@@ -1582,7 +1094,7 @@ body {
         </div>
 
         <!-- Rebates section -->
-        <div class="settings-section">
+        <div class="settings-section" id="section-rebates">
           <div class="settings-section__header">
             <div class="settings-section__title">Rebates</div>
             <div class="settings-section__description">Map Lightspeed rebate fields to Ekho. Combine multiple rebate sources into a single total.</div>
@@ -1594,146 +1106,82 @@ body {
                   <div class="mapping-card__header-left">
                     <span class="material-symbols-outlined mapping-card__icon">sell</span>
                     <span class="mapping-card__title">Rebates</span>
-                    <span class="mapping-card__count" id="rebates-count">1 of 1 mapped</span>
+                    <span class="mapping-card__count" id="rebates-count">0 of 1 mapped</span>
                   </div>
                 </div>
                 <div class="mapping-headers">
-                  <span class="col-formula">Lightspeed source</span>
-                  <span class="col-arrow"></span>
                   <span class="col-field">Ekho field</span>
+                  <span class="col-formula">Lightspeed source</span>
                   <span class="col-sync">Sync</span>
-                  <span class="col-status"></span>
                 </div>
                 <div class="mapping-row" data-field="rebates" data-ekho-label="Rebates">
-                  <div class="mapping-row__formula">
-                    <button class="formula-trigger" onclick="openFormulaModal(this)">
-                      <span class="formula-trigger__text">
-                        <span class="formula-tag">
-                          <span class="formula-tag__field">Rebate Amount</span>
-                          <span class="formula-tag__op">+</span>
-                          <span class="formula-tag__field">Mfr Rebate</span>
-                        </span>
-                      </span>
-                      <span class="formula-trigger__icon material-symbols-outlined">edit</span>
-                    </button>
-                  </div>
-                  <div class="mapping-row__arrow">
-                    <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-                  </div>
                   <div class="mapping-row__field-name">
-                    <div class="mapping-row__field-label">Rebates <span class="field-info-trigger"><span class="material-symbols-outlined">info</span><span class="field-info-trigger__tip">OEM and dealer rebates</span></span></div>
+                    <div class="mapping-row__field-label">Rebates</div>
+                  </div>
+                  <div class="mapping-row__formula">
+                    <button class="add-btn" onclick="openFormulaModal(this)">
+                      <span class="material-symbols-outlined" style="font-size:16px">add</span> Add
+                    </button>
                   </div>
                   <div class="mapping-row__toggle">
                     <label class="toggle">
-                      <input type="checkbox" checked onchange="handleToggle(this)">
+                      <input type="checkbox" onchange="handleToggle(this)">
                       <span class="toggle__track"></span>
                       <span class="toggle__thumb"></span>
                     </label>
                   </div>
-                  <div class="mapping-row__status">
-                    <span class="material-symbols-outlined status-mapped">check_circle</span>
-                  </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Parts and labor section -->
-        <div class="settings-section" style="border-bottom:none;">
+        <!-- Parts & labor section -->
+        <div class="settings-section" id="section-parts-labor" style="border-bottom:none;">
           <div class="settings-section__header">
-            <div class="settings-section__title" style="display:flex; align-items:center; gap:8px;">Parts and labor <span style="display:inline-flex; align-items:center; gap:4px; font-size:11px; font-weight:500; color:var(--rev-color-textTertiary); background:var(--rev-color-backgroundTertiary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-pill); padding:2px 10px;"><span class="material-symbols-outlined" style="font-size:14px;">lock</span>Automatic</span></div>
-            <div class="settings-section__description">Ekho automatically syncs parts and labor breakdowns from each Lightspeed option. No configuration needed. Use price fields (not cost fields) in Lightspeed.</div>
+            <div class="settings-section__title" style="display:flex; align-items:center; gap:8px;">Parts &amp; labor <span class="pl-badge"><span class="pl-badge__dot"></span> Automatic</span></div>
+            <div class="settings-section__description">Ekho automatically syncs parts and labor breakdowns from each Lightspeed option. You can adjust pricing impact and buyer visibility here.</div>
           </div>
           <div class="settings-section__content">
             <div class="field-mapping">
-              <div class="card" style="padding:24px; overflow:visible; border:1px dashed var(--rev-color-controlOutline); background:var(--rev-color-backgroundSecondary);">
 
-                <!-- Flow diagram -->
-                <div style="display:flex; align-items:stretch; gap:0; position:relative;">
-
-                  <!-- Lightspeed side -->
-                  <div style="flex:1; min-width:0;">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--rev-color-textTertiary); margin-bottom:12px;">Lightspeed Option</div>
-                    <div style="border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-10); padding:14px; background:var(--rev-color-backgroundSecondary);">
-                      <div style="font-weight:600; font-size:14px; margin-bottom:12px;">Windshield Install</div>
-                      <div style="display:flex; flex-direction:column; gap:6px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
-                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Windshield (part price)</span>
-                          <span style="font-size:12px; font-weight:600;">$220</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
-                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Install labor (labor price)</span>
-                          <span style="font-size:12px; font-weight:600;">$80</span>
-                        </div>
-                        <div style="border-top:1px dashed var(--rev-color-controlOutline); margin:4px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px;">
-                          <span style="font-size:12px; font-weight:600;">Option price</span>
-                          <span style="font-size:13px; font-weight:700;">$350</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <!-- Arrow connector -->
-                  <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; width:64px; flex-shrink:0; padding-top:28px;">
-                    <div style="width:100%; height:1px; background:var(--rev-color-controlOutline); position:relative;">
-                      <span class="material-symbols-outlined" style="position:absolute; right:-4px; top:50%; transform:translateY(-50%); font-size:18px; color:var(--rev-color-textTertiary);">arrow_forward</span>
-                    </div>
-                    <div style="font-size:10px; color:var(--rev-color-textTertiary); margin-top:6px;">sync</div>
-                  </div>
-
-                  <!-- Ekho side -->
-                  <div style="flex:1; min-width:0;">
-                    <div style="font-size:11px; font-weight:600; text-transform:uppercase; letter-spacing:0.5px; color:var(--rev-color-textTertiary); margin-bottom:12px;">Ekho</div>
-                    <div style="border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-10); padding:14px; background:var(--rev-color-backgroundSecondary);">
-                      <div style="font-weight:600; font-size:14px; margin-bottom:12px;">Windshield Install</div>
-                      <div style="display:flex; flex-direction:column; gap:6px;">
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
-                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Parts</span>
-                          <span style="font-size:12px; font-weight:600;">$220</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-backgroundPrimary); border:1px solid var(--rev-color-controlOutline); border-radius:var(--rev-radius-8);">
-                          <span style="font-size:12px; color:var(--rev-color-textSecondary);">Labor</span>
-                          <span style="font-size:12px; font-weight:600;">$80</span>
-                        </div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px; background:var(--rev-color-accent5Light); border:1px solid var(--rev-color-accent5Outline); border-radius:var(--rev-radius-8);">
-                          <span style="font-size:12px; color:var(--rev-color-accent5Bold); font-weight:500;">Markup</span>
-                          <span style="font-size:12px; font-weight:600; color:var(--rev-color-accent5Bold);">$50</span>
-                        </div>
-                        <div style="border-top:1px dashed var(--rev-color-controlOutline); margin:4px 0;"></div>
-                        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 10px;">
-                          <span style="font-size:12px; font-weight:600;">Buyer sees</span>
-                          <span style="font-size:13px; font-weight:700;">$350</span>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
+              <!-- Sync from Lightspeed card -->
+              <div class="pl-sync-card">
+                <div class="pl-sync-card__header">Sync from Lightspeed</div>
+                <div class="pl-sync-card__row">
+                  <span class="pl-sync-card__label">Options</span>
+                  <label class="toggle"><input type="checkbox" checked><span class="toggle__track"></span><span class="toggle__thumb"></span></label>
                 </div>
-
-                <!-- Footnotes -->
-                <div style="margin-top:16px; display:flex; flex-direction:column; gap:8px; padding-top:16px; border-top:1px solid var(--rev-color-separatorTertiary);">
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textTertiary);">lock</span>
-                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">This mapping is automatic. Ekho reads parts and labor from each Lightspeed option.</span>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textTertiary);">info</span>
-                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">Options with no parts or labor are treated as standalone parts.</span>
-                  </div>
-                  <div style="display:flex; align-items:center; gap:8px;">
-                    <span class="material-symbols-outlined" style="font-size:16px; color:var(--rev-color-textDestructive);">warning</span>
-                    <span style="font-size:12px; color:var(--rev-color-textSecondary);">Use <strong>price</strong> fields in Lightspeed, not cost fields. Cost fields represent dealer acquisition cost.</span>
-                  </div>
+                <div class="pl-sync-card__row">
+                  <span class="pl-sync-card__label">Parts</span>
+                  <label class="toggle"><input type="checkbox" checked><span class="toggle__track"></span><span class="toggle__thumb"></span></label>
                 </div>
-
+                <div class="pl-sync-card__row">
+                  <span class="pl-sync-card__label">Labors</span>
+                  <label class="toggle"><input type="checkbox" checked><span class="toggle__track"></span><span class="toggle__thumb"></span></label>
+                </div>
               </div>
+
+              <!-- Open table modal button -->
+              <div class="card" style="padding:16px 20px; display:flex; align-items:center; justify-content:space-between;">
+                <div>
+                  <div style="font-size:14px; font-weight:600; margin-bottom:2px;">Options, Parts &amp; Labors</div>
+                  <div style="font-size:12px; color:var(--rev-color-textSecondary);">3 options, 6 parts, 6 labors synced from Lightspeed</div>
+                </div>
+                <button class="btn btn--primary" onclick="openPlModal()" style="border-radius:var(--rev-radius-pill);">
+                  <span class="material-symbols-outlined" style="font-size:16px">tune</span>
+                  Configure
+                </button>
+              </div>
+
+              <!-- Old inline tables removed, content lives in pl-modal now -->
+
             </div>
           </div>
         </div>
 
-        </div>
+        </div><!-- end field-mapping-section -->
+    </div><!-- end DMS tab -->
 
     <!-- Google Tab -->
     <div class="tab-content" data-tab-content="google">
@@ -1774,83 +1222,640 @@ body {
     </div>
   </div><!-- end page-shell -->
 
-  <!-- Commentary rail -->
-  <div class="commentary-rail">
-    <div class="commentary-rail__inner">
-      <!-- CRM commentary -->
-      <div class="commentary-tab-group" data-commentary-tab="crm">
-        <div class="commentary-card">
-          <div class="commentary-card__title">Design notes</div>
-          <div class="commentary-item">
-            <span class="commentary-tag changed">NAV CHANGE</span>
-            <div class="commentary-item__title">Moved to own tab</div>
-            <div class="commentary-item__body">CRM forwarding was previously a section on the Integrations page. Now lives in its own tab for cleaner navigation.</div>
-          </div>
-        </div>
+  <!-- Anchor nav -->
+  <nav class="anchor-nav">
+    <ul class="anchor-nav__list">
+      <li><a class="anchor-nav__link" href="#section-connection">DMS connection</a></li>
+      <li><a class="anchor-nav__link" href="#section-pricing">Pricing</a></li>
+      <li><a class="anchor-nav__link" href="#section-fees">Fees</a></li>
+      <li><a class="anchor-nav__link" href="#section-rebates">Rebates</a></li>
+      <li><a class="anchor-nav__link" href="#section-parts-labor">Parts &amp; labor</a></li>
+    </ul>
+  </nav>
+</div><!-- end page-layout -->
+<!-- Parts & Labor Modal -->
+<div class="modal-backdrop" id="pl-modal">
+  <div class="modal" style="width:960px; max-width:calc(100vw - 48px); max-height:calc(100vh - 64px); overflow-y:auto;">
+    <div class="modal__header">
+      <div>
+        <div class="modal__title">Parts &amp; labor configuration</div>
+        <div class="modal__subtitle">Configure buyer pricing impact and visibility for synced Lightspeed items</div>
       </div>
+      <button class="modal__close" onclick="closePlModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+    <div class="pl-tabs" style="padding:0 24px; background:var(--rev-color-backgroundSecondary);">
+      <div class="pl-tab active" onclick="switchPlTab('options')">Options (3) <span class="pl-dot" style="margin-left:6px;"></span></div>
+      <div class="pl-tab" onclick="switchPlTab('parts')">Parts (6) <span class="pl-dot" style="margin-left:6px;"></span></div>
+      <div class="pl-tab" onclick="switchPlTab('labors')">Labors (6) <span class="pl-dot" style="margin-left:6px;"></span></div>
+    </div>
 
-      <!-- DMS commentary -->
-      <div class="commentary-tab-group active" data-commentary-tab="dms">
-        <div class="commentary-card" style="margin-bottom:16px;">
-          <div class="commentary-card__title">Design notes</div>
-          <div class="commentary-item">
-            <span class="commentary-tag new">NEW INTERACTION</span>
-            <div class="commentary-item__title">Formula builder</div>
-            <div class="commentary-item__body">Each Ekho field opens a modal where dealers build formulas using multiple Lightspeed fields with + and &minus; operators. Supports complex calculations like "MSRP &minus; Rebate Amount".</div>
-          </div>
-          <div class="commentary-item">
-            <span class="commentary-tag new">NEW UI PATTERN</span>
-            <div class="commentary-item__title">Inline formula preview</div>
-            <div class="commentary-item__body">Each mapping row shows the formula expression as styled tags. Dealers can see at a glance whether a field uses a single source or a multi-field calculation.</div>
-          </div>
-          <div class="commentary-item">
-            <span class="commentary-tag new">NEW VALIDATION</span>
-            <div class="commentary-item__title">Sample calculation</div>
-            <div class="commentary-item__body">The modal shows a live calculation preview using sample Lightspeed data, so dealers can validate their formula produces the right result before saving.</div>
-          </div>
-        </div>
-        <div class="commentary-card" style="margin-bottom:16px;">
-          <div class="commentary-card__title">Architecture</div>
-          <div class="commentary-item">
-            <span class="commentary-tag methodology">LAYOUT DECISION</span>
-            <div class="commentary-item__title">Consistent left-to-right flow</div>
-            <div class="commentary-item__body">All rows read left to right: Lightspeed formula on the left, arrow, Ekho destination on the right. Arrow reinforces the data flow direction.</div>
-          </div>
-          <div class="commentary-item">
-            <span class="commentary-tag methodology">UX PRINCIPLE</span>
-            <div class="commentary-item__title">Progressive complexity</div>
-            <div class="commentary-item__body">Simple 1:1 mappings look simple (just a field name). Multi-field formulas show the full expression. Dealers only see complexity when they need it.</div>
-          </div>
-        </div>
-        <div class="commentary-card">
-          <div class="commentary-card__title">Scope</div>
-          <div class="commentary-item">
-            <span class="commentary-tag scope">V1 SCOPE LIMIT</span>
-            <div class="commentary-item__title">Add/subtract only</div>
-            <div class="commentary-item__body">V1 supports addition and subtraction operators only. Multiplication/division and conditional logic are out of scope.</div>
-          </div>
-          <div class="commentary-item">
-            <span class="commentary-tag scope">PLACEHOLDER DATA</span>
-            <div class="commentary-item__title">Lightspeed fields are placeholders</div>
-            <div class="commentary-item__body">Using realistic placeholder field names. Will swap in actual Lightspeed API field names when available.</div>
-          </div>
-        </div>
-      </div>
+    <!-- Options tab -->
+    <div class="pl-tab-content active" data-pl-tab="options">
+      <table class="pl-table">
+        <thead>
+          <tr>
+            <th>Option #</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Install type</th>
+            <th>Buyer visibility</th>
+            <th>Buyer pricing impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="pl-table__num">1</td>
+            <td>
+              Windshield Install
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Installed option</div>
+            </td>
+            <td class="pl-table__price">$300</td>
+            <td><span class="pl-type-badge pl-type-badge--installed">Installed</span></td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Visible" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Visible</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to upgrades price" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to upgrades price</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">2</td>
+            <td>
+              Uncrating &amp; Assembly
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Prep option</div>
+            </td>
+            <td class="pl-table__price">$150</td>
+            <td><span class="pl-type-badge pl-type-badge--prep">Prep</span></td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to assembly fee" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to assembly fee</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">3</td>
+            <td>
+              Crate Damage Claim
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Warranty option</div>
+            </td>
+            <td class="pl-table__price">$0</td>
+            <td><span class="pl-type-badge pl-type-badge--warranty">Warranty</span></td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
 
-      <!-- Google commentary -->
-      <div class="commentary-tab-group" data-commentary-tab="google">
-        <div class="commentary-card">
-          <div class="commentary-card__title">Design notes</div>
-          <div class="commentary-item">
-            <span class="commentary-tag changed">NAV CHANGE</span>
-            <div class="commentary-item__title">Moved to own tab</div>
-            <div class="commentary-item__body">Google Business Profile was previously a section on the Integrations page. Now lives in its own tab. Content is unchanged.</div>
-          </div>
-        </div>
-      </div>
+    <!-- Parts tab -->
+    <div class="pl-tab-content" data-pl-tab="parts">
+      <table class="pl-table">
+        <thead>
+          <tr>
+            <th>Part number</th>
+            <th>Description</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Option #</th>
+            <th>Buyer visibility</th>
+            <th>Buyer pricing impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="pl-table__num">P-4821-WS</td>
+            <td>
+              Windshield Glass
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Installed part, linked to option</div>
+            </td>
+            <td class="pl-table__price">$220</td>
+            <td><span class="pl-type-badge pl-type-badge--installed">Installed</span></td>
+            <td class="pl-table__num">1</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Visible (nested under associated option)" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Visible (nested under associated option)</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to upgrades price" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to upgrades price</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">P-5510-GH</td>
+            <td>
+              Grab Handle Kit
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Installed part, no linked option</div>
+            </td>
+            <td class="pl-table__price">$95</td>
+            <td><span class="pl-type-badge pl-type-badge--installed">Installed</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Visible" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Visible</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Standalone price" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Standalone price</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">P-3310-BT</td>
+            <td>
+              Crate Bolts &amp; Packing
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Prep part, linked to option</div>
+            </td>
+            <td class="pl-table__price">$15</td>
+            <td><span class="pl-type-badge pl-type-badge--prep">Prep</span></td>
+            <td class="pl-table__num">2</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to assembly fee" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to assembly fee</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">P-1122-OF</td>
+            <td>
+              Oil Filter
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Prep part, no linked option</div>
+            </td>
+            <td class="pl-table__price">$12</td>
+            <td><span class="pl-type-badge pl-type-badge--prep">Prep</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">P-0071-RP</td>
+            <td>
+              Replacement Fender Panel
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Warranty part, linked to option</div>
+            </td>
+            <td class="pl-table__price">$185</td>
+            <td><span class="pl-type-badge pl-type-badge--warranty">Warranty</span></td>
+            <td class="pl-table__num">3</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">P-0088-TP</td>
+            <td>
+              Touch-Up Paint Kit
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Warranty part, no linked option</div>
+            </td>
+            <td class="pl-table__price">$25</td>
+            <td><span class="pl-type-badge pl-type-badge--warranty">Warranty</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Labors tab -->
+    <div class="pl-tab-content" data-pl-tab="labors">
+      <table class="pl-table">
+        <thead>
+          <tr>
+            <th>RO #</th>
+            <th>Job Title</th>
+            <th>Price</th>
+            <th>Type</th>
+            <th>Option</th>
+            <th>Buyer visibility</th>
+            <th>Buyer pricing impact</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="pl-table__num">RO-00142</td>
+            <td>
+              Windshield Install Labor
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Installed labor, linked to option</div>
+            </td>
+            <td class="pl-table__price">$80</td>
+            <td><span class="pl-type-badge pl-type-badge--installed">Installed</span></td>
+            <td class="pl-table__num">1</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Visible (nested under associated option)" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Visible (nested under associated option)</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to upgrades price" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to upgrades price</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">RO-00147</td>
+            <td>
+              Grab Handle Install
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Installed labor, no linked option</div>
+            </td>
+            <td class="pl-table__price">$35</td>
+            <td><span class="pl-type-badge pl-type-badge--installed">Installed</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Visible" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Visible</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Standalone price" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Standalone price</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">RO-00151</td>
+            <td>
+              Uncrating Labor
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Prep labor, linked to option</div>
+            </td>
+            <td class="pl-table__price">$75</td>
+            <td><span class="pl-type-badge pl-type-badge--prep">Prep</span></td>
+            <td class="pl-table__num">2</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="Added to assembly fee" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Added to assembly fee</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">RO-00153</td>
+            <td>
+              Oil Change Labor
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Prep labor, no linked option</div>
+            </td>
+            <td class="pl-table__price">$45</td>
+            <td><span class="pl-type-badge pl-type-badge--prep">Prep</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">RO-00160</td>
+            <td>
+              Fender Panel Replacement
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Warranty labor, linked to option</div>
+            </td>
+            <td class="pl-table__price">$120</td>
+            <td><span class="pl-type-badge pl-type-badge--warranty">Warranty</span></td>
+            <td class="pl-table__num">3</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible (nested under associated option)</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+          <tr>
+            <td class="pl-table__num">RO-00162</td>
+            <td>
+              Paint Touch-Up
+              <div style="font-size:11px; color:var(--rev-color-textTertiary); margin-top:2px;">Warranty labor, no linked option</div>
+            </td>
+            <td class="pl-table__price">$40</td>
+            <td><span class="pl-type-badge pl-type-badge--warranty">Warranty</span></td>
+            <td class="pl-table__num pl-table__no-option">&mdash;</td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="visibility" data-value="Hidden" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">Hidden</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">Hidden</button></li>
+                  <li><button onclick="selectPlOption(this)">Visible</button></li>
+                </menu>
+              </div>
+            </td>
+            <td>
+              <div data-rev-component="dropdown" data-pl-type="impact" data-value="No impact" aria-expanded="false">
+                <button class="dropdown-button--rev" onclick="togglePlDropdown(this.parentNode)">
+                  <span class="dropdown-button-text--rev">No impact</span>
+                  <svg class="dropdown-chevron--rev" viewBox="0 0 10 6"><polyline points="1 1 5 5 9 1" stroke="currentColor" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                </button>
+                <menu>
+                  <li><button aria-selected="true" onclick="selectPlOption(this)">No impact</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to upgrades price</button></li>
+                  <li><button onclick="selectPlOption(this)">Added to assembly fee</button></li>
+                  <li><button onclick="selectPlOption(this)">Standalone price</button></li>
+                </menu>
+              </div>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="modal__footer">
+      <button class="btn btn--outline" onclick="closePlModal()">Close</button>
+      <button class="btn btn--primary" onclick="closePlModal()">Save changes</button>
     </div>
   </div>
-</div><!-- end page-layout -->
+</div>
 
 <!-- Formula Modal -->
 <div class="modal-backdrop" id="formula-modal">
@@ -1865,30 +1870,23 @@ body {
       </button>
     </div>
     <div class="modal__body">
-      <!-- Required field notice (shown only for Assembly) -->
       <div class="formula-required-notice" id="formula-required-notice" style="display:none;">
         <span class="material-symbols-outlined">lock</span>
         <div class="formula-required-notice__text">
           <strong>Assembly is a required fee.</strong> The base formula is pre-configured based on how Lightspeed structures assembly costs. You can add additional Lightspeed fields to the calculation, but the base terms cannot be changed or removed.
         </div>
       </div>
-      <div class="formula-terms" id="formula-terms">
-        <!-- Terms are populated dynamically -->
-      </div>
+      <div class="formula-terms" id="formula-terms"></div>
       <button class="formula-add-term" onclick="addFormulaTerm()">
         <span class="material-symbols-outlined" style="font-size:16px">add</span>
         Add Lightspeed field
       </button>
-
-      <!-- Formula preview -->
       <div class="formula-preview">
         <div class="formula-preview__label">Formula preview</div>
         <div class="formula-preview__expression" id="formula-preview-expr">
           <span class="formula-preview__empty">Select at least one Lightspeed field</span>
         </div>
       </div>
-
-      <!-- Sample calculation -->
       <div class="formula-sample" id="formula-sample" style="display:none;">
         <div class="formula-sample__label">Sample calculation</div>
         <div class="formula-sample__calc" id="formula-sample-calc"></div>
@@ -1904,6 +1902,329 @@ body {
   </div>
 </div>
 
+<!-- Checkout Preview Modal -->
+<div class="modal-backdrop" id="preview-modal">
+  <div class="modal preview-modal">
+    <div class="modal__header">
+      <div>
+        <div class="modal__title">Buyer Preview</div>
+        <div class="modal__subtitle">See how your settings appear to buyers across the purchase flow</div>
+      </div>
+      <button class="modal__close" onclick="closePreviewModal()">
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <div class="preview-vehicle">
+      <div class="preview-vehicle__img">
+        <span class="material-symbols-outlined">directions_car</span>
+      </div>
+      <div class="preview-vehicle__info">
+        <div class="preview-vehicle__name">2024 Can-Am Maverick X3 X RS Turbo RR</div>
+        <div class="preview-vehicle__meta">
+          <span>Stock #MV-24-0871</span>
+          <span>VIN 3JBKBAV29RK000142</span>
+          <span>New</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-tabs">
+      <div class="preview-tab active" onclick="switchPreviewTab('vdp')">
+        <span class="material-symbols-outlined">web</span> Vehicle Page
+      </div>
+      <div class="preview-tab" onclick="switchPreviewTab('checkout')">
+        <span class="material-symbols-outlined">shopping_cart</span> Checkout
+      </div>
+    </div>
+
+    <!-- VDP TAB -->
+    <div class="preview-tab-content active" data-preview-tab="vdp">
+      <div class="vdp-content">
+        <div class="vdp-main">
+          <div class="vdp-upgrades">
+            <div class="vdp-upgrades__title">
+              Included Upgrades
+              <span class="vdp-upgrades__count">3</span>
+            </div>
+            <div class="vdp-upgrade-item">
+              <div>
+                <div class="vdp-upgrade-item__name">Windshield Install</div>
+                <div class="vdp-upgrade-item__meta">PN: WS-CAN-2024-01 &middot; Parts + Labor</div>
+                <div class="vdp-upgrade-item__calc"><code>parts_cost</code> ($220) + <code>labor_cost</code> ($80) from service ticket</div>
+              </div>
+              <div class="vdp-upgrade-item__right">
+                <span class="vdp-upgrade-item__price">$300</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('section-parts-labor')" title="Parts &amp; labor from Lightspeed">
+                  <span class="material-symbols-outlined">edit</span>
+                </a>
+              </div>
+            </div>
+            <div class="vdp-upgrade-item">
+              <div>
+                <div class="vdp-upgrade-item__name">Oil Change</div>
+                <div class="vdp-upgrade-item__meta">PN: SVC-OIL-STD &middot; Standalone labor</div>
+                <div class="vdp-upgrade-item__calc">Labor-only: <code>labor_cost</code> ($45) from service ticket</div>
+              </div>
+              <div class="vdp-upgrade-item__right">
+                <span class="vdp-upgrade-item__price">$45</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('section-parts-labor')" title="Parts &amp; labor from Lightspeed">
+                  <span class="material-symbols-outlined">edit</span>
+                </a>
+              </div>
+            </div>
+            <div class="vdp-upgrade-item">
+              <div>
+                <div class="vdp-upgrade-item__name">Extended Warranty</div>
+                <div class="vdp-upgrade-item__meta">PN: EW-36MO-PLAT &middot; Option</div>
+                <div class="vdp-upgrade-item__calc"><code>option_price</code> ($499) from unit record</div>
+              </div>
+              <div class="vdp-upgrade-item__right">
+                <span class="vdp-upgrade-item__price">$499</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('section-parts-labor')" title="Option from Lightspeed">
+                  <span class="material-symbols-outlined">edit</span>
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="vdp-sidebar">
+          <div class="vdp-purchase-card">
+            <div class="vdp-price-info">
+              <div class="vdp-price-info__row">
+                <span class="vdp-price-info__advertised">$14,249</span>
+                <span class="vdp-price-info__msrp">MSRP $14,999</span>
+              </div>
+              <div class="vdp-price-info__savings">You save $750</div>
+              <div class="vdp-price-info__calc">
+                Advertised price = <code>retail_price</code> ($14,999) minus dealer discount ($500) minus rebates ($250)
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('group-pricing')" title="Edit pricing formula">
+                  <span class="material-symbols-outlined">edit</span> Pricing
+                </a>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('group-rebates')" title="Edit rebate formula">
+                  <span class="material-symbols-outlined">edit</span> Rebates
+                </a>
+              </div>
+            </div>
+
+            <div class="vdp-segmented-control">
+              <button class="vdp-segmented-control__option active" onclick="toggleVdpPayment('monthly')">Monthly</button>
+              <button class="vdp-segmented-control__option" onclick="toggleVdpPayment('onetime')">One-time</button>
+            </div>
+
+            <div class="vdp-monthly-view active" id="vdp-monthly">
+              <div class="vdp-monthly-view__estimated">Estimated</div>
+              <div class="vdp-monthly-view__price">$289<span class="vdp-monthly-view__unit">/mo*</span></div>
+              <div class="vdp-monthly-view__terms">
+                <span>$2,000 down</span><span>7.99% APR</span><span>60 mo</span>
+              </div>
+              <div class="vdp-monthly-view__disclaimer">
+                *Estimated monthly payment based on total of $17,765.37 with $2,000 down at 7.99% APR over 60 months. Actual terms determined at checkout based on credit approval.
+              </div>
+            </div>
+
+            <div class="vdp-onetime-view" id="vdp-onetime">
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Vehicle price<div class="vdp-line-item__calc">From <code>retail_price</code></div></div>
+                <span class="vdp-line-item__value">$14,999</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('group-pricing')"><span class="material-symbols-outlined">edit</span></a>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Rebates<div class="vdp-line-item__calc">Rebate formula</div></div>
+                <span class="vdp-line-item__value vdp-line-item__value--negative">-$750</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('group-rebates')"><span class="material-symbols-outlined">edit</span></a>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Upgrades<div class="vdp-line-item__calc">3 items from parts &amp; labor mapping</div></div>
+                <span class="vdp-line-item__value">$844</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('section-parts-labor')"><span class="material-symbols-outlined">edit</span></a>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Freight<div class="vdp-line-item__calc">From <code>freight_charge</code></div></div>
+                <span class="vdp-line-item__value">$799</span>
+                <a class="source-badge source-badge--lightspeed" onclick="previewEditLink('group-fees')"><span class="material-symbols-outlined">edit</span></a>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Doc Fee<div class="vdp-line-item__calc">Ekho fee settings</div></div>
+                <span class="vdp-line-item__value">$399</span>
+                <a class="source-badge source-badge--ekho" onclick="previewEditLink('group-fees')"><span class="material-symbols-outlined">edit</span></a>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Sales Tax (est.)<div class="vdp-line-item__calc">7.25% of taxable subtotal</div></div>
+                <span class="vdp-line-item__value">$1,189</span>
+                <span class="source-badge source-badge--calculated">auto</span>
+              </div>
+              <div class="vdp-line-item">
+                <div class="vdp-line-item__label">Titling &amp; Reg (est.)<div class="vdp-line-item__calc">Buyer state fee schedule</div></div>
+                <span class="vdp-line-item__value">$285</span>
+                <span class="source-badge source-badge--calculated">auto</span>
+              </div>
+              <div class="vdp-line-item vdp-line-item--total">
+                <span class="vdp-line-item__label">Total Purchase Price</span>
+                <span class="vdp-line-item__value">$17,765.37</span>
+              </div>
+            </div>
+
+            <div class="vdp-purchase-card__cta">
+              <button class="vdp-purchase-card__btn">Start Purchase</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHECKOUT TAB -->
+    <div class="preview-tab-content" data-preview-tab="checkout">
+      <div class="checkout-content">
+        <div class="checkout-collapsible open" onclick="toggleCheckoutSection(this)">
+          <div class="checkout-collapsible__header">
+            <div class="checkout-collapsible__left">
+              <span class="material-symbols-outlined checkout-collapsible__icon">directions_car</span>
+              <span class="checkout-collapsible__title">Vehicle Price</span>
+            </div>
+            <div class="checkout-collapsible__right">
+              <span class="checkout-collapsible__subtotal">$14,499.00</span>
+              <span class="material-symbols-outlined checkout-collapsible__chevron">expand_more</span>
+            </div>
+          </div>
+          <div class="checkout-collapsible__body">
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>MSRP</strong><div class="checkout-line-item__calc">Pulled from Lightspeed <code>retail_price</code> field via your pricing formula</div></div>
+              <div class="checkout-line-item__amount">$14,999.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('group-pricing')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Dealer Discount</strong><div class="checkout-line-item__calc">Pricing formula: <code>retail_price - advertised_price</code></div></div>
+              <div class="checkout-line-item__amount checkout-line-item__amount--negative">-$500.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('group-pricing')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-collapsible" onclick="toggleCheckoutSection(this)">
+          <div class="checkout-collapsible__header">
+            <div class="checkout-collapsible__left">
+              <span class="material-symbols-outlined checkout-collapsible__icon">sell</span>
+              <span class="checkout-collapsible__title">Rebates</span>
+              <span class="checkout-collapsible__count">2 items</span>
+            </div>
+            <div class="checkout-collapsible__right">
+              <span class="checkout-collapsible__subtotal checkout-line-item__amount--negative">-$250.00</span>
+              <span class="material-symbols-outlined checkout-collapsible__chevron">expand_more</span>
+            </div>
+          </div>
+          <div class="checkout-collapsible__body">
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Rebate Amount</strong><div class="checkout-line-item__calc">Mapped from Lightspeed <code>rebate_amount</code></div></div>
+              <div class="checkout-line-item__amount checkout-line-item__amount--negative">-$150.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('group-rebates')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Mfr Rebate</strong><div class="checkout-line-item__calc">Mapped from Lightspeed <code>mfr_rebate</code></div></div>
+              <div class="checkout-line-item__amount checkout-line-item__amount--negative">-$100.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('group-rebates')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-collapsible" onclick="toggleCheckoutSection(this)">
+          <div class="checkout-collapsible__header">
+            <div class="checkout-collapsible__left">
+              <span class="material-symbols-outlined checkout-collapsible__icon">build</span>
+              <span class="checkout-collapsible__title">Included Upgrades</span>
+              <span class="checkout-collapsible__count">3 items</span>
+            </div>
+            <div class="checkout-collapsible__right">
+              <span class="checkout-collapsible__subtotal">$844.00</span>
+              <span class="material-symbols-outlined checkout-collapsible__chevron">expand_more</span>
+            </div>
+          </div>
+          <div class="checkout-collapsible__body">
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Windshield Install</strong><div class="checkout-line-item__detail">Parts: $220 + Labor: $80</div></div>
+              <div class="checkout-line-item__amount">$300.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('section-parts-labor')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Oil Change</strong><div class="checkout-line-item__detail">Standalone labor</div></div>
+              <div class="checkout-line-item__amount">$45.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('section-parts-labor')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Extended Warranty</strong><div class="checkout-line-item__detail">Option (no parts/labor)</div></div>
+              <div class="checkout-line-item__amount">$499.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('section-parts-labor')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-collapsible" onclick="toggleCheckoutSection(this)">
+          <div class="checkout-collapsible__header">
+            <div class="checkout-collapsible__left">
+              <span class="material-symbols-outlined checkout-collapsible__icon">receipt_long</span>
+              <span class="checkout-collapsible__title">Fees</span>
+              <span class="checkout-collapsible__count">2 items</span>
+            </div>
+            <div class="checkout-collapsible__right">
+              <span class="checkout-collapsible__subtotal">$1,198.00</span>
+              <span class="material-symbols-outlined checkout-collapsible__chevron">expand_more</span>
+            </div>
+          </div>
+          <div class="checkout-collapsible__body">
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Freight</strong></div>
+              <div class="checkout-line-item__amount">$799.00</div>
+              <a class="source-badge source-badge--lightspeed" onclick="event.stopPropagation(); previewEditLink('group-fees')"><span class="material-symbols-outlined">edit</span> Lightspeed</a>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Doc Fee</strong></div>
+              <div class="checkout-line-item__amount">$399.00</div>
+              <a class="source-badge source-badge--ekho" onclick="event.stopPropagation(); previewEditLink('group-fees')"><span class="material-symbols-outlined">edit</span> Ekho</a>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-collapsible" onclick="toggleCheckoutSection(this)">
+          <div class="checkout-collapsible__header">
+            <div class="checkout-collapsible__left">
+              <span class="material-symbols-outlined checkout-collapsible__icon">account_balance</span>
+              <span class="checkout-collapsible__title">Taxes &amp; Government Fees</span>
+            </div>
+            <div class="checkout-collapsible__right">
+              <span class="checkout-collapsible__subtotal">$1,474.37</span>
+              <span class="material-symbols-outlined checkout-collapsible__chevron">expand_more</span>
+            </div>
+          </div>
+          <div class="checkout-collapsible__body">
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Sales Tax (est.)</strong><div class="checkout-line-item__detail">Based on buyer location</div></div>
+              <div class="checkout-line-item__amount">$1,189.37</div>
+              <span class="source-badge source-badge--calculated">Calculated</span>
+            </div>
+            <div class="checkout-line-item">
+              <div class="checkout-line-item__desc"><strong>Titling &amp; Registration (est.)</strong><div class="checkout-line-item__detail">Based on buyer state</div></div>
+              <div class="checkout-line-item__amount">$285.00</div>
+              <span class="source-badge source-badge--calculated">Calculated</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="checkout-total">
+          <div class="checkout-total__label">Due Today</div>
+          <div class="checkout-total__amount">$17,765.37</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="preview-legend">
+      <span class="preview-legend__label">Sources</span>
+      <div class="preview-legend__item"><span class="preview-legend__dot preview-legend__dot--lightspeed"></span> Synced from Lightspeed</div>
+      <div class="preview-legend__item"><span class="preview-legend__dot preview-legend__dot--ekho"></span> Configured in Ekho</div>
+      <div class="preview-legend__item"><span class="preview-legend__dot preview-legend__dot--calculated"></span> Calculated automatically</div>
+    </div>
+  </div>
+</div>
 <script>
 // Available Lightspeed fields with sample values
 const LIGHTSPEED_FIELDS = [
@@ -1931,43 +2252,44 @@ const LIGHTSPEED_FIELDS = [
   { value: 'dmvFee', label: 'DMV / Title Fee', sample: 75 },
 ];
 
-// Current modal state
 let activeFormulaRow = null;
 let formulaTerms = [];
 
 function fieldOptionsHtml(selectedValue) {
   let html = '<option value="">Select field...</option>';
   LIGHTSPEED_FIELDS.forEach(f => {
-    html += `<option value="${f.value}"${f.value === selectedValue ? ' selected' : ''}>${f.label}</option>`;
+    html += '<option value="' + f.value + '"' + (f.value === selectedValue ? ' selected' : '') + '>' + f.label + '</option>';
   });
   return html;
 }
 
 function openFormulaModal(triggerBtn) {
   activeFormulaRow = triggerBtn.closest('.mapping-row');
-  const ekhoLabel = activeFormulaRow.getAttribute('data-ekho-label');
+  const ekhoLabel = activeFormulaRow.getAttribute('data-ekho-label') || 'Field';
   const isRequired = activeFormulaRow.getAttribute('data-required') === 'true';
   document.getElementById('modal-title').textContent = 'Configure ' + ekhoLabel;
 
-  // Show/hide required notice
-  const notice = document.getElementById('formula-required-notice');
+  var notice = document.getElementById('formula-required-notice');
   notice.style.display = isRequired ? '' : 'none';
 
-  // Parse existing formula from the trigger button's tags
-  const tags = triggerBtn.querySelectorAll('.formula-tag__field');
-  const ops = triggerBtn.querySelectorAll('.formula-tag__op');
-
+  // Parse existing formula from formula-trigger (not add-btn)
+  var existingTrigger = activeFormulaRow.querySelector('.formula-trigger');
   formulaTerms = [];
-  tags.forEach((tag, i) => {
-    const label = tag.textContent.trim();
-    const field = LIGHTSPEED_FIELDS.find(f => f.label === label);
-    const op = i === 0 ? '+' : (ops[i - 1] ? ops[i - 1].textContent.trim() : '+');
-    formulaTerms.push({
-      operator: op === '\u2212' ? '-' : (op === '+' ? '+' : op),
-      fieldValue: field ? field.value : '',
-      locked: isRequired,
+
+  if (existingTrigger) {
+    var tags = existingTrigger.querySelectorAll('.formula-tag__field');
+    var ops = existingTrigger.querySelectorAll('.formula-tag__op');
+    tags.forEach(function(tag, i) {
+      var label = tag.textContent.trim();
+      var field = LIGHTSPEED_FIELDS.find(function(f) { return f.label === label; });
+      var op = i === 0 ? '+' : (ops[i - 1] ? ops[i - 1].textContent.trim() : '+');
+      formulaTerms.push({
+        operator: op === '\u2212' ? '-' : (op === '+' ? '+' : op),
+        fieldValue: field ? field.value : '',
+        locked: isRequired,
+      });
     });
-  });
+  }
 
   if (formulaTerms.length === 0) {
     formulaTerms.push({ operator: '+', fieldValue: '', locked: false });
@@ -1984,51 +2306,35 @@ function closeFormulaModal() {
 }
 
 function renderFormulaTerms() {
-  const container = document.getElementById('formula-terms');
+  var container = document.getElementById('formula-terms');
   container.innerHTML = '';
-  formulaTerms.forEach((term, i) => {
-    const div = document.createElement('div');
+  formulaTerms.forEach(function(term, i) {
+    var div = document.createElement('div');
     div.className = 'formula-term' + (term.locked ? ' formula-term--locked' : '');
 
     if (term.locked) {
-      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
-      const fieldLabel = field ? field.label : term.fieldValue;
-      const hint = field && field.hint ? `<span class="formula-term__hint">${field.hint}</span>` : '';
-      div.innerHTML = `
-        <div class="formula-term__operator-static">${term.operator === '-' ? '&minus;' : '+'}</div>
-        <div class="formula-term__field-static">
-          <span class="material-symbols-outlined formula-term__lock-icon">lock</span>
-          <div class="formula-term__field-info">
-            <span>${fieldLabel}</span>
-            ${hint}
-          </div>
-        </div>
-      `;
+      var field = LIGHTSPEED_FIELDS.find(function(f) { return f.value === term.fieldValue; });
+      var fieldLabel = field ? field.label : term.fieldValue;
+      var hint = field && field.hint ? '<span class="formula-term__hint">' + field.hint + '</span>' : '';
+      div.innerHTML =
+        '<div class="formula-term__operator-static">' + (term.operator === '-' ? '&minus;' : '+') + '</div>' +
+        '<div class="formula-term__field-static">' +
+        '<span class="material-symbols-outlined formula-term__lock-icon">lock</span>' +
+        '<div class="formula-term__field-info"><span>' + fieldLabel + '</span>' + hint + '</div></div>';
     } else {
-      const removable = formulaTerms.filter(t => !t.locked).length > 1 || formulaTerms.some(t => t.locked);
-      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
-      const hintText = field && field.hint ? field.hint : '';
-      div.innerHTML = `
-        <div class="formula-term__operator">
-          <select onchange="updateTermOperator(${i}, this.value)">
-            <option value="+"${term.operator === '+' ? ' selected' : ''}>+</option>
-            <option value="-"${term.operator === '-' ? ' selected' : ''}>&minus;</option>
-          </select>
-        </div>
-        <div class="formula-term__field">
-          <select onchange="updateTermField(${i}, this.value)">
-            ${fieldOptionsHtml(term.fieldValue)}
-          </select>
-          <div class="formula-term__hint" id="term-hint-${i}"${hintText ? '' : ' style="display:none"'}>${hintText}</div>
-        </div>
-        ${removable ? `
-          <button class="formula-term__remove" onclick="removeFormulaTerm(${i})" title="Remove">
-            <span class="material-symbols-outlined" style="font-size:18px">close</span>
-          </button>
-        ` : ''}
-      `;
+      var removable = formulaTerms.filter(function(t) { return !t.locked; }).length > 1 || formulaTerms.some(function(t) { return t.locked; });
+      var field2 = LIGHTSPEED_FIELDS.find(function(f) { return f.value === term.fieldValue; });
+      var hintText = field2 && field2.hint ? field2.hint : '';
+      div.innerHTML =
+        '<div class="formula-term__operator">' +
+        '<select onchange="updateTermOperator(' + i + ', this.value)">' +
+        '<option value="+"' + (term.operator === '+' ? ' selected' : '') + '>+</option>' +
+        '<option value="-"' + (term.operator === '-' ? ' selected' : '') + '>&minus;</option></select></div>' +
+        '<div class="formula-term__field">' +
+        '<select onchange="updateTermField(' + i + ', this.value)">' + fieldOptionsHtml(term.fieldValue) + '</select>' +
+        '<div class="formula-term__hint" id="term-hint-' + i + '"' + (hintText ? '' : ' style="display:none"') + '>' + hintText + '</div></div>' +
+        (removable ? '<button class="formula-term__remove" onclick="removeFormulaTerm(' + i + ')" title="Remove"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>' : '');
     }
-
     container.appendChild(div);
   });
 }
@@ -2053,27 +2359,21 @@ function updateTermOperator(index, value) {
 
 function updateTermField(index, value) {
   formulaTerms[index].fieldValue = value;
-  const hintEl = document.getElementById('term-hint-' + index);
+  var hintEl = document.getElementById('term-hint-' + index);
   if (hintEl) {
-    const field = LIGHTSPEED_FIELDS.find(f => f.value === value);
-    if (field && field.hint) {
-      hintEl.textContent = field.hint;
-      hintEl.style.display = '';
-    } else {
-      hintEl.textContent = '';
-      hintEl.style.display = 'none';
-    }
+    var field = LIGHTSPEED_FIELDS.find(function(f) { return f.value === value; });
+    if (field && field.hint) { hintEl.textContent = field.hint; hintEl.style.display = ''; }
+    else { hintEl.textContent = ''; hintEl.style.display = 'none'; }
   }
   updateFormulaPreview();
 }
 
 function updateFormulaPreview() {
-  const exprContainer = document.getElementById('formula-preview-expr');
-  const sampleContainer = document.getElementById('formula-sample');
-  const calcEl = document.getElementById('formula-sample-calc');
-  const resultEl = document.getElementById('formula-sample-result');
-
-  const validTerms = formulaTerms.filter(t => t.fieldValue);
+  var exprContainer = document.getElementById('formula-preview-expr');
+  var sampleContainer = document.getElementById('formula-sample');
+  var calcEl = document.getElementById('formula-sample-calc');
+  var resultEl = document.getElementById('formula-sample-result');
+  var validTerms = formulaTerms.filter(function(t) { return t.fieldValue; });
 
   if (validTerms.length === 0) {
     exprContainer.innerHTML = '<span class="formula-preview__empty">Select at least one Lightspeed field</span>';
@@ -2081,37 +2381,23 @@ function updateFormulaPreview() {
     return;
   }
 
-  // Build expression preview
-  let exprHtml = '';
-  validTerms.forEach((term, i) => {
-    const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+  var exprHtml = '';
+  validTerms.forEach(function(term, i) {
+    var field = LIGHTSPEED_FIELDS.find(function(f) { return f.value === term.fieldValue; });
     if (!field) return;
-    if (i > 0) {
-      exprHtml += `<span class="op">${term.operator === '-' ? '\u2212' : '+'}</span>`;
-    }
-    exprHtml += `<span class="field-name">${field.label}</span>`;
+    if (i > 0) { exprHtml += '<span class="op">' + (term.operator === '-' ? '\u2212' : '+') + '</span>'; }
+    exprHtml += '<span class="field-name">' + field.label + '</span>';
   });
   exprContainer.innerHTML = exprHtml;
 
-  // Build sample calculation
-  let calcParts = [];
-  let total = 0;
-  validTerms.forEach((term, i) => {
-    const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+  var calcParts = [];
+  var total = 0;
+  validTerms.forEach(function(term, i) {
+    var field = LIGHTSPEED_FIELDS.find(function(f) { return f.value === term.fieldValue; });
     if (!field) return;
-    const val = field.sample;
-    if (i === 0) {
-      total = val;
-      calcParts.push('$' + val.toLocaleString());
-    } else {
-      if (term.operator === '-') {
-        total -= val;
-        calcParts.push('\u2212 $' + val.toLocaleString());
-      } else {
-        total += val;
-        calcParts.push('+ $' + val.toLocaleString());
-      }
-    }
+    if (i === 0) { total = field.sample; calcParts.push('$' + field.sample.toLocaleString()); }
+    else if (term.operator === '-') { total -= field.sample; calcParts.push('\u2212 $' + field.sample.toLocaleString()); }
+    else { total += field.sample; calcParts.push('+ $' + field.sample.toLocaleString()); }
   });
 
   sampleContainer.style.display = '';
@@ -2121,31 +2407,21 @@ function updateFormulaPreview() {
 
 function saveFormula() {
   if (!activeFormulaRow) return;
-  const trigger = activeFormulaRow.querySelector('.formula-trigger');
-  const textSpan = trigger.querySelector('.formula-trigger__text');
-  const statusEl = activeFormulaRow.querySelector('.mapping-row__status');
-
-  const validTerms = formulaTerms.filter(t => t.fieldValue);
+  var validTerms = formulaTerms.filter(function(t) { return t.fieldValue; });
+  var formulaCell = activeFormulaRow.querySelector('.mapping-row__formula');
 
   if (validTerms.length === 0) {
-    textSpan.innerHTML = '<span class="placeholder">Click to configure formula...</span>';
-    textSpan.classList.add('placeholder');
-    statusEl.innerHTML = '<span class="status-unmapped"></span>';
+    formulaCell.innerHTML = '<button class="add-btn" onclick="openFormulaModal(this)"><span class="material-symbols-outlined" style="font-size:16px">add</span> Add</button>';
   } else {
-    let tagHtml = '<span class="formula-tag">';
-    validTerms.forEach((term, i) => {
-      const field = LIGHTSPEED_FIELDS.find(f => f.value === term.fieldValue);
+    var tagHtml = '<span class="formula-tag">';
+    validTerms.forEach(function(term, i) {
+      var field = LIGHTSPEED_FIELDS.find(function(f) { return f.value === term.fieldValue; });
       if (!field) return;
-      if (i > 0) {
-        const opSymbol = term.operator === '-' ? '\u2212' : '+';
-        tagHtml += `<span class="formula-tag__op">${opSymbol}</span>`;
-      }
-      tagHtml += `<span class="formula-tag__field">${field.label}</span>`;
+      if (i > 0) { tagHtml += '<span class="formula-tag__op">' + (term.operator === '-' ? '\u2212' : '+') + '</span>'; }
+      tagHtml += '<span class="formula-tag__field">' + field.label + '</span>';
     });
     tagHtml += '</span>';
-    textSpan.innerHTML = tagHtml;
-    textSpan.classList.remove('placeholder');
-    statusEl.innerHTML = '<span class="material-symbols-outlined status-mapped">check_circle</span>';
+    formulaCell.innerHTML = '<button class="formula-trigger" onclick="openFormulaModal(this)"><span class="formula-trigger__text">' + tagHtml + '</span><span class="formula-trigger__icon material-symbols-outlined">edit</span></button>';
   }
 
   updateGroupCounts();
@@ -2154,217 +2430,226 @@ function saveFormula() {
 
 // Tab switching
 function switchTab(tabId) {
-  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
-  document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.commentary-tab-group').forEach(c => c.classList.remove('active'));
-  document.querySelector(`.tab-item[data-tab="${tabId}"]`).classList.add('active');
-  document.querySelector(`.tab-content[data-tab-content="${tabId}"]`).classList.add('active');
-  const commentaryGroup = document.querySelector(`.commentary-tab-group[data-commentary-tab="${tabId}"]`);
-  if (commentaryGroup) commentaryGroup.classList.add('active');
+  document.querySelectorAll('.tab-item').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+  var tabEl = document.querySelector('.tab-item[data-tab="' + tabId + '"]');
+  if (tabEl) tabEl.classList.add('active');
+  var contentEl = document.querySelector('.tab-content[data-tab-content="' + tabId + '"]');
+  if (contentEl) contentEl.classList.add('active');
 }
 
-// State switching
-function switchState(state) {
-  document.querySelectorAll('.demo-switcher__btn').forEach(b => b.classList.remove('active'));
-  event.target.classList.add('active');
-
-  const provider = document.getElementById('dms-provider-select');
-  const cmfField = document.getElementById('cmf-field');
-  const otherField = document.getElementById('other-dms-field');
-  const fieldMapping = document.getElementById('field-mapping-section');
-
-  if (state === 'connected') {
-    provider.value = 'lightspeed';
-    cmfField.style.display = '';
-    otherField.style.display = 'none';
-    fieldMapping.style.display = '';
-    document.getElementById('auth-consent').checked = true;
-  } else if (state === 'no-provider') {
-    provider.value = '';
-    cmfField.style.display = 'none';
-    otherField.style.display = 'none';
-    fieldMapping.style.display = 'none';
-    document.getElementById('auth-consent').checked = false;
-  } else if (state === 'other-dms') {
-    provider.value = 'other';
-    cmfField.style.display = 'none';
-    otherField.style.display = '';
-    fieldMapping.style.display = 'none';
-    document.getElementById('auth-consent').checked = true;
-  }
-}
-
-// Provider change
-function handleProviderChange() {
-  const provider = document.getElementById('dms-provider-select').value;
-  const cmfField = document.getElementById('cmf-field');
-  const otherField = document.getElementById('other-dms-field');
-  const fieldMapping = document.getElementById('field-mapping-section');
-
-  cmfField.style.display = provider === 'lightspeed' ? '' : 'none';
-  otherField.style.display = provider === 'other' ? '' : 'none';
-  fieldMapping.style.display = provider === 'lightspeed' ? '' : 'none';
-}
-
-// Accordion toggle
-// Options source selector (Options vs Parts)
-function selectUpgradeSource(btn, source) {
-  const container = btn.closest('.source-selector__options');
-  container.querySelectorAll('.source-selector__option').forEach(o => {
-    o.classList.remove('active');
-    o.querySelector('.material-symbols-outlined').textContent = 'radio_button_unchecked';
-  });
-  btn.classList.add('active');
-  btn.querySelector('.material-symbols-outlined').textContent = 'radio_button_checked';
-
-  // Update the formula trigger in the options pricing card
-  const upgradePricingCard = document.getElementById('group-upgrades');
-  if (upgradePricingCard) {
-    const trigger = upgradePricingCard.querySelector('.formula-trigger');
-    const fieldEl = trigger ? trigger.querySelector('.formula-tag__field') : null;
-    if (fieldEl) {
-      fieldEl.textContent = source === 'options' ? 'Options Total' : 'Parts Total';
-    }
-  }
-}
-
-// Toggle sync on/off
+// Toggle sync
 function handleToggle(checkbox) {
-  const row = checkbox.closest('.mapping-row');
-  const trigger = row.querySelector('.formula-trigger');
-  const arrow = row.querySelector('.mapping-row__arrow');
-  const status = row.querySelector('.mapping-row__status');
-
+  var row = checkbox.closest('.mapping-row');
+  var trigger = row.querySelector('.formula-trigger');
   if (checkbox.checked) {
-    trigger.classList.remove('disabled');
-    arrow.style.opacity = '1';
-    // Check if there's a formula set
-    const hasFormula = !trigger.querySelector('.placeholder');
-    if (hasFormula) {
-      status.innerHTML = '<span class="material-symbols-outlined status-mapped">check_circle</span>';
-    }
+    if (trigger) trigger.classList.remove('disabled');
   } else {
-    trigger.classList.add('disabled');
-    arrow.style.opacity = '0.3';
-    status.innerHTML = '<span class="status-unmapped"></span>';
+    if (trigger) trigger.classList.add('disabled');
   }
   updateGroupCounts();
 }
 
-// Update group mapped counts
+// Update group counts
 function updateGroupCounts() {
-  ['pricing', 'upgrades', 'rebates', 'fees'].forEach(groupId => {
-    const group = document.getElementById('group-' + groupId);
+  ['pricing', 'rebates', 'fees'].forEach(function(groupId) {
+    var group = document.getElementById('group-' + groupId);
     if (!group) return;
-    const rows = group.querySelectorAll('.mapping-row');
-    let mapped = 0;
-    let total = rows.length;
-    rows.forEach(row => {
-      const toggle = row.querySelector('.toggle input');
-      const trigger = row.querySelector('.formula-trigger');
-      const hasFormula = trigger && !trigger.querySelector('.placeholder');
-      if (toggle && toggle.checked && hasFormula) mapped++;
+    var rows = group.querySelectorAll('.mapping-row');
+    var mapped = 0;
+    var total = rows.length;
+    rows.forEach(function(row) {
+      var toggle = row.querySelector('.toggle input');
+      var hasTrigger = row.querySelector('.formula-trigger');
+      var hasStaticFormula = row.querySelector('.formula-trigger--static');
+      if (toggle && toggle.checked && (hasTrigger || hasStaticFormula)) mapped++;
     });
-    const countEl = document.getElementById(groupId + '-count');
-    if (countEl) countEl.textContent = `${mapped} of ${total} mapped`;
+    var countEl = document.getElementById(groupId + '-count');
+    if (countEl) countEl.textContent = mapped + ' of ' + total + ' mapped';
   });
 }
 
 // Add fee row
 function addFeeRow() {
-  const container = document.getElementById('fee-rows');
-  const row = document.createElement('div');
+  var container = document.getElementById('fee-rows');
+  var row = document.createElement('div');
   row.className = 'mapping-row';
   row.setAttribute('data-field', 'fee');
   row.setAttribute('data-ekho-label', 'New Fee');
   row.setAttribute('data-is-fee', 'true');
-  row.innerHTML = `
-    <div class="mapping-row__formula">
-      <button class="formula-trigger" onclick="openFormulaModal(this)">
-        <span class="formula-trigger__text placeholder">Click to configure formula...</span>
-        <span class="formula-trigger__icon material-symbols-outlined">edit</span>
-      </button>
-    </div>
-    <div class="mapping-row__arrow">
-      <span class="material-symbols-outlined" style="font-size:16px">arrow_forward</span>
-    </div>
-    <div class="mapping-row__field-name mapping-row__field-name--editable">
-      <select onchange="updateFeeLabel(this)">
-        <option value="">Select fee...</option>
-        <option value="Freight">Freight</option>
-        <option value="PDI">PDI</option>
-        <option value="Prep">Prep</option>
-        <option value="Setup">Setup</option>
-        <option value="Assembly">Assembly</option>
-        <option value="Crating">Crating</option>
-        <option value="Destination">Destination</option>
-        <option value="Labor prep">Labor prep</option>
-        <option value="Custom 1">Custom 1</option>
-        <option value="Custom 2">Custom 2</option>
-        <option value="Custom 3">Custom 3</option>
-        <option value="Custom 4">Custom 4</option>
-        <option value="Custom 5">Custom 5</option>
-      </select>
-    </div>
-    <div class="mapping-row__toggle">
-      <label class="toggle">
-        <input type="checkbox" checked onchange="handleToggle(this)">
-        <span class="toggle__track"></span>
-        <span class="toggle__thumb"></span>
-      </label>
-    </div>
-    <div class="mapping-row__status">
-      <span class="status-unmapped"></span>
-    </div>
-    <button class="fee-mapping-row__remove" onclick="removeFeeRow(this)" title="Remove mapping">
-      <span class="material-symbols-outlined" style="font-size:18px">close</span>
-    </button>
-  `;
+  row.innerHTML =
+    '<div class="mapping-row__field-name"><button class="add-btn" style="font-size:12px; padding:4px 10px;"><span class="material-symbols-outlined" style="font-size:14px">add</span> Add</button></div>' +
+    '<div class="mapping-row__formula"><button class="add-btn" onclick="openFormulaModal(this)" style="font-size:12px; padding:4px 10px;"><span class="material-symbols-outlined" style="font-size:14px">add</span> Add</button></div>' +
+    '<div class="mapping-row__toggle"><label class="toggle"><input type="checkbox" onchange="handleToggle(this)"><span class="toggle__track"></span><span class="toggle__thumb"></span></label></div>' +
+    '<button class="fee-mapping-row__remove" onclick="removeFeeRow(this)" title="Remove mapping"><span class="material-symbols-outlined" style="font-size:18px">close</span></button>';
   container.appendChild(row);
   updateGroupCounts();
 }
 
-// Update fee label from editable select/input
-function updateFeeLabel(el) {
-  const row = el.closest('.mapping-row');
-  row.setAttribute('data-ekho-label', el.value || 'New Fee');
-}
-
-// Remove fee row
 function removeFeeRow(button) {
-  const row = button.closest('.mapping-row');
+  var row = button.closest('.mapping-row');
   row.remove();
   updateGroupCounts();
 }
 
-// Toggle preview panel
-function togglePreview() {
-  const panel = document.getElementById('preview-panel');
-  panel.classList.toggle('visible');
+// Parts & labor modal
+function openPlModal() { document.getElementById('pl-modal').classList.add('open'); }
+function closePlModal() { document.getElementById('pl-modal').classList.remove('open'); }
+
+// Preview modal
+function openPreviewModal() { document.getElementById('preview-modal').classList.add('open'); }
+function closePreviewModal() { document.getElementById('preview-modal').classList.remove('open'); }
+
+function switchPreviewTab(tabId) {
+  document.querySelectorAll('.preview-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.preview-tab-content').forEach(function(c) { c.classList.remove('active'); });
+  document.querySelectorAll('.preview-tab').forEach(function(t) {
+    if (t.textContent.toLowerCase().includes(tabId === 'vdp' ? 'vehicle' : 'checkout')) t.classList.add('active');
+  });
+  var panel = document.querySelector('.preview-tab-content[data-preview-tab="' + tabId + '"]');
+  if (panel) panel.classList.add('active');
 }
 
-// Save handler
-function handleSave() {
-  const btn = event.target.closest('.btn');
-  const original = btn.textContent;
-  btn.textContent = 'Saved!';
-  btn.style.background = 'var(--rev-color-textSuccess)';
-  setTimeout(() => {
-    btn.textContent = original;
-    btn.style.background = '';
-  }, 1500);
+function toggleVdpPayment(mode) {
+  document.querySelectorAll('.vdp-segmented-control__option').forEach(function(b) { b.classList.remove('active'); });
+  event.target.classList.add('active');
+  var monthly = document.getElementById('vdp-monthly');
+  var onetime = document.getElementById('vdp-onetime');
+  if (mode === 'monthly') { monthly.classList.add('active'); onetime.classList.remove('active'); }
+  else { monthly.classList.remove('active'); onetime.classList.add('active'); }
 }
 
-// Close modal on backdrop click
-document.getElementById('formula-modal').addEventListener('click', function(e) {
-  if (e.target === this) closeFormulaModal();
+function toggleCheckoutSection(el) { el.classList.toggle('open'); }
+
+function previewEditLink(sectionId) {
+  closePreviewModal();
+  var el = document.getElementById(sectionId);
+  if (el) {
+    setTimeout(function() {
+      el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      el.style.outline = '2px solid ' + getComputedStyle(document.documentElement).getPropertyValue('--rev-color-accent1Bold');
+      el.style.outlineOffset = '4px';
+      el.style.borderRadius = '12px';
+      setTimeout(function() { el.style.outline = ''; el.style.outlineOffset = ''; }, 2000);
+    }, 300);
+  }
+}
+
+// Parts & labor tab switching
+function switchPlTab(tabId) {
+  document.querySelectorAll('.pl-tab').forEach(function(t) { t.classList.remove('active'); });
+  document.querySelectorAll('.pl-tab-content').forEach(function(c) { c.classList.remove('active'); });
+  // Activate clicked tab
+  document.querySelectorAll('.pl-tab').forEach(function(t) {
+    if (t.textContent.toLowerCase().includes(tabId)) t.classList.add('active');
+  });
+  var panel = document.querySelector('.pl-tab-content[data-pl-tab="' + tabId + '"]');
+  if (panel) panel.classList.add('active');
+}
+
+// Anchor nav smooth scroll
+document.querySelectorAll('.anchor-nav__link').forEach(function(link) {
+  link.addEventListener('click', function(e) {
+    e.preventDefault();
+    var target = document.querySelector(this.getAttribute('href'));
+    if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
 });
 
-// Close modal on Escape key
+// Close modals on backdrop click
+document.getElementById('formula-modal').addEventListener('click', function(e) { if (e.target === this) closeFormulaModal(); });
+document.getElementById('preview-modal').addEventListener('click', function(e) { if (e.target === this) closePreviewModal(); });
+document.getElementById('pl-modal').addEventListener('click', function(e) { if (e.target === this) closePlModal(); });
+
+// Close modals on Escape
 document.addEventListener('keydown', function(e) {
-  if (e.key === 'Escape') closeFormulaModal();
+  if (e.key === 'Escape') { closeFormulaModal(); closePreviewModal(); closePlModal(); }
 });
+
+// Toast helper
+var toastTimer;
+function showPlToast(msg) {
+  var el = document.getElementById('pl-toast');
+  el.textContent = msg;
+  el.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { el.classList.remove('show'); }, 2500);
+}
+
+// Custom dropdown toggle
+function togglePlDropdown(dropdown) {
+  document.querySelectorAll('[data-rev-component="dropdown"][aria-expanded="true"]').forEach(function(d) {
+    if (d !== dropdown) d.setAttribute('aria-expanded', 'false');
+  });
+  var isOpen = dropdown.getAttribute('aria-expanded') === 'true';
+  dropdown.setAttribute('aria-expanded', isOpen ? 'false' : 'true');
+}
+
+// Select an option in custom dropdown
+function selectPlOption(optionBtn) {
+  var dropdown = optionBtn.closest('[data-rev-component="dropdown"]');
+  var newValue = optionBtn.textContent;
+
+  dropdown.dataset.value = newValue;
+  dropdown.querySelector('.dropdown-button-text--rev').textContent = newValue;
+
+  dropdown.querySelectorAll('menu button').forEach(function(b) { b.removeAttribute('aria-selected'); });
+  optionBtn.setAttribute('aria-selected', 'true');
+
+  dropdown.setAttribute('aria-expanded', 'false');
+
+  if (dropdown.dataset.plType === 'visibility') {
+    handleVisibilityChange(dropdown);
+  } else if (dropdown.dataset.plType === 'impact') {
+    handlePricingChange(dropdown);
+  }
+}
+
+// Close dropdowns when clicking outside
+document.addEventListener('click', function(e) {
+  if (!e.target.closest('[data-rev-component="dropdown"]')) {
+    document.querySelectorAll('[data-rev-component="dropdown"][aria-expanded="true"]').forEach(function(d) {
+      d.setAttribute('aria-expanded', 'false');
+    });
+  }
+});
+
+// Bidirectional auto-switch between visibility and pricing impact
+function handleVisibilityChange(dropdown) {
+  var row = dropdown.closest('tr');
+  var impactDropdown = row.querySelector('[data-pl-type="impact"]');
+  if (!impactDropdown) return;
+  if (dropdown.dataset.value === 'Hidden' && impactDropdown.dataset.value !== 'No impact') {
+    impactDropdown.dataset.value = 'No impact';
+    impactDropdown.querySelector('.dropdown-button-text--rev').textContent = 'No impact';
+    impactDropdown.querySelectorAll('menu button').forEach(function(b) {
+      if (b.textContent === 'No impact') b.setAttribute('aria-selected', 'true');
+      else b.removeAttribute('aria-selected');
+    });
+    showPlToast('Buyer pricing impact reset to No impact');
+  }
+}
+
+function handlePricingChange(dropdown) {
+  var row = dropdown.closest('tr');
+  var visDropdown = row.querySelector('[data-pl-type="visibility"]');
+  if (!visDropdown) return;
+  if (dropdown.dataset.value !== 'No impact' && visDropdown.dataset.value === 'Hidden') {
+    var firstVisible = Array.from(visDropdown.querySelectorAll('menu button')).find(function(b) { return b.textContent !== 'Hidden'; });
+    if (firstVisible) {
+      var newVal = firstVisible.textContent;
+      visDropdown.dataset.value = newVal;
+      visDropdown.querySelector('.dropdown-button-text--rev').textContent = newVal;
+      visDropdown.querySelectorAll('menu button').forEach(function(b) {
+        if (b.textContent === newVal) b.setAttribute('aria-selected', 'true');
+        else b.removeAttribute('aria-selected');
+      });
+      showPlToast('Buyer visibility updated to ' + newVal);
+    }
+  }
+}
 </script>
+<div class="pl-toast" id="pl-toast"></div>
 
 </body>
 </html>
