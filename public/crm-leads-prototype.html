@@ -1,0 +1,1791 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Ekho Prototype: Leads (CRM)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@350;400;500;550;600;700&display=swap" rel="stylesheet" />
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+<style>
+  :root {
+    /* Rev tokens (from packages/ekho-common/src/rev) */
+    --rev-color-textPrimary: #0d0d0d;
+    --rev-color-textSecondary: #333333;
+    --rev-color-textTertiary: #4d4d4d;
+    --rev-color-textQuaternary: #8a8a8a;
+    --rev-color-surfaceBase: #ffffff;
+    --rev-color-surfaceLevel1: #f4f4f4;
+    --rev-color-surfaceLevel2: #e7e7e7;
+    --rev-color-strokeBase: #ececec;
+    --rev-color-strokeLevel1: #dbdbdb;
+    --rev-color-strokeLevel2: #c4c4c4;
+    --rev-color-hover: #f7f7f7;
+    --rev-color-brand: #0d0d0d;
+    --rev-radius-small: 4px;
+    --rev-radius-brand: 8px;
+    --rev-radius-full: 999rem;
+    --rev-font: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+
+    /* Tag accents (solid appearance = light bg + bold fg + colored dot) */
+    --tag-green-bg: #e7f4ef;   --tag-green-dot: #34a884;  --tag-green-fg: #1f6b52;
+    --tag-clay-bg:  #f6ece4;   --tag-clay-dot:  #c07a5c;  --tag-clay-fg:  #8a5940;
+    --tag-amber-bg: #fbf1e0;   --tag-amber-dot: #e0972f;  --tag-amber-fg: #9c6a17;
+    --tag-gray-bg:  #f0f0f0;   --tag-gray-dot:  #9a9a9a;  --tag-gray-fg:  #4d4d4d;
+    --tag-blue-bg:  #eaf1fc;   --tag-blue-dot:  #2b5fd0;  --tag-blue-fg:  #2b5fd0;
+    --tag-violet-bg:#f0ecfb;   --tag-violet-dot:#7a5cc0;  --tag-violet-fg:#5b3fa0;
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; width: 100%; }
+  body {
+    font-family: var(--rev-font);
+    color: var(--rev-color-textPrimary);
+    background: var(--rev-color-surfaceBase);
+    font-size: 13px;
+    -webkit-font-smoothing: antialiased;
+  }
+  .material-symbols-outlined {
+    font-variation-settings: "FILL" 0, "wght" 400, "GRAD" 0, "opsz" 20;
+    font-size: 20px; line-height: 1; vertical-align: middle; user-select: none;
+  }
+
+  /* ---- Prototype chrome (not part of the real UI) ---- */
+  .proto-bar {
+    display: flex; align-items: center; gap: 10px;
+    padding: 6px 16px; background: #0d0d0d; color: #fff;
+    font-size: 11px; letter-spacing: .3px;
+  }
+  .proto-bar b { font-weight: 600; }
+  .proto-bar .dot { opacity: .4; }
+  .proto-bar .tag { background: rgba(255,255,255,.14); padding: 2px 7px; border-radius: 999rem; font-weight: 600; }
+
+  /* ---- Top account bar (matches Admin Portal shell) ---- */
+  .topbar {
+    display: flex; align-items: center; justify-content: flex-end; gap: 14px;
+    padding: 10px 24px; border-bottom: 1px solid var(--rev-color-strokeBase);
+  }
+  .acct-switch { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .acct-switch .material-symbols-outlined { font-size: 18px; color: var(--rev-color-textTertiary); }
+  .me-avatar {
+    width: 30px; height: 30px; border-radius: 50%; background: #2b5fd0; color: #fff;
+    display: inline-flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700;
+  }
+
+  /* ---- App shell ---- */
+  .app { background: var(--rev-color-surfaceBase); min-height: calc(100vh - 27px); width: 100%; padding: 24px 24px 14px; }
+  .page-title { font-size: 22px; font-weight: 700; margin: 0 0 18px; letter-spacing: -.2px; }
+
+  /* ---- Summary cards ---- */
+  .summary-cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin: 0 0 26px; }
+  .scard { background: #f8f8f9; border-radius: 12px; padding: 13px 18px; }
+  .scard-label { font-size: 12.5px; font-weight: 500; color: var(--rev-color-textTertiary); margin-bottom: 6px; }
+  .scard-value { font-size: 21px; font-weight: 700; letter-spacing: -.3px; color: var(--rev-color-textPrimary); }
+
+  /* ---- Quick-filter tabs ---- */
+  .quick-tabs { display: flex; align-items: center; gap: 22px; border-bottom: 1px solid var(--rev-color-strokeBase); margin: 0 0 16px; flex-wrap: wrap; }
+  .qtab {
+    display: inline-flex; align-items: center; gap: 8px; padding: 0 1px 12px; margin-bottom: -1px;
+    border-bottom: 2px solid transparent; cursor: pointer; white-space: nowrap;
+    font-size: 14px; font-weight: 500; color: var(--rev-color-textTertiary);
+  }
+  .qtab:hover { color: var(--rev-color-textPrimary); }
+  .qtab .qcount { font-size: 13px; font-weight: 500; color: var(--rev-color-textQuaternary); }
+  .qtab.active { color: var(--rev-color-textPrimary); font-weight: 700; border-bottom-color: var(--rev-color-textPrimary); }
+  .qtab.active .qcount { color: var(--rev-color-textTertiary); }
+
+  /* ---- Changes note (prototype only) ---- */
+  .changes { margin: 26px 0 16px; border: 1px solid var(--rev-color-strokeLevel1); border-left: 3px solid #ff6333; border-radius: var(--rev-radius-brand); background: #fffaf8; overflow: hidden; }
+  .changes-head { display: flex; align-items: center; gap: 10px; padding: 11px 14px; cursor: pointer; font-size: 13px; font-weight: 600; color: var(--rev-color-textPrimary); }
+  .changes-head .step { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; background: #0d0d0d; color: #fff; padding: 2px 7px; border-radius: 999rem; }
+  .changes-head .material-symbols-outlined { margin-left: auto; color: var(--rev-color-textTertiary); transition: transform .18s; }
+  .changes.collapsed .changes-head .material-symbols-outlined { transform: rotate(-90deg); }
+  .changes-body { padding: 2px 14px 14px; display: grid; gap: 9px; }
+  .changes.collapsed .changes-body { display: none; }
+  .chg { font-size: 12.5px; line-height: 1.5; color: var(--rev-color-textSecondary); }
+  .chg .tag { display: inline-block; font-size: 9px; font-weight: 700; text-transform: uppercase; letter-spacing: .3px; padding: 2px 6px; border-radius: 3px; margin-right: 8px; vertical-align: middle; }
+  .chg .tag.new { background: #dcfce7; color: #166534; }
+  .chg .tag.changed { background: #fef3c7; color: #92400e; }
+  .chg .tag.removed { background: #fee2e2; color: #991b1b; }
+  .chg .tag.method { background: #e5e7eb; color: #374151; }
+  .chg b { color: var(--rev-color-textPrimary); font-weight: 600; }
+
+  /* ---- Toolbar ---- */
+  .toolbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; gap: 12px; }
+  .toolbar-left { display: flex; align-items: center; gap: 12px; }
+  .search { position: relative; width: 260px; max-width: 34vw; }
+  .search .material-symbols-outlined { position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: var(--rev-color-textQuaternary); font-size: 18px; pointer-events: none; }
+  .search input { width: 100%; height: 36px; padding: 0 12px 0 34px; border: 1px solid var(--rev-color-strokeLevel1); border-radius: var(--rev-radius-brand); font-family: inherit; font-size: 13px; color: var(--rev-color-textPrimary); background: var(--rev-color-surfaceBase); outline: none; }
+  .search input:focus { border-color: var(--rev-color-textPrimary); }
+  /* segmented Table / Board toggle */
+  .segmented { display: inline-flex; background: var(--rev-color-surfaceLevel1); border-radius: var(--rev-radius-brand); padding: 3px; gap: 2px; }
+  .seg { display: inline-flex; align-items: center; gap: 6px; height: 30px; padding: 0 14px; border: none; background: transparent; border-radius: 6px; font-family: inherit; font-size: 13px; font-weight: 550; color: var(--rev-color-textTertiary); cursor: pointer; }
+  .seg .material-symbols-outlined { font-size: 17px; }
+  .seg.active { background: #fff; color: var(--rev-color-textPrimary); box-shadow: 0 1px 2px rgba(0,0,0,.1); }
+  .toolbar-right { display: flex; align-items: center; gap: 10px; }
+  .btn-outline { height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--rev-color-strokeLevel1); border-radius: var(--rev-radius-brand); background: var(--rev-color-surfaceBase); color: var(--rev-color-textPrimary); font-family: inherit; font-size: 13px; font-weight: 550; cursor: pointer; position: relative; }
+  .btn-outline:hover { background: var(--rev-color-hover); }
+  .btn-outline.active { border-color: var(--rev-color-brand); background: var(--rev-color-surfaceLevel1); }
+  .btn-soft { height: 36px; padding: 0 16px; display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: var(--rev-radius-brand); background: var(--rev-color-surfaceLevel1); color: var(--rev-color-textPrimary); font-family: inherit; font-size: 13px; font-weight: 550; cursor: pointer; position: relative; }
+  .btn-soft:hover { background: var(--rev-color-surfaceLevel2); }
+  .btn-soft.active { box-shadow: inset 0 0 0 1.5px var(--rev-color-brand); }
+  .count-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 20px; height: 18px; padding: 0 5px; border-radius: 999rem; font-size: 10px; font-weight: 700; }
+  .count-badge.warn { background: #ff6333; color: #fff; }
+  .count-badge.neutral { background: var(--rev-color-surfaceLevel2); color: var(--rev-color-textTertiary); }
+  .filter-count { position: absolute; top: -7px; right: -7px; min-width: 17px; height: 17px; padding: 0 4px; background: #cc2936; color: #fff; border-radius: 999rem; font-size: 10px; font-weight: 700; display: none; align-items: center; justify-content: center; }
+
+  /* ---- Table ---- */
+  .table-wrap { border: 1px solid var(--rev-color-strokeBase); border-radius: var(--rev-radius-brand); overflow: auto; position: relative; width: 100%; }
+  table { border-collapse: separate; border-spacing: 0; width: 100%; }
+  thead th { position: sticky; top: 0; z-index: 3; background: var(--rev-color-surfaceLevel1); text-align: left; font-weight: 600; font-size: 12.5px; color: var(--rev-color-textSecondary); padding: 11px 18px; white-space: nowrap; border-bottom: 1px solid var(--rev-color-strokeBase); cursor: default; }
+  tbody td { padding: 12px 18px; border-bottom: 1px solid var(--rev-color-strokeBase); font-size: 13px; color: var(--rev-color-textSecondary); white-space: nowrap; background: var(--rev-color-surfaceBase); vertical-align: middle; height: 64px; }
+  th.col-check, td.col-check, th.col-kebab, td.col-kebab { padding-left: 0; padding-right: 0; text-align: center; }
+  .th-label { display: inline-flex; align-items: center; gap: 4px; }
+  .th-info { font-size: 14px; color: var(--rev-color-textQuaternary); cursor: help; }
+  .th-info:hover { color: var(--rev-color-textSecondary); }
+  tbody tr:last-child td { border-bottom: none; }
+  tbody tr { cursor: pointer; }
+  tbody tr:hover td { background: var(--rev-color-hover); }
+
+  /* sticky columns */
+  .col-check { width: 44px; min-width: 44px; }
+  .col-name  { width: 240px; min-width: 240px; max-width: 240px; }
+  .col-kebab { width: 52px; min-width: 52px; }
+  .col-tasks { width: 118px; min-width: 118px; }
+  .col-assignee { width: 176px; min-width: 176px; }
+  .col-spacer { width: 100%; padding: 0; }
+  th.sticky-l1, td.sticky-l1 { position: sticky; left: 0; z-index: 2; }
+  th.sticky-l2, td.sticky-l2 { position: sticky; left: 44px; z-index: 2; }
+  th.sticky-r3, td.sticky-r3 { position: sticky; right: 228px; z-index: 2; }
+  th.sticky-r2, td.sticky-r2 { position: sticky; right: 52px; z-index: 2; }
+  th.sticky-r,  td.sticky-r  { position: sticky; right: 0; z-index: 2; }
+  thead th.sticky-l1, thead th.sticky-l2 { z-index: 4; }
+  thead th.sticky-r, thead th.sticky-r2, thead th.sticky-r3 { z-index: 4; }
+  td.sticky-l2::after, th.sticky-l2::after { content: ""; position: absolute; top: 0; right: -6px; bottom: 0; width: 6px; background: linear-gradient(90deg, rgba(0,0,0,.05), transparent); opacity: 0; transition: opacity .15s; }
+  .table-wrap.scrolled td.sticky-l2::after, .table-wrap.scrolled th.sticky-l2::after { opacity: 1; }
+  td.sticky-r3, th.sticky-r3 { border-left: 1px solid var(--rev-color-strokeBase); }
+  td.sticky-r3::before, th.sticky-r3::before { content: ""; position: absolute; top: 0; left: -6px; bottom: 0; width: 6px; background: linear-gradient(270deg, rgba(0,0,0,.05), transparent); opacity: 0; transition: opacity .15s; }
+  .table-wrap.scrolled-right td.sticky-r3::before, .table-wrap.scrolled-right th.sticky-r3::before { opacity: 1; }
+
+  /* name cell */
+  .cell-name .ncell { display: flex; align-items: center; gap: 11px; }
+  .cell-name .ntext { min-width: 0; }
+  .cell-name .name { font-weight: 600; color: var(--rev-color-textPrimary); line-height: 1.3; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .avatar { width: 30px; height: 30px; border-radius: 50%; flex: none; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; color: #fff; }
+  .avatar.sm { width: 22px; height: 22px; font-size: 9px; }
+  .lead-open { font-size: 16px; color: var(--rev-color-textTertiary); cursor: pointer; opacity: 0; flex: none; margin-left: auto; align-self: center; transition: opacity .12s, color .12s; }
+  tr:hover .cell-name .lead-open { opacity: 1; }
+  .cell-name .lead-open:hover { color: var(--rev-color-brand); }
+  .muted { color: var(--rev-color-textQuaternary); }
+
+  /* click-to-copy */
+  .copyable { cursor: pointer; user-select: none; border-radius: 3px; transition: color .12s; }
+  .copyable:hover { color: var(--rev-color-textPrimary); text-decoration: underline; text-decoration-style: dotted; text-underline-offset: 2px; }
+  .copyable.copied { color: var(--tag-green-fg); font-weight: 600; text-decoration: none; }
+
+  /* custom checkbox */
+  .cbx { width: 16px; height: 16px; border: 1.5px solid var(--rev-color-strokeLevel2); border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: #fff; transition: all .12s; flex-shrink: 0; }
+  .cbx .material-symbols-outlined { font-size: 14px; color: #fff; opacity: 0; }
+  .cbx.checked { background: var(--rev-color-brand); border-color: var(--rev-color-brand); }
+  .cbx.checked .material-symbols-outlined { opacity: 1; }
+
+  /* pills (stage) */
+  .pill { display: inline-flex; align-items: center; gap: 7px; padding: 5px 12px; border-radius: var(--rev-radius-full); font-size: 12px; font-weight: 550; white-space: nowrap; }
+  .pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .pill.green { background: var(--tag-green-bg); color: var(--tag-green-fg); } .pill.green .dot { background: var(--tag-green-dot); }
+  .pill.clay  { background: var(--tag-clay-bg);  color: var(--tag-clay-fg); }  .pill.clay .dot  { background: var(--tag-clay-dot); }
+  .pill.amber { background: var(--tag-amber-bg); color: var(--tag-amber-fg); } .pill.amber .dot { background: var(--tag-amber-dot); }
+  .pill.gray  { background: var(--tag-gray-bg);  color: var(--tag-gray-fg); }  .pill.gray .dot  { background: var(--tag-gray-dot); }
+  .pill.blue  { background: var(--tag-blue-bg);  color: var(--tag-blue-fg); }  .pill.blue .dot  { background: var(--tag-blue-dot); }
+  .pill.violet{ background: var(--tag-violet-bg);color: var(--tag-violet-fg);} .pill.violet .dot{ background: var(--tag-violet-dot); }
+
+  /* type = dot + label (no pill bg) */
+  .type-cell { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .type-cell .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+  /* pre-qual indicator */
+  .prequal { display: inline-flex; align-items: center; justify-content: center; cursor: default; }
+  .prequal .ring { width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--rev-color-strokeLevel2); display: inline-flex; align-items: center; justify-content: center; }
+  .prequal.done .ring { border-color: var(--tag-green-dot); background: var(--tag-green-dot); }
+  .prequal.done .material-symbols-outlined { font-size: 13px; color: #fff; }
+  .prequal.progress .ring { border-color: var(--tag-amber-dot); border-right-color: var(--rev-color-strokeBase); border-bottom-color: var(--rev-color-strokeBase); }
+  .amount-val { font-weight: 600; color: var(--rev-color-textPrimary); }
+  .pipeline-cell, .vehicle-cell, .account-cell, .created-cell { color: var(--rev-color-textSecondary); }
+  .col-email { min-width: 210px; } .col-phone { min-width: 150px; } .col-pipeline { min-width: 150px; }
+  .col-stage { min-width: 150px; } .col-type { min-width: 140px; } .col-vehicle { min-width: 210px; }
+  .col-amount { min-width: 120px; } .col-account { min-width: 168px; } .col-created { min-width: 120px; }
+  .col-prequal { min-width: 82px; text-align: center; }
+  .assignee-cell { display: inline-flex; align-items: center; gap: 8px; white-space: nowrap; }
+  .assignee-cell .aname { color: var(--rev-color-textPrimary); overflow: hidden; text-overflow: ellipsis; }
+
+  .kebab { color: var(--rev-color-textTertiary); cursor: pointer; border-radius: var(--rev-radius-brand); padding: 6px; display: inline-flex; }
+  .kebab:hover { background: var(--rev-color-surfaceLevel1); }
+
+  /* row action menu */
+  .row-menu { position: fixed; z-index: 60; min-width: 178px; background: #fff; border: 1px solid var(--rev-color-strokeBase); border-radius: var(--rev-radius-brand); box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); padding: 5px; display: none; }
+  .row-menu button { display: flex; align-items: center; gap: 10px; width: 100%; text-align: left; padding: 8px 10px; border: none; background: transparent; border-radius: 6px; font-family: inherit; font-size: 13px; color: var(--rev-color-textPrimary); cursor: pointer; }
+  .row-menu button:hover { background: var(--rev-color-hover); }
+  .row-menu button .material-symbols-outlined { font-size: 18px; color: var(--rev-color-textTertiary); }
+  .row-menu .sep { height: 1px; background: var(--rev-color-strokeBase); margin: 4px 0; }
+  .row-menu button.danger, .row-menu button.danger .material-symbols-outlined { color: #cc2936; }
+
+  /* task button + popover */
+  .task-btn { display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 9px 12px; background: var(--rev-color-brand); color: #fff; border: none; border-radius: var(--rev-radius-brand); font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .task-btn:hover { background: #262626; }
+  .task-btn.overdue { background: #cc2936; }
+  .task-btn.overdue:hover { background: #b21f2b; }
+  .task-pop { position: fixed; z-index: 60; width: 288px; background: #fff; border: 1px solid var(--rev-color-strokeBase); border-radius: var(--rev-radius-brand); box-shadow: 0 8px 24px rgba(0,0,0,.12), 0 0 0 1px rgba(0,0,0,.04); display: none; overflow: hidden; }
+  .task-pop-head { padding: 10px 14px; font-size: 11px; font-weight: 700; letter-spacing: .4px; text-transform: uppercase; color: var(--rev-color-textTertiary); border-bottom: 1px solid var(--rev-color-strokeBase); }
+  .task-pop-list { padding: 6px; display: grid; gap: 2px; }
+  .task-item { display: flex; align-items: flex-start; gap: 10px; padding: 9px 10px; border-radius: 6px; font-size: 13px; color: var(--rev-color-textPrimary); cursor: pointer; }
+  .task-item:hover { background: var(--rev-color-hover); }
+  .task-item .material-symbols-outlined { font-size: 18px; color: #ff6333; margin-top: 1px; }
+  .task-item .tmeta { display: block; font-size: 11.5px; color: var(--rev-color-textQuaternary); margin-top: 1px; }
+  .task-item .tmeta.due-over { color: #cc2936; font-weight: 600; }
+
+  /* Ekho tooltip */
+  .tooltip { position: fixed; z-index: 90; max-width: 260px; background: #111214; color: #fff; font-size: 12.5px; line-height: 1.45; padding: 8px 11px; border-radius: 9px; white-space: pre-line; box-shadow: 0 6px 20px rgba(0,0,0,.24); pointer-events: none; opacity: 0; transform: translateY(2px); transition: opacity .1s ease, transform .1s ease; }
+  .tooltip.show { opacity: 1; transform: translateY(0); }
+  .tooltip::after { content: ""; position: absolute; top: 100%; left: var(--arrow-x, 16px); margin-left: -6px; border: 6px solid transparent; border-top-color: #111214; }
+  .tooltip.below::after { top: auto; bottom: 100%; border-top-color: transparent; border-bottom-color: #111214; }
+
+  /* ---- Pagination ---- */
+  .pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 4px 6px; font-size: 13px; color: var(--rev-color-textSecondary); }
+  .pager { display: flex; align-items: center; gap: 6px; }
+  .pager .pg { min-width: 32px; height: 32px; padding: 0 6px; border-radius: var(--rev-radius-brand); border: none; background: transparent; color: var(--rev-color-textSecondary); font-family: inherit; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+  .pager .pg:hover:not(:disabled) { background: var(--rev-color-hover); }
+  .pager .pg.active { background: var(--rev-color-brand); color: #fff; font-weight: 600; }
+  .pager .pg:disabled { opacity: .35; cursor: default; }
+  .per-page { display: flex; align-items: center; gap: 8px; }
+  .per-page select { height: 30px; border: 1px solid var(--rev-color-strokeLevel1); border-radius: var(--rev-radius-brand); font-family: inherit; font-size: 13px; padding: 0 6px; background: #fff; cursor: pointer; }
+
+  /* ---- Board (kanban) view ---- */
+  .board { display: none; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+  .board.show { display: flex; }
+  .bcol { flex: 0 0 288px; width: 288px; background: #f8f8f9; border-radius: 12px; display: flex; flex-direction: column; max-height: 640px; }
+  .bcol-head { display: flex; align-items: center; gap: 8px; padding: 13px 14px 10px; font-size: 13px; font-weight: 700; }
+  .bcol-head .bdot { width: 8px; height: 8px; border-radius: 50%; }
+  .bcol-head .bcount { margin-left: auto; font-size: 12px; font-weight: 600; color: var(--rev-color-textQuaternary); background: #fff; border-radius: 999rem; padding: 1px 8px; }
+  .bcol-body { padding: 0 10px 12px; display: grid; gap: 8px; overflow-y: auto; }
+  .bcard { background: #fff; border: 1px solid var(--rev-color-strokeBase); border-radius: 10px; padding: 11px 12px; cursor: pointer; box-shadow: 0 1px 2px rgba(0,0,0,.04); }
+  .bcard:hover { border-color: var(--rev-color-strokeLevel2); }
+  .bcard .bname { font-weight: 600; font-size: 13px; color: var(--rev-color-textPrimary); }
+  .bcard .bveh { font-size: 12px; color: var(--rev-color-textTertiary); margin: 3px 0 8px; }
+  .bcard .bfoot { display: flex; align-items: center; justify-content: space-between; }
+  .bcard .bamt { font-size: 12.5px; font-weight: 700; color: var(--rev-color-textPrimary); }
+
+  /* ---- Filters drawer ---- */
+  .scrim { position: fixed; inset: 0; background: rgba(0,0,0,.35); opacity: 0; pointer-events: none; transition: opacity .2s; z-index: 40; }
+  .scrim.open { opacity: 1; pointer-events: auto; }
+  .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 400px; max-width: 92vw; background: #fff; z-index: 50; transform: translateX(100%); transition: transform .24s ease; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,.12); }
+  .drawer.open { transform: translateX(0); }
+  .drawer-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 24px 12px; }
+  .drawer-head h2 { margin: 0; font-size: 19px; font-weight: 700; }
+  .drawer-body { flex: 1; overflow-y: auto; padding: 4px 24px 16px; }
+  .drawer-foot { padding: 14px 24px; border-top: 1px solid var(--rev-color-strokeBase); }
+  .icon-btn { height: 36px; width: 36px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid transparent; border-radius: var(--rev-radius-brand); background: transparent; color: var(--rev-color-textSecondary); cursor: pointer; }
+  .icon-btn:hover { background: var(--rev-color-hover); }
+  .btn-primary { width: 100%; height: 46px; border: none; border-radius: var(--rev-radius-brand); background: var(--rev-color-brand); color: #fff; font-family: inherit; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .btn-primary:hover { opacity: .9; }
+  .btn-ghost-full { width: 100%; height: 40px; margin-bottom: 8px; border: 1px solid var(--rev-color-strokeLevel1); border-radius: var(--rev-radius-brand); background: #fff; font-family: inherit; font-size: 13px; font-weight: 550; cursor: pointer; color: var(--rev-color-textPrimary); }
+  .fsection { border-bottom: 1px solid var(--rev-color-strokeBase); }
+  .fsection:last-child { border-bottom: none; }
+  .fsection-head { display: flex; align-items: center; justify-content: space-between; cursor: pointer; padding: 18px 0 14px; font-size: 15px; font-weight: 600; color: var(--rev-color-textPrimary); }
+  .fsection-head .material-symbols-outlined { color: var(--rev-color-textTertiary); transition: transform .18s; }
+  .fsection.collapsed .fsection-head .material-symbols-outlined { transform: rotate(-90deg); }
+  .fsection-body { padding-bottom: 12px; }
+  .fsection.collapsed .fsection-body { display: none; }
+  .frow { display: flex; align-items: center; gap: 10px; padding: 8px 0; cursor: pointer; }
+  .frow .label { flex: 1; font-size: 13px; color: var(--rev-color-textPrimary); }
+  .frow .count { font-size: 13px; color: var(--rev-color-textQuaternary); }
+
+  /* ---- Lead detail drawer ---- */
+  .lead-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 880px; max-width: 94vw; background: #fff; z-index: 55; transform: translateX(100%); transition: transform .26s ease; display: flex; flex-direction: column; box-shadow: -8px 0 24px rgba(0,0,0,.14); }
+  .lead-drawer.open { transform: translateX(0); }
+  .ld-head { display: flex; align-items: center; gap: 10px; padding: 20px 24px 0; }
+  .ld-title { font-size: 22px; font-weight: 700; letter-spacing: -.2px; display: inline-flex; align-items: center; gap: 8px; }
+  .verified { font-variation-settings: "FILL" 1; color: #2b5fd0; font-size: 20px; }
+  .ld-close { margin-left: auto; }
+  .ld-tabs { display: flex; gap: 26px; padding: 14px 24px 0; border-bottom: 1px solid var(--rev-color-strokeBase); }
+  .ld-tab { padding: 0 1px 12px; margin-bottom: -1px; border-bottom: 2px solid transparent; font-size: 15px; font-weight: 500; color: var(--rev-color-textTertiary); cursor: pointer; display: inline-flex; gap: 8px; align-items: center; }
+  .ld-tab:hover { color: var(--rev-color-textPrimary); }
+  .ld-tab.active { color: var(--rev-color-textPrimary); font-weight: 700; border-bottom-color: var(--rev-color-textPrimary); }
+  .ld-tab .tcount { color: var(--rev-color-textQuaternary); font-weight: 500; font-size: 14px; }
+  .ld-body { flex: 1; overflow-y: auto; padding: 20px 24px 24px; }
+  .ld-foot { display: flex; align-items: center; padding: 12px 24px; border-top: 1px solid var(--rev-color-strokeBase); gap: 10px; }
+  .ld-foot .spacer { flex: 1; }
+  .nav-btn { width: 40px; height: 40px; border-radius: 8px; border: none; background: var(--rev-color-surfaceLevel1); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; color: var(--rev-color-textSecondary); }
+  .nav-btn:hover { background: var(--rev-color-surfaceLevel2); }
+
+  .rule-label { display: flex; align-items: center; gap: 16px; color: var(--rev-color-textQuaternary); font-size: 14px; margin: 4px 0 14px; }
+  .rule-label::before, .rule-label::after { content: ""; height: 1px; background: var(--rev-color-strokeBase); flex: 1; }
+
+  .ld-task { display: flex; align-items: center; gap: 14px; background: #f8f8f9; border-radius: 12px; padding: 16px 18px; }
+  .ld-task .tk-ic { width: 34px; height: 34px; border-radius: 50%; background: #fbf1e0; color: var(--tag-amber-dot); display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .ld-task .tk-txt b { display: block; font-size: 14px; }
+  .ld-task .tk-txt span { font-size: 13px; color: var(--rev-color-textTertiary); }
+  .ld-task .tk-btn { margin-left: auto; }
+  .mini-btn { background: var(--rev-color-brand); color: #fff; border: none; border-radius: 8px; padding: 9px 16px; font-family: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+  .mini-btn:hover { background: #262626; }
+
+  .ld-quick { display: flex; justify-content: center; gap: 34px; padding: 22px 0 6px; }
+  .qa { display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; }
+  .qa .qa-ic { width: 46px; height: 46px; border-radius: 50%; background: var(--rev-color-surfaceLevel1); display: inline-flex; align-items: center; justify-content: center; color: var(--rev-color-textPrimary); }
+  .qa.disabled { cursor: default; } .qa.disabled .qa-ic, .qa.disabled .qa-lb { color: var(--rev-color-textQuaternary); }
+  .qa .qa-lb { font-size: 13px; font-weight: 600; }
+  .qa:not(.disabled):hover .qa-ic { background: var(--rev-color-surfaceLevel2); }
+
+  .ld-stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 16px 0; }
+  .ld-stat { background: #f8f8f9; border-radius: 12px; padding: 14px 16px; }
+  .ld-stat .lb { font-size: 13px; color: var(--rev-color-textTertiary); margin-bottom: 6px; }
+  .ld-stat .vl { font-size: 16px; font-weight: 700; letter-spacing: -.2px; }
+
+  .ld-attrs { background: #f8f8f9; border-radius: 12px; padding: 8px 18px; margin-bottom: 6px; }
+  .attr-row { display: grid; grid-template-columns: 130px 1fr; align-items: center; gap: 12px; padding: 11px 0; }
+  .attr-row .k { font-size: 13px; color: var(--rev-color-textTertiary); }
+  .attr-row .v { font-size: 14px; }
+  .select-field { display: flex; align-items: center; background: #fff; border: 1px solid var(--rev-color-strokeLevel1); border-radius: 8px; padding: 9px 12px; font-size: 14px; font-weight: 600; cursor: pointer; }
+  .select-field .material-symbols-outlined { margin-left: auto; color: var(--rev-color-textTertiary); }
+
+  .ld-acc { border-top: 1px solid var(--rev-color-strokeBase); }
+  .ld-acc-head { display: flex; align-items: center; justify-content: space-between; padding: 18px 0; cursor: pointer; }
+  .ld-acc-head h3 { margin: 0; font-size: 18px; font-weight: 700; display: inline-flex; align-items: center; }
+  .ld-acc-head .material-symbols-outlined { color: var(--rev-color-textTertiary); transition: transform .18s; }
+  .ld-acc.collapsed .ld-acc-head .material-symbols-outlined { transform: rotate(180deg); }
+  .ld-acc-body { padding-bottom: 20px; }
+  .ld-acc.collapsed .ld-acc-body { display: none; }
+  .express-tag { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: #5b3fa0; background: #f0ecfb; padding: 2px 7px; border-radius: 999rem; margin-left: 8px; }
+  .info-row { display: grid; grid-template-columns: 150px 1fr; gap: 12px; padding: 9px 0; font-size: 14px; }
+  .info-row .k { color: var(--rev-color-textTertiary); }
+
+  /* prequal / partial-order container */
+  .pq-wrap { background: #f8f8f9; border-radius: 14px; padding: 14px; display: grid; gap: 12px; }
+  .pq-top { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .pq-card { background: #fff; border-radius: 10px; padding: 14px 16px; }
+  .pq-card .lb { font-size: 13px; color: var(--rev-color-textTertiary); margin-bottom: 6px; }
+  .pq-card .vl { font-size: 15px; font-weight: 700; }
+  .pq-card .vl.with-ic { display: inline-flex; align-items: center; gap: 8px; }
+  .pq-detail { background: #fff; border-radius: 10px; padding: 4px 16px 10px; }
+  .veh-card { background: #fff; border-radius: 10px; padding: 12px; display: flex; align-items: center; gap: 14px; }
+  .veh-thumb { width: 66px; height: 48px; border-radius: 8px; flex: none; box-shadow: 0 0 0 1px var(--rev-color-strokeLevel1); }
+  .veh-meta { min-width: 0; }
+  .veh-meta .vn { font-size: 14px; font-weight: 600; }
+  .veh-meta .vs { font-size: 12.5px; color: var(--rev-color-textTertiary); margin-top: 2px; }
+  .veh-price { margin-left: auto; font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .pq-cta { display: flex; justify-content: flex-end; align-items: center; gap: 10px; }
+  .badge-ic { width: 20px; height: 20px; border-radius: 50%; background: #2b5fd0; color: #fff; display: inline-flex; align-items: center; justify-content: center; }
+  .badge-ic .material-symbols-outlined { font-size: 14px; }
+  .fico-sq { width: 14px; height: 14px; border-radius: 4px; display: inline-block; }
+
+  /* checkout stepper (partial order) */
+  .steps { display: flex; align-items: center; padding: 6px 0 12px; }
+  .step { display: flex; align-items: center; gap: 6px; }
+  .step .sdot { width: 18px; height: 18px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 700; flex: none; }
+  .step.done .sdot { background: var(--tag-green-dot); color: #fff; }
+  .step.current .sdot { background: var(--rev-color-brand); color: #fff; }
+  .step.todo .sdot { background: var(--rev-color-surfaceLevel2); color: var(--rev-color-textQuaternary); }
+  .step .slb { font-size: 11px; color: var(--rev-color-textTertiary); white-space: nowrap; }
+  .step.current .slb { color: var(--rev-color-textPrimary); font-weight: 600; }
+  .step-sep { flex: 1; height: 2px; background: var(--rev-color-strokeBase); margin: 0 6px; min-width: 10px; }
+  .step-sep.done { background: var(--tag-green-dot); }
+  .step { cursor: default; }
+
+  /* dense grouped cards (credit-app / financing-rejected grammar) */
+  .pq-sub { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; color: var(--rev-color-textTertiary); padding: 10px 0 6px; }
+  .sum-row { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; font-size: 14px; }
+  .sum-row .k { color: var(--rev-color-textTertiary); }
+  .sum-row .v { font-weight: 500; white-space: nowrap; }
+  .sum-row.total { border-top: 1px solid var(--rev-color-strokeBase); margin-top: 4px; padding-top: 10px; }
+  .sum-row.total .k, .sum-row.total .v { font-weight: 700; font-size: 15px; }
+  .info-row .v code { font-size: 12px; background: var(--rev-color-surfaceLevel1); padding: 1px 6px; border-radius: 4px; }
+
+  /* preview: expandable vehicle card + rows (rejected-credit-app grammar) */
+  .veh-card.exp { display: block; padding: 0; }
+  .veh-card-head { display: flex; align-items: center; gap: 14px; padding: 12px; cursor: pointer; }
+  .veh-card-head .veh-price { margin-left: auto; }
+  .veh-exp { margin-left: 6px; color: var(--rev-color-textTertiary); transition: transform .18s; flex: none; }
+  .veh-card.open .veh-exp { transform: rotate(180deg); }
+  .veh-card-body { display: none; padding: 2px 16px 8px; border-top: 1px solid var(--rev-color-strokeBase); }
+  .veh-card.open .veh-card-body { display: block; }
+  .xrow { border-bottom: 1px solid var(--rev-color-strokeBase); }
+  .xrow:last-child { border-bottom: none; }
+  .xrow-head { display: flex; align-items: center; gap: 12px; padding: 13px 0; cursor: pointer; }
+  .xr-plus { width: 26px; height: 26px; border-radius: 50%; background: var(--rev-color-surfaceLevel1); display: inline-flex; align-items: center; justify-content: center; flex: none; font-size: 17px; color: var(--rev-color-textSecondary); }
+  .xr-plus::before { content: "+"; }
+  .xrow.open .xr-plus::before { content: "\2212"; }
+  .xr-label { font-size: 14px; }
+  .xr-val { margin-left: auto; display: inline-flex; align-items: center; gap: 10px; font-size: 14px; color: var(--rev-color-textSecondary); }
+  .xr-val .material-symbols-outlined { color: var(--rev-color-textTertiary); transition: transform .18s; font-size: 20px; }
+  .xrow.open .xr-val .material-symbols-outlined { transform: rotate(180deg); }
+  .xrow-body { display: none; padding: 0 0 12px 38px; }
+  .xrow.open .xrow-body { display: block; }
+  .prow { display: grid; grid-template-columns: 240px 1fr; gap: 16px; padding: 7px 0; align-items: start; }
+  .prow .k { font-size: 15px; color: var(--rev-color-textTertiary); font-weight: 400; }
+  .prow .v { font-size: 15px; color: var(--rev-color-textPrimary); font-weight: 400; line-height: 1.5; }
+  .pq-actions { display: flex; gap: 10px; align-items: center; padding-top: 4px; }
+  .review-btn { background: var(--rev-color-surfaceLevel1); border: none; border-radius: 8px; padding: 10px 16px; font-family: inherit; font-weight: 600; font-size: 13px; color: var(--rev-color-textPrimary); cursor: pointer; }
+  .review-btn:hover { background: var(--rev-color-surfaceLevel2); }
+
+  /* full "Review partial order" view */
+  .ld-back { cursor: pointer; display: inline-flex; align-items: center; margin-right: 4px; color: var(--rev-color-textSecondary); }
+  .ld-back:hover { color: var(--rev-color-textPrimary); }
+  .callout { display: flex; align-items: flex-start; gap: 10px; border: 1px solid var(--rev-color-strokeLevel1); border-radius: 10px; padding: 12px 14px; font-size: 13px; color: var(--rev-color-textSecondary); margin-bottom: 18px; }
+  .callout .ic { width: 22px; height: 22px; border-radius: 50%; background: var(--rev-color-brand); color: #fff; display: inline-flex; align-items: center; justify-content: center; flex: none; }
+  .callout .ic .material-symbols-outlined { font-size: 14px; }
+  .detail-sec { margin-bottom: 22px; }
+  .detail-sec:not(:last-child) { border-bottom: 1px solid var(--rev-color-strokeBase); padding-bottom: 22px; }
+  .detail-title { font-size: 16px; font-weight: 700; margin: 0 0 12px; display: flex; align-items: center; justify-content: space-between; }
+  .jump-link { display: inline-flex; align-items: center; gap: 4px; color: var(--rev-color-textPrimary); font-weight: 600; font-size: 13px; cursor: pointer; white-space: nowrap; }
+  .jump-link:hover { text-decoration: underline; }
+  .jump-link .material-symbols-outlined { font-size: 15px; color: var(--rev-color-textTertiary); }
+  /* Order caret status chip */
+  .ord-chip { font-size: 11px; font-weight: 700; padding: 2px 9px; border-radius: 999rem; margin-left: 10px; vertical-align: middle; letter-spacing: .2px; }
+  .ord-chip.inprog { background: var(--tag-blue-bg); color: var(--tag-blue-fg); }
+  .ord-chip.aband { background: var(--tag-amber-bg); color: var(--tag-amber-fg); }
+  .ord-chip.rej { background: #fde8e8; color: #b42318; }
+  .ord-chip.declined { background: #fdeadf; color: #9a4a12; }
+  .ord-chip.placed { background: var(--tag-green-bg); color: var(--tag-green-fg); }
+  .ord-chip.expired { background: #eceef1; color: #5b6572; }
+  .ord-chip.cancelled { background: #f6e4e8; color: #9f1239; }
+  /* Abandoned-cart card (drawer) */
+  .cart-head { background: #fff; border-radius: 10px; padding: 12px 14px; display: flex; align-items: center; gap: 14px; }
+  .cart-head .veh-thumb { width: 66px; height: 48px; border-radius: 8px; flex: none; box-shadow: 0 0 0 1px var(--rev-color-strokeLevel1); }
+  .cart-head .cart-meta { min-width: 0; }
+  .cart-head .cart-name { font-size: 15px; font-weight: 600; color: var(--rev-color-textPrimary); }
+  .cart-head .cart-sub { font-size: 12.5px; color: var(--rev-color-textTertiary); margin-top: 2px; }
+  .cart-head .cart-price { margin-left: auto; font-size: 15px; font-weight: 700; color: var(--rev-color-textPrimary); white-space: nowrap; }
+  .cart-exp { width: 34px; height: 34px; border-radius: 8px; border: none; background: var(--rev-color-surfaceLevel1); color: var(--rev-color-textSecondary); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; flex: none; }
+  .cart-exp .material-symbols-outlined { transition: transform .18s; }
+  .pq-wrap.cart-collapsed .cart-rows { display: none; }
+  .pq-wrap.cart-collapsed .cart-exp .material-symbols-outlined { transform: rotate(180deg); }
+  .more-btn { justify-self: start; background: var(--rev-color-surfaceLevel1); border: none; border-radius: 8px; padding: 9px 14px; font-family: inherit; font-size: 13px; font-weight: 600; color: var(--rev-color-textPrimary); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .more-btn .material-symbols-outlined { font-size: 18px; }
+  /* multi-order compact cards */
+  .ord-row { display: flex; align-items: center; gap: 12px; background: #f8f8f9; border-radius: 12px; padding: 12px 14px; cursor: pointer; margin-bottom: 10px; }
+  .ord-row:last-child { margin-bottom: 0; }
+  .ord-row:hover { background: var(--rev-color-surfaceLevel1); }
+  .ord-row .veh-thumb { width: 52px; height: 40px; }
+  .ord-row .ord-total { margin-left: auto; font-weight: 700; font-size: 14px; white-space: nowrap; }
+  .ord-row .ord-open { color: var(--rev-color-textTertiary); }
+  .detail-card { background: #f8f8f9; border-radius: 14px; padding: 8px 22px; }
+  .detail-card .info-row { grid-template-columns: 240px 1fr; padding: 7px 0; }
+  .full-status { font-size: 13px; color: var(--rev-color-textSecondary); margin: 0 0 18px; }
+  /* ============ Lifecycle & Forwarding screen ============ */
+  .screen-nav { display: flex; gap: 2px; padding: 0 24px; border-bottom: 1px solid var(--rev-color-strokeBase); background: var(--rev-color-surfaceBase); position: sticky; top: 0; z-index: 20; }
+  .screen-nav button { appearance: none; border: none; background: transparent; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--rev-color-textTertiary); padding: 13px 14px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; display: inline-flex; align-items: center; gap: 7px; }
+  .screen-nav button:hover { color: var(--rev-color-textSecondary); }
+  .screen-nav button.active { color: var(--rev-color-textPrimary); border-bottom-color: var(--rev-color-brand); }
+  .screen-nav .material-symbols-outlined { font-size: 18px; }
+
+  .flow-sub { color: var(--rev-color-textSecondary); font-size: 14px; line-height: 1.55; max-width: 920px; margin: 2px 0 22px; }
+  .mermaid-wrap { border: 1px solid var(--rev-color-strokeBase); border-radius: 14px; padding: 28px 24px; background: var(--rev-color-surfaceBase); overflow-x: auto; }
+  .mermaid { font-family: inherit; }
+  .flow-note { color: var(--rev-color-textTertiary); font-size: 12.5px; margin-top: 14px; }
+</style>
+</head>
+<body>
+  <div class="proto-bar">
+    <span class="material-symbols-outlined" style="font-size:16px">draft</span>
+    <b>Ekho Prototype</b><span class="dot">·</span> Admin Portal <span class="dot">·</span> Leads (CRM)
+    <span class="tag" style="margin-left:8px">Baseline · Current table</span>
+  </div>
+
+  <div class="topbar">
+    <span class="acct-switch">EuroCycle Las Vegas <span class="material-symbols-outlined">expand_more</span></span>
+    <span class="me-avatar">CH</span>
+  </div>
+
+  <nav class="screen-nav" id="screenNav">
+    <button class="active" data-screen="leads"><span class="material-symbols-outlined">table_rows</span>Leads</button>
+    <button data-screen="flow"><span class="material-symbols-outlined">account_tree</span>Lifecycle &amp; forwarding</button>
+  </nav>
+
+  <div class="app" id="leadsScreen">
+    <h1 class="page-title">Leads</h1>
+
+    <div class="summary-cards">
+      <div class="scard"><div class="scard-label">Total lead value</div><div class="scard-value">$4,675,070</div></div>
+      <div class="scard"><div class="scard-label">Open lead value</div><div class="scard-value">$4,491,829</div></div>
+      <div class="scard"><div class="scard-label">Closed won lead value</div><div class="scard-value">$159,256</div></div>
+      <div class="scard"><div class="scard-label">Avg open lead age</div><div class="scard-value">88 days</div></div>
+    </div>
+
+    <div class="quick-tabs" id="quickTabs"></div>
+
+    <div class="changes collapsed" id="changes">
+      <div class="changes-head" id="changesHead">
+        <span class="step">Step 1</span>
+        <span>Lead detail drawer + new Partial order section</span>
+        <span class="material-symbols-outlined">keyboard_arrow_down</span>
+      </div>
+      <div class="changes-body">
+        <div class="chg"><span class="tag new">New</span><b>Lead detail drawer</b>. Clicking a lead's name (or a Board card) opens the Overview drawer, rebuilt from the production panel: Your tasks, Log / Call / Email quick actions, Cart total / Lead created / Last active stats, the Pipeline / Type / Stage / Assigned rep card, and Contact / Activities / Pre-qualifications accordions. Up/down arrows page through the current list; X or the scrim closes it. <b>Opens on Bradley Landrum on load</b> just to show the new section, that auto-open comes out later.</div>
+        <div class="chg"><span class="tag new">New</span><b>Partial order section</b> (the ask), titled <b>Partial order</b>. For a Checkout V2 / Ekho Express checkout a lead started but hasn't placed. The goal is <b>lead intel for a salesperson</b>, not an inventory/order breakdown, so it leads with who the buyer is and how far they got, not the cart math. <b>Tame preview</b> in the accordion: furthest step, payment path, pre-qualification (FICO), and a <b>View full order</b> CTA. <b>Full view</b> is the main experience: everything the buyer entered, in the exact order they moved through the flow, 1 Contact, 2 Payment path, 3 Pre-qualification, 4 Financing, 5 Trade-in, 6 Delivery, 7 Vehicle of interest, mirroring the "Review credit application" layout with a back arrow.</div>
+        <div class="chg"><span class="tag changed">Changed</span><b>Vehicle identifier line</b> on the vehicle cards (both Pre-qualifications and Partial order) now reads <b>stock # (click to copy) • condition</b> (New / Pre-owned), matching the Inventory name-cell pattern. Removed the "Specs / Accessories" counts and the "Ekho Express" header pill.</div>
+        <div class="chg"><span class="tag method">Grounding</span>The flow steps are pulled from David Reichek's Checkout V2 build docs (Notion Checkout V2 hub) and the view mirrors the shipped credit-app / financing-rejected components. Mock values are illustrative. Deliberately left out the order/inventory detail (fee itemization, cart-type codes, attribution) to keep the focus on the lead. Two gaps to confirm with David: the <b>insurance</b> step isn't specced yet, and the <b>prequal provider</b> fields (approved amount / APR / expiry) are still TBD.</div>
+        <div class="chg"><span class="tag method">Methodology</span>Faithful rebuild of today's Leads table using real Rev tokens and the same table framework as the Inventory prototype (sticky Name on the left, sticky Tasks / Assigned to / actions on the right, Ekho tooltips, click-to-copy, filters drawer). This is the <b>base we iterate from</b>, not a redesign yet.</div>
+        <div class="chg"><span class="tag new">New</span><b>Working Board view</b>. The Table / Board toggle now switches to a real kanban grouped by <b>Stage</b>, with a card per lead (name, vehicle interest, deal amount, owner). Drag isn't wired yet; everything else is.</div>
+        <div class="chg"><span class="tag new">New</span><b>Pre-qual as a real status</b>. The circle now carries state: filled green check = <b>pre-qualified for financing</b>, half-ring amber = <b>in progress</b>, empty = <b>not started</b>. Hover for the detail.</div>
+        <div class="chg"><span class="tag new">New</span><b>Initials avatar</b> on each lead name (and a smaller one on Assigned to), matching the visual-lead pattern the Inventory name cell established.</div>
+        <div class="chg"><span class="tag new">New</span><b>Open the lead record</b>: hovering a row reveals an open-in-new icon by the name.</div>
+        <div class="chg"><span class="tag new">New</span><b>Tasks carry urgency</b>. The Tasks button turns red when a lead has an overdue task; the popover shows each task's due date, overdue ones in red.</div>
+        <div class="chg"><span class="tag new">New</span><b>Click-to-copy</b> on email and phone (flashes "Copied!"), same paradigm as the Inventory stock # / VIN.</div>
+        <div class="chg"><span class="tag changed">Changed</span><b>Stage and Type read clearly</b>: Stage is a colored pill (amber = needs first touch, blue = in progress, clay = negotiating, green = closed won, gray = closed lost); Type is a colored dot + label (Inquiry, Abandoned cart, Test ride, Trade-in).</div>
+        <div class="chg"><span class="tag changed">Changed</span><b>Action required</b> and <b>Assigned to me</b> are live filter toggles, and <b>All filters</b> opens a real drawer (pipeline, stage, type, pre-qual, owner, deal value, lead age).</div>
+      </div>
+    </div>
+
+    <div class="toolbar">
+      <div class="toolbar-left">
+        <div class="search">
+          <span class="material-symbols-outlined">search</span>
+          <input id="searchInput" type="search" placeholder="Search" />
+        </div>
+        <div class="segmented" id="viewToggle">
+          <button class="seg active" data-view="table"><span class="material-symbols-outlined">table_rows</span>Table</button>
+          <button class="seg" data-view="board"><span class="material-symbols-outlined">view_kanban</span>Board</button>
+        </div>
+      </div>
+      <div class="toolbar-right">
+        <button class="btn-outline" id="actionReqBtn">Action required <span class="count-badge warn" id="actionReqCount">65</span></button>
+        <button class="btn-outline" id="assignedMeBtn">Assigned to me <span class="count-badge neutral" id="assignedMeCount">0</span></button>
+        <button class="btn-soft" id="exportBtn">Export</button>
+        <button class="btn-soft" id="filtersBtn">All filters<span class="filter-count" id="filterCount">0</span></button>
+      </div>
+    </div>
+
+    <div class="table-wrap" id="tableWrap">
+      <table>
+        <thead><tr id="headRow"></tr></thead>
+        <tbody id="tableBody"></tbody>
+      </table>
+    </div>
+
+    <div class="board" id="board"></div>
+
+    <div class="pagination" id="pagination">
+      <div id="itemsSummary">1 - 25 of 482 items</div>
+      <div class="pager" id="pager"></div>
+      <div class="per-page">
+        <span>Items per page:</span>
+        <select id="perPage"><option>10</option><option selected>25</option><option>50</option><option>100</option></select>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ Lifecycle & Forwarding screen ============ -->
+  <div class="app" id="flowScreen" style="display:none">
+    <h1 class="page-title">Lead lifecycle &amp; forwarding</h1>
+    <p class="flow-sub">How a Digital retail order lead moves from checkout to close: how its state changes and what updates in the Leads drawer. A lead is only created once Ekho has a <b>name plus an email or phone</b>; before that it's an anonymous checkout session with no lead record. Ekho forwards the lead to the dealer's own CRM/DMS <b>exactly once</b> (a one-time snapshot, no follow-up updates), at whichever terminal state the lead reaches. Only Abandoned is pre-placement; every other outcome happens <b>after the order is placed</b> (unit soft-locked). The snapshot always includes a <b>deep link back to the live Ekho lead record</b>, so the dealer can click through for current status even though Ekho never pushes updates.</p>
+    <div class="mermaid-wrap">
+      <pre class="mermaid">
+flowchart TD
+    Start([Buyer starts Ekho Express checkout]):::plain --> Anon[Anonymous checkout session<br/>no Ekho lead yet]:::lost
+    Anon -->|Buyer provides name + email or phone| Created[Lead created in Ekho CRM<br/>Status: In progress]:::inprog
+    Created --> Progress[Buyer advances checkout<br/>Ekho drawer updates live:<br/>furthest step, payment, pre-qual, credit]:::inprog
+    Progress -->|Ghosts before placing an order| Abandoned[Status: Abandoned]:::aband
+    Progress -->|Places order, unit soft-locked| Placed[Order placed<br/>unit soft-locked, not yet won]:::plain
+
+    Placed -->|Ghosts too long, soft-lock on unit expires| Expired[Status: Expired]:::expired
+    Placed -->|Buyer reaches out to cancel| Cancelled[Status: Cancelled]:::cancelled
+    Placed -->|Financing application declined| Rejected[Status: Financing rejected]:::rej
+    Placed -->|Buyer declines all financing offers| Declined[Status: Declined financing offers]:::declined
+    Placed -->|Order converts / completes| Won[Status: Closed won]:::placed
+
+    Abandoned -. one-time forward .-> Dealer
+    Expired -. one-time forward .-> Dealer
+    Cancelled -. one-time forward .-> Dealer
+    Rejected -. one-time forward .-> Dealer
+    Declined -. one-time forward .-> Dealer
+    Won -. one-time forward .-> Dealer
+    Dealer[(Dealer's own CRM / DMS<br/>lead snapshot + deep link to the live Ekho lead)]:::dealer
+
+    Won --> Fulfill[Ekho fulfillment continues in Orders<br/>Sales processing to In fulfillment to Fulfilled]:::placed
+
+    classDef inprog fill:#eaf1fc,stroke:#2b5fd0,color:#1a3d82;
+    classDef aband fill:#fbf1e0,stroke:#e0972f,color:#7a4e12;
+    classDef rej fill:#fde8e8,stroke:#e0654f,color:#8f1d15;
+    classDef declined fill:#fdeadf,stroke:#c2701c,color:#8a3b12;
+    classDef placed fill:#e7f4ef,stroke:#1f6b52,color:#15503e;
+    classDef expired fill:#eceef1,stroke:#98a2b3,color:#475467;
+    classDef cancelled fill:#f6e4e8,stroke:#c2416a,color:#9f1239;
+    classDef lost fill:#eef0f2,stroke:#98a2b3,color:#475467;
+    classDef dealer fill:#f0ecfb,stroke:#8b7cf0,color:#4a3a8f;
+    classDef plain fill:#ffffff,stroke:#d0d5dd,color:#101828;
+      </pre>
+    </div>
+    <p class="flow-note"><b>Order status states:</b> In progress during checkout. If the buyer ghosts before placing, the lead is <b>Abandoned</b> (the only pre-placement outcome). Otherwise they place an order (unit soft-locked, not yet a win), and it resolves to one of five post-placement states: <b>Expired</b> (soft-lock lapses), <b>Cancelled</b> (buyer cancels), <b>Financing rejected</b>, <b>Declined financing offers</b>, or <b>Closed won</b> (only on conversion). Each lead fires <b>exactly one</b> forward, at whichever terminal state it reaches. Because all five post-placement states have a real order, the drawer links out to it with <b>Open in Orders</b>. <b>Still to confirm for the spec:</b> which credit / PII fields may be included in each forward (compliance gating).</p>
+  </div>
+
+  <!-- Row action menu -->
+  <div class="row-menu" id="rowMenu">
+    <button><span class="material-symbols-outlined">visibility</span> View lead</button>
+    <button><span class="material-symbols-outlined">call</span> Log a call</button>
+    <button><span class="material-symbols-outlined">mail</span> Send email</button>
+    <button><span class="material-symbols-outlined">person_add</span> Reassign</button>
+    <div class="sep"></div>
+    <button class="danger"><span class="material-symbols-outlined">archive</span> Mark lost</button>
+  </div>
+
+  <!-- Tooltip -->
+  <div class="tooltip" id="tooltip"></div>
+
+  <!-- Task popover -->
+  <div class="task-pop" id="taskPop">
+    <div class="task-pop-head" id="taskPopHead">Tasks</div>
+    <div class="task-pop-list" id="taskPopList"></div>
+  </div>
+
+  <!-- Filters drawer -->
+  <div class="scrim" id="scrim"></div>
+  <aside class="drawer" id="drawer" aria-label="Filters">
+    <div class="drawer-head">
+      <h2>Filters</h2>
+      <button class="icon-btn" id="closeDrawer"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="drawer-body" id="drawerBody"></div>
+    <div class="drawer-foot">
+      <button class="btn-ghost-full" id="clearAll" style="display:none">Clear all</button>
+      <button class="btn-primary" id="viewResults">View results (482)</button>
+    </div>
+  </aside>
+
+  <!-- Lead detail drawer -->
+  <aside class="lead-drawer" id="leadDrawer" aria-label="Lead detail">
+    <div class="ld-head">
+      <span class="ld-title" id="ldName"></span>
+      <button class="icon-btn ld-close" id="ldClose"><span class="material-symbols-outlined">close</span></button>
+    </div>
+    <div class="ld-tabs">
+      <span class="ld-tab active">Overview</span>
+      <span class="ld-tab">Conversations <span class="tcount">0</span></span>
+    </div>
+    <div class="ld-body" id="ldBody"></div>
+    <div class="ld-foot">
+      <button class="btn-soft">More actions <span class="material-symbols-outlined" style="font-size:18px">expand_more</span></button>
+      <span class="spacer"></span>
+      <button class="nav-btn" id="ldPrev"><span class="material-symbols-outlined">keyboard_arrow_up</span></button>
+      <button class="nav-btn" id="ldNext"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+    </div>
+  </aside>
+
+<script>
+  // ---------- Config ----------
+  const TODAY = new Date(2026, 6, 10); // Jul 10 2026
+  const ME = "Charlie H";
+
+  // Owners (assignees)
+  const OWNERS = {
+    "Chris Clovis": { color: "#2b5fd0", initials: "CC" },
+    "Maria Santos": { color: "#c07a5c", initials: "MS" },
+    "Charlie H":    { color: "#34a884", initials: "CH" },
+    "Unassigned":   { color: "#9a9a9a", initials: "--" },
+  };
+
+  // Stage definitions: order drives the Board columns. color -> pill + board dot.
+  const STAGES = [
+    { key: "To reach out",     color: "amber",  dot: "var(--tag-amber-dot)" },
+    { key: "Attempted contact",color: "amber",  dot: "var(--tag-amber-dot)" },
+    { key: "In conversation",  color: "blue",   dot: "var(--tag-blue-dot)" },
+    { key: "Qualified",        color: "blue",   dot: "var(--tag-blue-dot)" },
+    { key: "Appointment set",  color: "blue",   dot: "var(--tag-blue-dot)" },
+    { key: "Negotiating",      color: "clay",   dot: "var(--tag-clay-dot)" },
+    { key: "Closed won",       color: "green",  dot: "var(--tag-green-dot)" },
+    { key: "Closed lost",      color: "gray",   dot: "var(--tag-gray-dot)" },
+  ];
+  const STAGE_COLOR = Object.fromEntries(STAGES.map(s => [s.key, s.color]));
+
+  // Type definitions: colored dot + label.
+  const TYPES = {
+    "Inquiry":             "var(--tag-blue-dot)",
+    "Abandoned cart":      "var(--tag-green-dot)",
+    "Test ride":           "var(--tag-amber-dot)",
+    "Trade-in":            "var(--tag-violet-dot)",
+    "Digital retail order":"var(--tag-clay-dot)",
+  };
+
+  // ---------- Data ----------
+  // First 11 rows mirror the current production screenshot exactly; the rest add realistic
+  // variety across stage, pipeline, type, owner, and pre-qual so the tabs/filters/board have stock.
+  const ROWS = [
+    // --- Showcase leads (top): each demonstrates a different partial-order / financing state ---
+    // 1) Reference lead: carries one order in EVERY status so all states + interactions are visible at a glance
+    { name:"Bradley Landrum", email:"lanbrad48@gmail.com", phone:"+1 (725) 321-4243", pipeline:"Digital retail", stage:"Qualified", type:"Digital retail order", vehicle:"2026 Aprilia Tuono V4 1100", amount:14995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"done", credit:"approved", tasks:[{t:"Help buyer place their order",due:0}],
+      orders:[
+        { veh:"2026 Aprilia RS 660 Base", amount:10995, status:"Abandoned", furthest:2, specs:1, accessories:0, started:"Jul 7, 2026, 12:25 PM", lastViewed:"Tuesday at 12:28 PM", timesViewed:0, paymentPath:"Financing" },
+        { veh:"2026 Aprilia RS 660 Base", amount:10995, status:"Abandoned", furthest:2, paymentPath:"Cash", condition:"Pre-owned", started:"Jul 6, 2026, 5:40 PM", detailed:true },
+        { veh:"2026 Kawasaki Ninja 650", amount:8499, status:"In progress", furthest:3, creditState:"in_progress", paymentPath:"Financing", condition:"New", started:"Jul 8, 2026, 9:12 AM", detailed:true },
+        { veh:"2026 Ducati Monster Plus", amount:13995, status:"In progress", furthest:4, creditState:"approved", paymentPath:"Financing", condition:"New", started:"Jul 8, 2026, 11:29 AM", detailed:true },
+      ] },
+    // 2) Rejected credit app -> links out to the Rejected credit application flow
+    { name:"Renata Alvarez", email:"renata.alvarez@gmail.com", phone:"+1 (702) 555-0155", pipeline:"Digital retail", stage:"In conversation", type:"Digital retail order", vehicle:"2026 Ducati Panigale V2", amount:18995, created:"Jul 7, 2026", age:3, owner:"Maria Santos", prequal:"done", credit:"rejected", abandoned:false, furthest:3, tasks:[{t:"Review rejected credit application",due:-1}] },
+    // 3) Abandoned cart -> follow-up task; credit app not finished
+    { name:"Cole Whitaker", email:"cole.whitaker@gmail.com", phone:"+1 (725) 555-0132", pipeline:"Digital retail", stage:"To reach out", type:"Abandoned cart", vehicle:"2025 Kawasaki Z900 SE", amount:10995, created:"Jul 6, 2026", age:4, owner:"Chris Clovis", prequal:"done", credit:"in_progress", abandoned:true, furthest:3, tasks:[{t:"Follow up on abandoned checkout",due:1}] },
+    // 4) Placed order -> Order caret shows Placed, links out to the Order record
+    { name:"Maya Chen", email:"maya.chen@gmail.com", phone:"+1 (702) 555-0166", pipeline:"Digital retail", stage:"Closed won", type:"Digital retail order", vehicle:"2026 Honda Rebel 500 ABS", amount:6499, created:"Jul 5, 2026", age:5, owner:"Maria Santos", prequal:"done", credit:"approved", abandoned:false, placed:true, orderNo:"ORD-24815", placedDate:"Jul 6, 2026, 2:14 PM", fulfillmentStatus:"Preparing for delivery", furthest:6, tasks:[] },
+    // 5) Multiple orders on one lead (a prior placed order + a new in-progress one)
+    { name:"Diego Ramos", email:"diego.ramos@gmail.com", phone:"+1 (702) 555-0184", pipeline:"Digital retail", stage:"Qualified", type:"Digital retail order", vehicle:"2026 Ducati Monster Plus", amount:13995, created:"Jul 4, 2026", age:6, owner:"Charlie H", prequal:"done", credit:"approved", tasks:[{t:"Help buyer place their order",due:0}],
+      orders:[
+        { veh:"2026 Ducati Monster Plus", amount:13995, status:"In progress", furthest:3, creditState:"in_progress" },
+        { veh:"2026 Kawasaki Ninja 500", amount:5299, status:"Closed won", furthest:6, creditState:"approved", orderNo:"ORD-23140", placedDate:"May 2, 2026, 11:20 AM", fulfillmentStatus:"Delivered" },
+        { veh:"2025 Zero SR/F", amount:19995, status:"Cancelled", furthest:6, creditState:"approved", orderNo:"ORD-22011", placedDate:"Apr 10, 2026, 9:05 AM" },
+      ] },
+    { name:"Sean Kurtz", email:"stiltz3232@gmail.com", phone:"+1 (315) 289-8670", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Livewire One", amount:9995, created:"Jul 9, 2026", age:1, owner:"Chris Clovis", prequal:"progress", tasks:[{t:"Make first contact call",due:1}] },
+    { name:"Grant Mosley", email:"grant.mosley@gmail.com", phone:"+1 (725) 321-4243", pipeline:"Digital retail", stage:"To reach out", type:"Abandoned cart", vehicle:"2026 Aprilia Tuono V4 1100", amount:14995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"done", abandoned:true, furthest:2, tasks:[{t:"Follow up on abandoned checkout",due:0}] },
+    { name:"Blake Barrett", email:"blake@blakebarrett.net", phone:"", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Guzzi V100 Mandello S", amount:11995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Make first contact call",due:2}] },
+    { name:"Luis Braz-Ruivo", email:"luis.brazruivo@gmail.com", phone:"+1 (301) 379-5894", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Livewire One", amount:7995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Make first contact call",due:2}] },
+    { name:"Charles Vignet", email:"charlesvignet@gmail.com", phone:"+1 (331) 590-2834", pipeline:"Digital retail", stage:"To reach out", type:"Abandoned cart", vehicle:"2026 Aprilia Tuono V4 1100", amount:14995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"done", tasks:[{t:"Follow up on abandoned checkout",due:0}] },
+    { name:"Jake Stoltz", email:"jakestoltz@yahoo.com", phone:"+1 (330) 608-5454", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Speed 400", amount:3995, created:"Jul 8, 2026", age:2, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Make first contact call",due:2}] },
+    { name:"Ed Cavic", email:"raska963@icloud.com", phone:"+1 (224) 598-7601", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Ninja® 7 Hybrid ABS", amount:5995, created:"Jul 7, 2026", age:3, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Make first contact call",due:3}] },
+    { name:"Daniel Schwartz", email:"d.j.schwartz73@gmail.com", phone:"", pipeline:"Inbound", stage:"To reach out", type:"Inquiry", vehicle:"Speed 400", amount:3995, created:"Jul 7, 2026", age:3, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Make first contact call",due:3}] },
+    // --- added variety ---
+    { name:"Priya Nadkarni", email:"priya.nadkarni@gmail.com", phone:"+1 (702) 555-0142", pipeline:"Digital retail", stage:"In conversation", type:"Test ride", vehicle:"2026 Ducati Monster Plus", amount:13995, created:"Jul 6, 2026", age:4, owner:"Maria Santos", prequal:"done", tasks:[{t:"Confirm test ride Sat 10am",due:-1}] },
+    { name:"Marcus Webb", email:"marcuswebb@outlook.com", phone:"+1 (415) 555-0198", pipeline:"Inbound", stage:"Attempted contact", type:"Inquiry", vehicle:"2025 Kawasaki Z900 SE", amount:10995, created:"Jul 5, 2026", age:5, owner:"Maria Santos", prequal:"progress", tasks:[{t:"Second contact attempt",due:-1},{t:"Text follow-up",due:0}] },
+    { name:"Ana Ferreira", email:"ana.ferreira@gmail.com", phone:"+1 (786) 555-0110", pipeline:"Digital retail", stage:"Qualified", type:"Abandoned cart", vehicle:"2025 Aprilia Tuono 660 Factory", amount:10499, created:"Jul 3, 2026", age:7, owner:"Charlie H", prequal:"done", tasks:[{t:"Send OTD quote",due:0}] },
+    { name:"Tyrell Jones", email:"tyrell.j@gmail.com", phone:"+1 (312) 555-0177", pipeline:"Inbound", stage:"Appointment set", type:"Test ride", vehicle:"2026 Honda Rebel 500 ABS", amount:6499, created:"Jul 2, 2026", age:8, owner:"Charlie H", prequal:"done", tasks:[{t:"Prep unit for Thu appointment",due:1}] },
+    { name:"Sofia Rossi", email:"sofia.rossi@icloud.com", phone:"+1 (646) 555-0163", pipeline:"Digital retail", stage:"Negotiating", type:"Digital retail order", vehicle:"2026 Ducati Panigale V2", amount:18995, created:"Jun 30, 2026", age:10, owner:"Maria Santos", prequal:"done", declinedOffers:true, furthest:5, tasks:[{t:"Follow up: buyer declined financing offers",due:-2}] },
+    { name:"Kevin O'Neil", email:"koneil.moto@gmail.com", phone:"+1 (503) 555-0129", pipeline:"Inbound", stage:"In conversation", type:"Trade-in", vehicle:"2016 Triumph America", amount:3995, created:"Jun 29, 2026", age:11, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Appraise trade-in",due:0}] },
+    { name:"Hana Kim", email:"hana.kim@gmail.com", phone:"+1 (213) 555-0155", pipeline:"Digital retail", stage:"Qualified", type:"Digital retail order", vehicle:"2025 Vespa Primavera 150", amount:5899, created:"Jun 27, 2026", age:13, owner:"Charlie H", prequal:"done", tasks:[{t:"Collect down payment",due:2}] },
+    { name:"Derrick Vaughn", email:"dvaughn88@gmail.com", phone:"+1 (404) 555-0188", pipeline:"Inbound", stage:"Attempted contact", type:"Inquiry", vehicle:"2022 KTM 350 XC-F", amount:7999, created:"Jun 25, 2026", age:15, owner:"Chris Clovis", prequal:"none", tasks:[{t:"Third contact attempt",due:-3}] },
+    { name:"Isabella Grant", email:"bella.grant@gmail.com", phone:"+1 (972) 555-0141", pipeline:"Digital retail", stage:"Negotiating", type:"Digital retail order", vehicle:"2026 Royal Enfield Classic 650", amount:7499, created:"Jun 22, 2026", age:18, owner:"Maria Santos", prequal:"done", tasks:[{t:"Finalize F&I products",due:0}] },
+    { name:"Omar Haddad", email:"omar.haddad@gmail.com", phone:"+1 (617) 555-0173", pipeline:"Inbound", stage:"Closed won", type:"Test ride", vehicle:"2026 Kawasaki Ninja 500", amount:5299, created:"Jun 18, 2026", age:22, owner:"Chris Clovis", prequal:"done", tasks:[] },
+    { name:"Rachel Lindqvist", email:"rachel.l@outlook.com", phone:"+1 (206) 555-0136", pipeline:"Digital retail", stage:"Closed lost", type:"Digital retail order", vehicle:"2026 Ducati Desmo450 EDX", amount:12495, created:"Jun 15, 2026", age:25, owner:"Maria Santos", prequal:"done", expired:true, orderNo:"ORD-22890", placedDate:"Jun 18, 2026, 4:02 PM", tasks:[] },
+    { name:"Gregory Pratt", email:"greg.pratt@gmail.com", phone:"", pipeline:"Inbound", stage:"Closed lost", type:"Inquiry", vehicle:"2018 Suzuki GSX-R750", amount:7995, created:"Jun 10, 2026", age:30, owner:"Chris Clovis", prequal:"none", tasks:[] },
+    { name:"Lena Fischer", email:"lena.fischer@gmail.com", phone:"+1 (305) 555-0190", pipeline:"Digital retail", stage:"Closed lost", type:"Abandoned cart", vehicle:"2015 Harley-Davidson Iron 883", amount:6250, created:"Jun 5, 2026", age:35, owner:"Maria Santos", prequal:"progress", tasks:[] },
+  ];
+
+  ROWS.forEach((r, i) => r.id = i);
+
+  // ---------- Columns ----------
+  const COLUMNS = [
+    { key: "prequal",  label: "Pre-qual", type: "prequal", tip: "Whether this lead has completed financing pre-qualification. Filled = pre-qualified, half = in progress, empty = not started." },
+    { key: "email",    label: "Email", type: "email" },
+    { key: "phone",    label: "Phone number", type: "phone" },
+    { key: "pipeline", label: "Pipeline", type: "pipeline" },
+    { key: "stage",    label: "Stage", type: "stage" },
+    { key: "type",     label: "Type", type: "type", tip: "How the lead came in: a website Inquiry, an Abandoned cart (started checkout online), a Test ride request, a Trade-in, or a Digital retail order." },
+    { key: "vehicle",  label: "Vehicle interests", type: "vehicle" },
+    { key: "amount",   label: "Deal amount", type: "amount" },
+    { key: "account",  label: "Account name", type: "account" },
+    { key: "created",  label: "Date created", type: "created" },
+  ];
+
+  // ---------- Helpers ----------
+  const el = (t, cls, html) => { const e = document.createElement(t); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; };
+  const money = (n) => "$" + n.toLocaleString("en-US") + ".00";
+  const initials = (name) => name.split(/\s+/).map(w => w[0]).slice(0,2).join("").toUpperCase();
+  const AVATAR_COLORS = ["#2b5fd0","#c07a5c","#34a884","#7a5cc0","#d0894a","#4d7fb0","#b0506a"];
+  function avatarColor(name) { let h = 0; for (const c of name) h = (h*31 + c.charCodeAt(0)) >>> 0; return AVATAR_COLORS[h % AVATAR_COLORS.length]; }
+
+  const openTasks = (r) => r.tasks || [];
+  const hasOverdue = (r) => openTasks(r).some(t => t.due < 0);
+  const dueLabel = (d) => d < 0 ? `${-d} day${d===-1?'':'s'} overdue` : d === 0 ? "Due today" : `Due in ${d} day${d===1?'':'s'}`;
+
+  function prequalHTML(r) {
+    if (r.prequal === "done") return `<span class="prequal done" data-tip="Pre-qualified for financing"><span class="ring"><span class="material-symbols-outlined">check</span></span></span>`;
+    if (r.prequal === "progress") return `<span class="prequal progress" data-tip="Pre-qualification in progress"><span class="ring"></span></span>`;
+    return `<span class="prequal" data-tip="Pre-qualification not started"><span class="ring"></span></span>`;
+  }
+  function stageHTML(r) { return `<span class="pill ${STAGE_COLOR[r.stage]||'gray'}"><span class="dot"></span>${r.stage}</span>`; }
+  function typeHTML(r) { return `<span class="type-cell"><span class="dot" style="background:${TYPES[r.type]||'var(--tag-gray-dot)'}"></span>${r.type}</span>`; }
+  function emailHTML(r) { return r.email ? `<span class="copyable" data-copy="${r.email}" data-tip="Click to copy email">${r.email}</span>` : `<span class="muted">--</span>`; }
+  function phoneHTML(r) { return r.phone ? `<span class="copyable" data-copy="${r.phone}" data-tip="Click to copy phone">${r.phone}</span>` : `<span class="muted">--</span>`; }
+  function assigneeHTML(r) {
+    const o = OWNERS[r.owner] || OWNERS["Unassigned"];
+    if (r.owner === "Unassigned") return `<span class="assignee-cell muted"><span class="avatar sm" style="background:${o.color}">--</span><span class="aname muted">Unassigned</span></span>`;
+    return `<span class="assignee-cell"><span class="avatar sm" style="background:${o.color}">${o.initials}</span><span class="aname">${r.owner}</span></span>`;
+  }
+
+  // ---------- Render: table ----------
+  function renderHead() {
+    const tr = document.getElementById("headRow");
+    tr.innerHTML = "";
+    const check = el("th", "col-check sticky-l1");
+    check.innerHTML = `<span class="cbx" data-role="select-all"><span class="material-symbols-outlined">check</span></span>`;
+    tr.appendChild(check);
+    tr.appendChild(el("th", "col-name sticky-l2", "Name"));
+    COLUMNS.forEach(c => tr.appendChild(el("th", "col-" + c.key, c.tip
+      ? `<span class="th-label">${c.label}<span class="th-info material-symbols-outlined" data-tip="${c.tip}">info</span></span>`
+      : c.label)));
+    tr.appendChild(el("th", "col-spacer", ""));
+    tr.appendChild(el("th", "col-tasks sticky-r3", "Tasks"));
+    tr.appendChild(el("th", "col-assignee sticky-r2", "Assigned to"));
+    tr.appendChild(el("th", "col-kebab sticky-r", ""));
+  }
+
+  let currentRows = ROWS;
+  function renderBody(rows) {
+    currentRows = rows;
+    const tb = document.getElementById("tableBody");
+    tb.innerHTML = "";
+    rows.forEach((r) => {
+      const tr = el("tr");
+      tr.dataset.id = r.id;
+      const c = el("td", "col-check sticky-l1");
+      c.innerHTML = `<span class="cbx" data-role="row-check"><span class="material-symbols-outlined">check</span></span>`;
+      tr.appendChild(c);
+      const nm = el("td", "col-name sticky-l2 cell-name");
+      nm.innerHTML = `<div class="ncell">
+        <span class="avatar" style="background:${avatarColor(r.name)}">${initials(r.name)}</span>
+        <div class="ntext"><div class="name">${r.name}</div></div>
+        <span class="lead-open material-symbols-outlined" data-role="lead" data-tip="Open lead record">open_in_new</span>
+      </div>`;
+      tr.appendChild(nm);
+      COLUMNS.forEach(col => {
+        const td = el("td", "col-" + col.key);
+        if (col.type === "prequal") td.innerHTML = prequalHTML(r);
+        else if (col.type === "stage") td.innerHTML = stageHTML(r);
+        else if (col.type === "type") td.innerHTML = typeHTML(r);
+        else if (col.type === "email") td.innerHTML = emailHTML(r);
+        else if (col.type === "phone") td.innerHTML = phoneHTML(r);
+        else if (col.type === "amount") td.innerHTML = `<span class="amount-val">${money(r.amount)}</span>`;
+        else if (col.type === "pipeline") td.innerHTML = `<span class="pipeline-cell">${r.pipeline} pipeline</span>`;
+        else if (col.type === "vehicle") td.innerHTML = `<span class="vehicle-cell">${r.vehicle}</span>`;
+        else if (col.type === "account") td.innerHTML = `<span class="account-cell">EuroCycle Las Vegas</span>`;
+        else if (col.type === "created") td.innerHTML = `<span class="created-cell">${r.created}</span>`;
+        else td.innerHTML = r[col.key] ?? `<span class="muted">--</span>`;
+        tr.appendChild(td);
+      });
+      tr.appendChild(el("td", "col-spacer", ""));
+      const tasks = openTasks(r);
+      const tcell = el("td", "col-tasks sticky-r3");
+      if (tasks.length) {
+        const over = hasOverdue(r);
+        tcell.innerHTML = `<button class="task-btn ${over ? 'overdue' : ''}" data-role="tasks">${tasks.length} task${tasks.length > 1 ? 's' : ''}</button>`;
+        tcell.querySelector('.task-btn').addEventListener('click', (ev) => { ev.stopPropagation(); openTaskPop(ev.currentTarget, r, tasks); });
+      } else {
+        tcell.innerHTML = `<span class="muted">--</span>`;
+      }
+      tr.appendChild(tcell);
+      tr.appendChild(el("td", "col-assignee sticky-r2", assigneeHTML(r)));
+      const k = el("td", "col-kebab sticky-r");
+      k.innerHTML = `<span class="kebab" data-role="kebab"><span class="material-symbols-outlined">more_horiz</span></span>`;
+      tr.appendChild(k);
+      tb.appendChild(tr);
+    });
+  }
+
+  // ---------- Render: board ----------
+  function renderBoard(rows) {
+    const board = document.getElementById("board");
+    board.innerHTML = "";
+    STAGES.forEach(s => {
+      const items = rows.filter(r => r.stage === s.key);
+      const col = el("div", "bcol");
+      col.innerHTML = `<div class="bcol-head"><span class="bdot" style="background:${s.dot}"></span>${s.key}<span class="bcount">${items.length}</span></div>`;
+      const body = el("div", "bcol-body");
+      items.forEach(r => {
+        const o = OWNERS[r.owner] || OWNERS["Unassigned"];
+        const card = el("div", "bcard");
+        card.dataset.id = r.id;
+        card.innerHTML = `
+          <div class="bname">${r.name}</div>
+          <div class="bveh">${r.vehicle}</div>
+          <div class="bfoot">
+            <span class="bamt">${money(r.amount)}</span>
+            <span class="avatar sm" style="background:${o.color}" data-tip="${r.owner}">${o.initials}</span>
+          </div>`;
+        body.appendChild(card);
+      });
+      if (!items.length) body.innerHTML = `<div style="font-size:12px;color:var(--rev-color-textQuaternary);padding:6px 2px">No leads</div>`;
+      col.appendChild(body);
+      board.appendChild(col);
+    });
+  }
+
+  // ---------- Filters ----------
+  const FILTER_GROUPS = [
+    { title:"Pipeline", collapsed:true, options:[["Inbound pipeline",393],["Digital retail pipeline",89]] },
+    { title:"Stage", collapsed:true, options:[["To reach out",65],["Attempted contact",48],["In conversation",71],["Qualified",54],["Appointment set",33],["Negotiating",29],["Closed won",41],["Closed lost",141]] },
+    { title:"Type", collapsed:true, options:[["Inquiry",286],["Abandoned cart",74],["Test ride",58],["Trade-in",41],["Digital retail order",23]] },
+    { title:"Pre-qualification", collapsed:true, options:[["Pre-qualified",112],["In progress",47],["Not started",323]] },
+    { title:"Assigned to", collapsed:true, options:[["Chris Clovis",214],["Maria Santos",176],["Charlie H",64],["Unassigned",28]] },
+    { title:"Deal amount", collapsed:true, options:[["Under $5k",121],["$5k – $10k",203],["$10k – $15k",118],["$15k+",40]] },
+    { title:"Lead age", collapsed:true, options:[["0–30 days",188],["31–60 days",142],["61–90 days",96],["90+ days",56]] },
+  ];
+  function renderFilters() {
+    const body = document.getElementById("drawerBody");
+    body.innerHTML = "";
+    FILTER_GROUPS.forEach(g => {
+      const sec = el("div", "fsection" + (g.collapsed ? " collapsed" : ""));
+      const head = el("div", "fsection-head", `<span>${g.title}</span><span class="material-symbols-outlined">keyboard_arrow_down</span>`);
+      head.addEventListener("click", () => sec.classList.toggle("collapsed"));
+      sec.appendChild(head);
+      const bdy = el("div", "fsection-body");
+      g.options.forEach(([label, count]) => {
+        const row = el("div", "frow");
+        row.innerHTML = `<span class="cbx" data-role="filter-check"><span class="material-symbols-outlined">check</span></span>
+                         <span class="label">${label}</span><span class="count">${count}</span>`;
+        row.addEventListener("click", () => { toggleCbx(row.querySelector(".cbx")); updateFilterCount(); });
+        bdy.appendChild(row);
+      });
+      sec.appendChild(bdy);
+      body.appendChild(sec);
+    });
+  }
+
+  // ---------- Interactivity ----------
+  function toggleCbx(cbx, force) {
+    const on = force != null ? force : !cbx.classList.contains("checked");
+    cbx.classList.toggle("checked", on);
+    return on;
+  }
+  function updateFilterCount() {
+    const n = document.querySelectorAll('#drawerBody .cbx.checked').length;
+    const badge = document.getElementById("filterCount");
+    badge.textContent = n;
+    badge.style.display = n ? "inline-flex" : "none";
+    document.getElementById("clearAll").style.display = n ? "block" : "none";
+  }
+
+  // Tooltip
+  const tooltipEl = document.getElementById("tooltip");
+  let tipTarget = null, tipTimer = null;
+  function placeTooltip(t) {
+    const r = t.getBoundingClientRect();
+    tooltipEl.textContent = t.dataset.tip;
+    tooltipEl.classList.add("show");
+    const tw = tooltipEl.offsetWidth, th = tooltipEl.offsetHeight;
+    const cx = r.left + r.width / 2;
+    let left = Math.min(Math.max(8, cx - tw / 2), window.innerWidth - tw - 8);
+    let top = r.top - th - 9, below = false;
+    if (top < 8) { top = r.bottom + 9; below = true; }
+    tooltipEl.classList.toggle("below", below);
+    tooltipEl.style.left = left + "px";
+    tooltipEl.style.top = top + "px";
+    tooltipEl.style.setProperty("--arrow-x", Math.min(Math.max(12, cx - left), tw - 12) + "px");
+  }
+  function hideTooltip() { clearTimeout(tipTimer); tipTarget = null; tooltipEl.classList.remove("show"); }
+  document.addEventListener("mouseover", (e) => {
+    const t = e.target.closest("[data-tip]");
+    if (!t || t === tipTarget) return;
+    tipTarget = t;
+    clearTimeout(tipTimer);
+    tipTimer = setTimeout(() => { if (tipTarget === t) placeTooltip(t); }, 90);
+  });
+  document.addEventListener("mouseout", (e) => {
+    const t = e.target.closest("[data-tip]");
+    if (t && t === tipTarget && !t.contains(e.relatedTarget)) hideTooltip();
+  });
+  window.addEventListener("scroll", hideTooltip, true);
+
+  function copyText(cp) {
+    const val = cp.dataset.copy || "";
+    if (navigator.clipboard) navigator.clipboard.writeText(val).catch(() => {});
+    clearTimeout(cp._ct);
+    cp.textContent = "Copied!";
+    cp.classList.add("copied");
+    cp._ct = setTimeout(() => { cp.textContent = val; cp.classList.remove("copied"); }, 1000);
+  }
+
+  document.addEventListener("click", (e) => {
+    const cp = e.target.closest('.copyable');
+    if (cp) { copyText(cp); e.stopPropagation(); return; }
+    // Open the lead drawer from anywhere on a table row (or Board card), except interactive controls.
+    const card = e.target.closest('.bcard');
+    const tr = e.target.closest('#tableBody tr');
+    if ((card || tr) && !e.target.closest('.cbx') && !e.target.closest('[data-role="kebab"]') && !e.target.closest('[data-role="tasks"]')) {
+      const id = card ? +card.dataset.id : +tr.dataset.id;
+      const r = ROWS.find(x => x.id === id);
+      if (r) openLeadDrawer(r);
+      e.stopPropagation();
+      return;
+    }
+    const cbx = e.target.closest('.cbx');
+    if (cbx && cbx.dataset.role === "select-all") {
+      const on = toggleCbx(cbx);
+      document.querySelectorAll('#tableBody .cbx[data-role="row-check"]').forEach(c => toggleCbx(c, on));
+      return;
+    }
+    if (cbx && cbx.dataset.role === "row-check") { toggleCbx(cbx); return; }
+    const kebab = e.target.closest('[data-role="kebab"]');
+    if (kebab) { openRowMenu(kebab); e.stopPropagation(); return; }
+    if (!e.target.closest('#rowMenu')) hideRowMenu();
+    if (!e.target.closest('#taskPop') && !e.target.closest('[data-role="tasks"]')) hideTaskPop();
+  });
+
+  // Search + tab + filter-toggle state, composed into one apply()
+  let activeTab = "all";
+  let actionReqOn = false, assignedMeOn = false;
+  const TAB_TESTS = {
+    all: () => true,
+    inbound: r => r.pipeline === "Inbound",
+    dr: r => r.pipeline === "Digital retail",
+  };
+  function apply() {
+    const q = document.getElementById("searchInput").value.trim().toLowerCase();
+    let rows = ROWS.filter(TAB_TESTS[activeTab]);
+    if (actionReqOn) rows = rows.filter(r => openTasks(r).length > 0);
+    if (assignedMeOn) rows = rows.filter(r => r.owner === ME);
+    if (q) rows = rows.filter(r => [r.name, r.email, r.phone, r.vehicle, r.stage, r.type].join(" ").toLowerCase().includes(q));
+    renderBody(rows);
+    renderBoard(rows);
+    const total = 482;
+    document.getElementById("itemsSummary").textContent =
+      (q || actionReqOn || assignedMeOn || activeTab !== "all")
+        ? `${rows.length} of ${total} items`
+        : `1 - 25 of ${total} items`;
+  }
+  document.getElementById("searchInput").addEventListener("input", apply);
+
+  // Quick-filter tabs (pipeline segments, matching production)
+  const TABS = [
+    { key: "all", label: "All", count: 482 },
+    { key: "inbound", label: "Inbound", count: 393 },
+    { key: "dr", label: "Digital retail", count: 89 },
+  ];
+  function renderQuickTabs() {
+    const wrap = document.getElementById("quickTabs");
+    wrap.innerHTML = "";
+    TABS.forEach(t => {
+      const tab = el("div", "qtab" + (t.key === activeTab ? " active" : ""), `${t.label}<span class="qcount">${t.count}</span>`);
+      tab.addEventListener("click", () => { activeTab = t.key; renderQuickTabs(); apply(); });
+      wrap.appendChild(tab);
+    });
+  }
+
+  // Toolbar filter toggles
+  document.getElementById("actionReqBtn").addEventListener("click", (e) => {
+    actionReqOn = !actionReqOn;
+    e.currentTarget.classList.toggle("active", actionReqOn);
+    apply();
+  });
+  document.getElementById("assignedMeBtn").addEventListener("click", (e) => {
+    assignedMeOn = !assignedMeOn;
+    e.currentTarget.classList.toggle("active", assignedMeOn);
+    apply();
+  });
+
+  // View toggle (Table / Board)
+  document.getElementById("viewToggle").addEventListener("click", (e) => {
+    const seg = e.target.closest(".seg");
+    if (!seg) return;
+    document.querySelectorAll("#viewToggle .seg").forEach(s => s.classList.toggle("active", s === seg));
+    const board = seg.dataset.view === "board";
+    document.getElementById("board").classList.toggle("show", board);
+    document.getElementById("tableWrap").style.display = board ? "none" : "";
+    document.getElementById("pagination").style.display = board ? "none" : "";
+  });
+
+  // Drawer
+  const drawer = document.getElementById("drawer"), scrim = document.getElementById("scrim");
+  const openDrawer = () => { drawer.classList.add("open"); scrim.classList.add("open"); };
+  const closeDrawer = () => { drawer.classList.remove("open"); scrim.classList.remove("open"); };
+  document.getElementById("filtersBtn").addEventListener("click", openDrawer);
+  document.getElementById("closeDrawer").addEventListener("click", closeDrawer);
+  document.getElementById("viewResults").addEventListener("click", closeDrawer);
+  scrim.addEventListener("click", () => { closeDrawer(); closeLeadDrawer(); });
+  document.getElementById("clearAll").addEventListener("click", () => {
+    document.querySelectorAll('#drawerBody .cbx.checked').forEach(c => toggleCbx(c, false));
+    updateFilterCount();
+  });
+
+  // Row menu
+  const rowMenu = document.getElementById("rowMenu");
+  function openRowMenu(anchor) {
+    const r = anchor.getBoundingClientRect();
+    rowMenu.style.display = "block";
+    const w = rowMenu.offsetWidth;
+    rowMenu.style.left = Math.max(8, r.right - w) + "px";
+    rowMenu.style.top = (r.bottom + 4) + "px";
+  }
+  function hideRowMenu() { rowMenu.style.display = "none"; }
+
+  // Task popover
+  const taskPop = document.getElementById("taskPop");
+  function openTaskPop(anchor, r, tasks) {
+    hideRowMenu();
+    document.getElementById("taskPopHead").textContent = `${tasks.length} open task${tasks.length > 1 ? 's' : ''} · ${r.name}`;
+    document.getElementById("taskPopList").innerHTML = tasks.map(t =>
+      `<div class="task-item"><span class="material-symbols-outlined">radio_button_unchecked</span><span>${t.t}<span class="tmeta ${t.due < 0 ? 'due-over' : ''}">${dueLabel(t.due)}</span></span></div>`).join('');
+    const rect = anchor.getBoundingClientRect();
+    taskPop.style.display = "block";
+    const w = taskPop.offsetWidth, h = taskPop.offsetHeight;
+    let left = Math.min(rect.left, window.innerWidth - w - 8);
+    let top = rect.bottom + 6;
+    if (top + h > window.innerHeight - 8) top = rect.top - h - 6;
+    taskPop.style.left = Math.max(8, left) + "px";
+    taskPop.style.top = top + "px";
+  }
+  function hideTaskPop() { taskPop.style.display = "none"; }
+
+  // Pagination (visual; prototype data fits one page)
+  function renderPager() {
+    const pager = document.getElementById("pager");
+    pager.innerHTML = "";
+    const mk = (html, opts = {}) => { const b = el("button", "pg" + (opts.active ? " active" : ""), html); if (opts.disabled) b.disabled = true; pager.appendChild(b); };
+    mk("&laquo;", { disabled: true }); mk("&lsaquo;", { disabled: true });
+    [1,2,3,4,5,6,7,8].forEach(n => mk(String(n), { active: n === 1 }));
+    mk("&hellip;"); mk("20");
+    mk("&rsaquo;"); mk("&raquo;");
+    pager.querySelectorAll(".pg").forEach(b => b.addEventListener("click", () => {
+      if (b.disabled || !/^\d+$/.test(b.textContent)) return;
+      pager.querySelectorAll(".pg").forEach(x => x.classList.remove("active"));
+      b.classList.add("active");
+    }));
+  }
+
+  // Horizontal scroll shadows on sticky columns
+  const tableWrap = document.getElementById("tableWrap");
+  tableWrap.addEventListener("scroll", () => {
+    tableWrap.classList.toggle("scrolled", tableWrap.scrollLeft > 0);
+    tableWrap.classList.toggle("scrolled-right", tableWrap.scrollLeft + tableWrap.clientWidth < tableWrap.scrollWidth - 1);
+  });
+
+  // Changes note collapse
+  document.getElementById("changesHead").addEventListener("click", () => document.getElementById("changes").classList.toggle("collapsed"));
+
+  // Assigned-to-me count from data
+  document.getElementById("assignedMeCount").textContent = ROWS.filter(r => r.owner === ME).length;
+
+  // ---------- Lead detail drawer ----------
+  // Real Checkout V2 / Ekho Express flow (from the checkout screenshots — BUILD YOUR DEAL then FINALIZE ORDER).
+  const CHECKOUT_STEPS = ["Personal details", "Payment method", "Pre-qualification", "Credit application", "Fulfillment", "Review your offer", "Sign documents"];
+  const VEH_BG = [
+    "linear-gradient(135deg,#5b6472,#2b303b)", "linear-gradient(135deg,#8a5a44,#4a2f22)",
+    "linear-gradient(135deg,#3f5a6b,#22323d)", "linear-gradient(135deg,#6f6f6f,#3a3a3a)",
+    "linear-gradient(135deg,#4a5d52,#26332c)",
+  ];
+  function hashStr(s) { let h = 0; for (const c of s) h = (h * 31 + c.charCodeAt(0)) >>> 0; return h; }
+  function fmtTime(h) { const hr = (h % 12) || 12; const m = (h * 7) % 60; const ap = (h % 24) < 12 ? "AM" : "PM"; return `${hr}:${String(m).padStart(2, "0")} ${ap}`; }
+  const vehBg = (h) => VEH_BG[h % VEH_BG.length];
+  const STK_L = "ABCDEFGHJKLMNPRSTUVWXYZ";
+  function stockNo(h) { return STK_L[h % STK_L.length] + STK_L[(h >>> 3) % STK_L.length] + String(h % 900000 + 100000); }
+  const conditionOf = (h) => (h % 3 === 0) ? "Pre-owned" : "New";
+  // Vehicle identifier line: stock # (copyable) • condition — matches the Inventory name-cell pattern.
+  function vehLine(v) { return `<span class="copyable" data-copy="${v.stock}" data-tip="Click to copy stock #">${v.stock}</span> • ${v.condition}`; }
+
+  // Financing pre-qualification (mirrors the production Pre-qualifications section).
+  function prequalOf(r) {
+    if (r.prequal !== "done" && r.prequal !== "progress") return null;
+    const h = hashStr(r.name + "pq");
+    const tiers = [
+      { label: "Subprime (580-619)", color: "#ff6333" },
+      { label: "Near-prime (620-659)", color: "#e0972f" },
+      { label: "Prime (660-719)", color: "#2b5fd0" },
+      { label: "Super-prime (720+)", color: "#34a884" },
+    ];
+    const tier = tiers[h % tiers.length];
+    return {
+      dateFiled: r.created + ", " + fmtTime(h),
+      status: r.prequal === "done" ? "Success" : "Pending",
+      fico: tier.label, ficoColor: tier.color,
+      outstanding: (h % 5) + 1, avgAge: ((h >>> 2) % 8) + 2,
+      vehicle: { name: r.vehicle, price: r.amount, bg: vehBg(h), stock: stockNo(h), condition: conditionOf(h) },
+    };
+  }
+  // Partial order = an Ekho Express / Checkout V2 CheckoutCart in ABANDONEDCART state (started, not placed).
+  // Field shape follows David Reichek's cart / paymentInvoice model.
+  function partialOf(r) {
+    if (!(r.type === "Abandoned cart" || r.type === "Digital retail order")) return null;
+    const h = hashStr(r.name + "po");
+    const furthest = r.furthest != null ? r.furthest : (r.type === "Digital retail order" ? 4 : 3);
+    const pre = r.prequal === "done";
+    // paymentInvoice money model
+    const msrp = r.amount;
+    const accessories = (h % 4 === 0) ? 749 : 0;
+    const homeDelivery = (h % 2 === 0);
+    const shipping = homeDelivery ? ((h % 3 === 0) ? 499 : 299) : 0;
+    const docFee = 599, inspection = 149, tempTag = 45, stateFee = 385;
+    const stateTax = Math.round(msrp * 0.0725);
+    const coverageSel = (h % 2 === 1);
+    const coverage = coverageSel ? 1299 : 0;
+    const discount = (h % 5 === 0) ? 250 : 0;
+    const totalFees = shipping + docFee + inspection + tempTag + stateFee;
+    const totalTaxes = stateTax;
+    const cartTotal = msrp + accessories + totalFees + totalTaxes + coverage - discount;
+    const loanTerm = [60, 66, 72][h % 3];
+    const downPayment = 500 + (h % 6) * 250;
+    const financed = cartTotal - downPayment;
+    const monthly = Math.round(financed / loanTerm * 1.08);
+    const tiers = [["Subprime (580-619)", "#ff6333"], ["Near-prime (620-659)", "#e0972f"], ["Prime (660-719)", "#2b5fd0"], ["Super-prime (720+)", "#34a884"]];
+    const tier = tiers[h % tiers.length];
+    return {
+      started: r.created + ", " + fmtTime(h),
+      updated: r.created + ", " + fmtTime(h >>> 2),
+      furthestIdx: furthest,
+      status: "In progress",
+      cartType: "ABANDONEDCART",
+      source: r.type === "Abandoned cart" ? "Ekho Express" : "Organic checkout",
+      referrer: "eurocyclelv.com/inventory",
+      cartId: "cart_" + (h.toString(36) + (h >>> 5).toString(36)).slice(0, 12),
+      fidelity: "Estimate",
+      cartTotal,
+      paymentPath: pre ? "Financing" : (r.type === "Digital retail order" ? "Financing" : "Cash"),
+      prequalApproved: pre, fico: tier[0], ficoColor: tier[1],
+      loanTerm, downPayment, financed, monthly,
+      lender: pre ? "FreedomRoad Financial" : "--",
+      tradeIn: (h % 2) ? { name: "2019 Yamaha MT-07", value: 4200, payoff: 2100 } : null,
+      fulfillment: homeDelivery ? "Home delivery" : "Dealership pickup",
+      buyerAddress: pre ? "1420 S Rainbow Blvd, Las Vegas, NV 89146-2231" : "--",
+      address: homeDelivery ? "1420 S Rainbow Blvd, Las Vegas, NV 89146-2231" : "EuroCycle Las Vegas — 6255 W Sahara Ave",
+      deliveryDate: homeDelivery ? "Est. " + ["Jul 18", "Jul 21", "Jul 24"][h % 3] : "--",
+      deliveryPrice: shipping,
+      coverage: coverageSel ? "Tire & Wheel + GAP" : "None selected",
+      contact: { name: r.name, phone: r.phone || "--", email: r.email || "--" },
+      promoCode: discount ? "SUMMER250" : null,
+      money: { msrp, accessories, shipping, docFee, inspection, tempTag, stateFee, stateTax, coverage, discount, totalFees, totalTaxes, cartTotal },
+      vehicle: { name: r.vehicle, price: r.amount, bg: vehBg(h), stock: stockNo(h), condition: conditionOf(h) },
+    };
+  }
+
+  function typePillHTML(r) { return `<span class="pill gray"><span class="dot" style="background:${TYPES[r.type] || 'var(--tag-gray-dot)'}"></span>${r.type}</span>`; }
+  function stepperHTML(furthest) {
+    return `<div class="steps">` + CHECKOUT_STEPS.map((s, i) => {
+      const cls = i < furthest ? "done" : (i === furthest ? "current" : "todo");
+      const dot = i < furthest ? `<span class="material-symbols-outlined" style="font-size:12px">check</span>` : (i + 1);
+      const sep = i < CHECKOUT_STEPS.length - 1 ? `<span class="step-sep ${i < furthest ? 'done' : ''}"></span>` : "";
+      return `<span class="step ${cls}" data-tip="${s}"><span class="sdot">${dot}</span></span>${sep}`;
+    }).join("") + `</div>`;
+  }
+  function acc(title, count, bodyHTML, collapsed) {
+    const c = count == null ? "" : ` (${count})`;
+    return `<div class="ld-acc ${collapsed ? 'collapsed' : ''}">
+      <div class="ld-acc-head"><h3>${title}${c}</h3><span class="material-symbols-outlined">expand_less</span></div>
+      <div class="ld-acc-body">${bodyHTML}</div></div>`;
+  }
+
+  function prequalSection(pq) {
+    if (!pq) return `<div style="color:var(--rev-color-textQuaternary);font-size:13px;padding:4px 0 8px">No pre-qualification on file.</div>`;
+    return `<div class="pq-wrap">
+      <div class="pq-top">
+        <div class="pq-card"><div class="lb">Date filed</div><div class="vl">${pq.dateFiled}</div></div>
+        <div class="pq-card"><div class="lb">Pre-qualification</div><div class="vl with-ic"><span class="badge-ic"><span class="material-symbols-outlined">check</span></span>${pq.status}</div></div>
+      </div>
+      <div class="pq-detail">
+        <div class="info-row"><span class="k">FICO score</span><span class="v" style="display:inline-flex;align-items:center;gap:8px"><span class="fico-sq" style="background:${pq.ficoColor}"></span><b>${pq.fico}</b></span></div>
+        <div class="info-row"><span class="k">Outstanding accounts</span><span class="v">${pq.outstanding}</span></div>
+        <div class="info-row"><span class="k">Avg account age</span><span class="v">${pq.avgAge}yr</span></div>
+      </div>
+      <div class="veh-card">
+        <span class="veh-thumb" style="background:${pq.vehicle.bg}"></span>
+        <div class="veh-meta"><div class="vn">${pq.vehicle.name}</div><div class="vs">${vehLine(pq.vehicle)}</div></div>
+        <span class="veh-price">${money(pq.vehicle.price)}</span>
+      </div>
+      <div class="pq-cta"><button class="mini-btn">Invite to checkout</button></div>
+    </div>`;
+  }
+  // The new section: same visual grammar as the credit-app / financing-rejected flow
+  // (sections -> inset cards -> label/value rows), showing everything the CheckoutCart captures.
+  const infoR = (k, v) => `<div class="info-row"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const sumR = (k, v, cls) => `<div class="sum-row ${cls || ''}"><span class="k">${k}</span><span class="v">${v}</span></div>`;
+  const copyV = (v) => v === "--" ? "--" : `<span class="copyable" data-copy="${v}" data-tip="Click to copy">${v}</span>`;
+  // Row + section builders.
+  const prow = (label, valHTML) => `<div class="prow"><span class="k">${label}</span><span class="v">${valHTML}</span></div>`;
+  const detailSection = (title, rowsHTML, link) => `<div class="detail-sec"><div class="detail-title">${title}${link || ""}</div><div class="detail-card">${rowsHTML}</div></div>`;
+  // A titled sub-card (used to group the several cards within a step, e.g. Credit application).
+  const subCard = (title, rowsHTML) => `<div class="detail-card" style="margin-bottom:10px"><div class="pq-sub">${title}</div>${rowsHTML}</div>`;
+  const ficoChip = (color, label) => `<span style="display:inline-flex;align-items:center;gap:8px"><span class="fico-sq" style="background:${color}"></span><b>${label}</b></span>`;
+  const vehCard = (v) => `<div class="veh-card"><span class="veh-thumb" style="background:${v.bg}"></span><div class="veh-meta"><div class="vn">${v.name}</div><div class="vs">${vehLine(v)}</div></div><span class="veh-price">${money(v.price)}</span></div>`;
+  // Expandable vehicle card (chevron) + expandable rows, for the compact rejected-financing preview.
+  const vehCardExp = (v) => `<div class="veh-card exp"><div class="veh-card-head" data-vexp>
+      <span class="veh-thumb" style="background:${v.bg}"></span>
+      <div class="veh-meta"><div class="vn">${v.name}</div><div class="vs">Specs (1) • Accessories (0)</div></div>
+      <span class="veh-price">${money(v.price)}</span>
+      <span class="veh-exp material-symbols-outlined">expand_more</span>
+    </div>
+    <div class="veh-card-body">${infoR("Stock #", copyV(v.stock))}${infoR("Condition", v.condition)}${infoR("Specs", "1 selected")}${infoR("Accessories", "0 selected")}</div></div>`;
+  const xrow = (label, valHTML, bodyHTML) => `<div class="xrow"><div class="xrow-head"><span class="xr-plus"></span><span class="xr-label">${label}</span><span class="xr-val">${valHTML}<span class="material-symbols-outlined">expand_more</span></span></div><div class="xrow-body">${bodyHTML}</div></div>`;
+  // Link out to the dedicated financing experiences (partial order stays read-only data).
+  const jumpLink = (label, role) => `<span class="jump-link" data-role="${role}">${label} <span class="material-symbols-outlined">north_east</span></span>`;
+
+  // The deal object status drives the Order caret's chip, body, and out-links.
+  // Placed follows the full order lifecycle (like the Orders table): pending -> sales processing ->
+  // kick off fulfillment -> in fulfillment -> fulfilled.
+  // Order status states. PLACED_STATES = an order was placed / the unit was soft-locked. Placement
+  // comes first, so every outcome except In progress and Abandoned is post-placement (has a real
+  // order -> "Open in Orders"). Fulfillment sub-states live on fulfillmentStatus, shown in Orders.
+  const PLACED_STATES = new Set(["Closed won", "Expired", "Cancelled", "Financing rejected", "Declined financing offers"]);
+  const OS_CLASS = { "In progress": "inprog", "Abandoned": "aband", "Financing rejected": "rej", "Declined financing offers": "declined", "Closed won": "placed", "Expired": "expired", "Cancelled": "cancelled" };
+  const osClass = (s) => OS_CLASS[s];
+  // Build one order object. Vehicle/status/progress are per-order; buyer identity (prequal, credit app,
+  // contact) is shared at the lead level. Late states (Financing rejected, Placed) imply completed steps.
+  function buildOrder(r, spec) {
+    spec = spec || {};
+    const vehName = spec.veh || r.vehicle;
+    const amount = spec.amount != null ? spec.amount : r.amount;
+    const h = hashStr(vehName + (spec.status || ""));
+    const homeDelivery = spec.homeDelivery != null ? spec.homeDelivery : (h % 2 === 0);
+    const shipping = homeDelivery ? 299 : 0;
+    const cartTotal = amount + 599 + 149 + 45 + 385 + Math.round(amount * 0.0725) + shipping;
+    const loanTerm = [60, 66, 72][h % 3];
+    const downPayment = 500 + (h % 4) * 250;
+    const financed = cartTotal - downPayment;
+    const monthly = Math.round(financed / loanTerm * 1.08);
+    const paymentPath = spec.paymentPath || "Financing";
+    const furthestIdx = spec.furthest != null ? spec.furthest : (PLACED_STATES.has(spec.status) ? CHECKOUT_STEPS.length - 1 : 3);
+    const status = spec.status || "In progress";
+    let creditState = spec.creditState;
+    if (creditState == null) creditState = paymentPath !== "Financing" ? "none" : (furthestIdx > 3 ? "approved" : furthestIdx === 3 ? "in_progress" : "none");
+    return {
+      vehicle: { name: vehName, price: amount, bg: vehBg(h), stock: spec.stock || stockNo(h), condition: spec.condition || conditionOf(h) },
+      cartTotal, paymentPath,
+      prequalApproved: paymentPath === "Financing" && furthestIdx > 2,
+      loanTerm, downPayment, financed, monthly, lender: paymentPath === "Financing" ? "FreedomRoad Financial" : "--",
+      fulfillment: homeDelivery ? "Home delivery" : "Dealership pickup",
+      address: homeDelivery ? "1420 S Rainbow Blvd, Las Vegas, NV 89146-2231" : "EuroCycle Las Vegas — 6255 W Sahara Ave",
+      deliveryPrice: shipping, deliveryDate: homeDelivery ? "Est. Jul 21, 2026" : "--",
+      furthestIdx, creditState, status,
+      started: spec.started || (r.created + ", " + fmtTime(h)),
+      placed: PLACED_STATES.has(status),
+      orderNo: spec.orderNo, placedDate: spec.placedDate, fulfillmentStatus: spec.fulfillmentStatus,
+      style: spec.style || "new",
+      specs: spec.specs, accessories: spec.accessories, lastViewed: spec.lastViewed, timesViewed: spec.timesViewed,
+      detailed: spec.detailed,
+    };
+  }
+  // A lead can have multiple orders (r.orders = specs). Otherwise derive a single order from the lead.
+  function ordersOf(r) {
+    if (r.orders) return r.orders.map(s => buildOrder(r, s));
+    const po = partialOf(r);
+    if (!po) return [];
+    const creditState = r.credit || (po.paymentPath !== "Financing" ? "none" : (po.furthestIdx > 3 ? "approved" : po.furthestIdx === 3 ? "in_progress" : "none"));
+    const status = r.cancelled ? "Cancelled"
+      : r.expired ? "Expired"
+      : r.placed ? "Closed won"
+      : creditState === "rejected" ? "Financing rejected"
+      : r.declinedOffers ? "Declined financing offers"
+      : r.abandoned ? "Abandoned"
+      : "In progress";
+    // Placement precedes all outcomes except Abandoned, so any post-placement status has a real order.
+    const isPlaced = PLACED_STATES.has(status);
+    return [Object.assign({}, po, { creditState, status, placed: isPlaced, furthestIdx: isPlaced ? CHECKOUT_STEPS.length - 1 : po.furthestIdx, orderNo: r.orderNo, placedDate: r.placedDate, fulfillmentStatus: r.fulfillmentStatus })];
+  }
+  function orderCard(o, i) {
+    return `<div class="ord-row" data-order="${i}">
+      <span class="veh-thumb" style="background:${o.vehicle.bg}"></span>
+      <div class="veh-meta"><div class="vn">${o.vehicle.name}</div><div class="vs">${vehLine(o.vehicle)}</div></div>
+      <span class="ord-chip ${OS_CLASS[o.status]}">${o.status}</span>
+      <span class="ord-total">${money(o.cartTotal)}</span>
+      <span class="material-symbols-outlined ord-open">chevron_right</span>
+    </div>`;
+  }
+  // Preview body: always the same partial-order layout. Only the status card changes by state
+  // (placed included) — the preview is a consistent lead-intel snapshot, not a per-status view.
+  function orderPreview(r, o) {
+    if (!o) return `<div style="color:var(--rev-color-textQuaternary);font-size:13px;padding:4px 0 8px">No Ekho Express checkout started for this lead.</div>`;
+    return partialPreview(r, o);
+  }
+  // Abandoned-cart card: a cart is only ever In progress or Abandoned. Header (vehicle + price), a
+  // recovery-focused detail block, and "More" -> full "view all details".
+  function cartCard(r, o) {
+    const h = hashStr(o.vehicle.name + o.status);
+    const dateLabel = o.status === "Abandoned" ? "Date abandoned" : "Date started";
+    // Subline: minimal card shows Specs/Accessories; detailed card shows stock # • condition.
+    const specs = o.specs != null ? o.specs : (h % 2) + 1;
+    const acc = o.accessories != null ? o.accessories : h % 3;
+    const sub = o.detailed ? vehLine(o.vehicle) : `Specs (${specs}) • Accessories (${acc})`;
+    let rows;
+    if (o.detailed) {
+      // Checkout-progress lines (same data as the full preview), condensed onto the card.
+      const isFin = o.paymentPath === "Financing";
+      const cs = o.creditState;
+      const prequalVal = !isFin ? "—" : (o.furthestIdx > 2 ? jumpLink("Completed", "open-prequal") : "Not started");
+      const creditVal = !isFin ? "—"
+        : cs === "rejected" ? jumpLink("Rejected", "open-rejected")
+        : cs === "approved" ? jumpLink("Completed", "open-full-credit")
+        : cs === "in_progress" ? jumpLink("In progress", "open-full-credit") : "Not started";
+      rows = `
+        <div class="info-row"><span class="k">${dateLabel}</span><span class="v">${o.started}</span></div>
+        <div class="info-row"><span class="k">Progress</span><span class="v">${CHECKOUT_STEPS[o.furthestIdx]} <span style="color:var(--rev-color-textTertiary)">(${o.furthestIdx + 1} of ${CHECKOUT_STEPS.length})</span></span></div>
+        <div class="info-row"><span class="k">Payment choice</span><span class="v">${o.furthestIdx >= 1 ? o.paymentPath : "—"}</span></div>
+        <div class="info-row"><span class="k">Pre-qualification</span><span class="v">${prequalVal}</span></div>
+        <div class="info-row"><span class="k">Credit application</span><span class="v">${creditVal}</span></div>`;
+    } else {
+      const lastViewed = o.lastViewed || (r.age === 0 ? ("Today at " + fmtTime(h)) : (r.age === 1 ? ("Yesterday at " + fmtTime(h)) : (r.age + " days ago")));
+      const timesViewed = o.timesViewed != null ? o.timesViewed : h % 6;
+      rows = `
+        <div class="info-row"><span class="k">${dateLabel}</span><span class="v">${o.started}</span></div>
+        <div class="info-row"><span class="k">Last viewed</span><span class="v">${lastViewed}</span></div>
+        <div class="info-row"><span class="k">Times viewed</span><span class="v">${timesViewed}</span></div>`;
+    }
+    return `<div class="pq-wrap">
+      <div class="cart-head">
+        <span class="veh-thumb" style="background:${o.vehicle.bg}"></span>
+        <div class="cart-meta"><div class="cart-name">${o.vehicle.name}</div><div class="cart-sub">${sub}</div></div>
+        <span class="cart-price">${money(o.vehicle.price)}</span>
+        <button class="cart-exp" data-role="cart-toggle"><span class="material-symbols-outlined">keyboard_arrow_down</span></button>
+      </div>
+      <div class="pq-detail cart-rows">${rows}</div>
+      <button class="more-btn" data-role="view-full">${o.detailed ? "View all details" : `More <span class="material-symbols-outlined">keyboard_arrow_down</span>`}</button>
+    </div>`;
+  }
+  // Placed Order record (mock — the real record lives in the Orders module). `order` optional (for extra orders).
+  function orderRecordView(r, o) {
+    const pq = prequalOf(r);
+    const meta = prow("Order number", copyV(o.orderNo)) + prow("Placed", o.placedDate) + prow("Fulfillment status", `<span style="color:var(--tag-green-fg);font-weight:600">${o.fulfillmentStatus}</span>`) + prow("Order total", money(o.cartTotal));
+    const prequalRows = pq ? prow("Result", "Approved") + prow("FICO score", ficoChip(pq.ficoColor, pq.fico)) : prow("Result", "--");
+    return `
+      <div class="callout"><span class="ic"><span class="material-symbols-outlined">check_circle</span></span>This order has been placed. The full record lives in Orders, this is a linked summary.</div>
+      ${detailSection("Order", meta)}
+      <div class="detail-sec"><div class="detail-title">Vehicle</div>${vehCard(o.vehicle)}</div>
+      ${detailSection("Payment method", prow("Choice", o.paymentPath))}
+      ${detailSection("Fulfillment", prow("Method", o.fulfillment) + prow("Address", copyV(o.address)) + prow("Delivery fee", o.deliveryPrice ? money(o.deliveryPrice) : "Free"))}
+      ${detailSection("Pre-qualification", prequalRows)}
+      ${creditAppSections(r)}
+      <div class="pq-actions" style="margin-top:2px"><button class="mini-btn">Open in Orders</button></div>`;
+  }
+
+  // Compact, tame preview — same gray-card grammar as Pre-qualifications: how far they got + the vehicle.
+  // CHECKOUT_STEPS = [Personal details, Payment method, Pre-qualification, Credit application, Fulfillment, Review your offer, Sign documents]
+  function partialPreview(r, po) {
+    if (!po) return `<div style="color:var(--rev-color-textQuaternary);font-size:13px;padding:4px 0 8px">No Ekho Express checkout started for this lead.</div>`;
+    const mut = (v) => (v === "--" || v === "—") ? `<span class="muted">${v}</span>` : v;
+    const isFin = po.paymentPath === "Financing";
+    const cs = po.creditState;
+    const payVal = po.furthestIdx >= 1 ? po.paymentPath : "--";
+    // Pre-qual links to its own experience when done. Credit app only links out when rejected
+    // (otherwise the full app is viewable inline via "View all details").
+    const prequalVal = !isFin ? "—" : (po.furthestIdx > 2 ? jumpLink("Completed", "open-prequal") : "Not started");
+    const creditVal = !isFin ? "—"
+      : cs === "rejected" ? jumpLink("Rejected", "open-rejected")
+      : cs === "approved" ? jumpLink("Completed", "open-full-credit")
+      : cs === "in_progress" ? jumpLink("In progress", "open-full-credit") : "Not started";
+    const fulfillVal = po.furthestIdx >= 4 ? po.fulfillment : "--";
+    return `<div class="pq-wrap">
+      <div class="pq-top">
+        <div class="pq-card"><div class="lb">Started</div><div class="vl">${po.started}</div></div>
+        <div class="pq-card"><div class="lb">Furthest step</div><div class="vl">${CHECKOUT_STEPS[po.furthestIdx]} <span style="color:var(--rev-color-textTertiary);font-weight:500">(${po.furthestIdx + 1} of ${CHECKOUT_STEPS.length})</span></div><div style="margin-top:8px"><span class="ord-chip ${osClass(po.status)}" style="margin-left:0">${po.status}</span></div></div>
+      </div>
+      <div class="pq-detail">
+        <div class="info-row"><span class="k">Payment method</span><span class="v">${mut(payVal)}</span></div>
+        <div class="info-row"><span class="k">Pre-qualification</span><span class="v">${mut(prequalVal)}</span></div>
+        <div class="info-row"><span class="k">Credit application</span><span class="v">${mut(creditVal)}</span></div>
+        <div class="info-row"><span class="k">Fulfillment</span><span class="v">${mut(fulfillVal)}</span></div>
+      </div>
+      ${vehCard(po.vehicle)}
+      <div class="pq-cta">
+        ${po.placed
+          ? `<button class="review-btn" data-role="view-full">View all details</button><button class="mini-btn" data-role="open-order">Open in Orders</button>`
+          : `<button class="mini-btn" data-role="view-full">View all details</button>`}
+      </div>
+    </div>`;
+  }
+
+  // Full view — everything the buyer entered, read-only, in the real checkout order.
+  function partialFullView(r, po) {
+    const pq = prequalOf(r);
+    const cs = po.creditState;
+    const isFin = po.paymentPath === "Financing";
+
+    // Always show every field; blank (--) when that step hasn't been filled out yet.
+    const D = `<span class="muted">--</span>`;
+    const pqReached = isFin && po.furthestIdx > 2 && pq;
+    const caFilled = cs === "approved" || cs === "in_progress" || cs === "rejected";
+    const fReached = po.furthestIdx >= 4;
+
+    // Payment method
+    const payment = prow("Choice", po.furthestIdx >= 1 ? (isFin ? "Financing" : "Paying cash") : D);
+
+    // Pre-qualification shown as its own card block (Date filed / Success, FICO, Invite to checkout).
+    const prequalBlock = pqReached
+      ? `<div class="detail-sec" id="prequal-anchor"><div class="detail-title">Pre-qualification</div>
+          <div class="pq-wrap">
+            <div class="pq-top">
+              <div class="pq-card"><div class="lb">Date filed</div><div class="vl">${pq.dateFiled}</div></div>
+              <div class="pq-card"><div class="lb">Pre-qualification</div><div class="vl with-ic"><span class="badge-ic"><span class="material-symbols-outlined">check</span></span>${pq.status}</div></div>
+            </div>
+            <div class="pq-detail">
+              <div class="info-row"><span class="k">FICO score</span><span class="v">${ficoChip(pq.ficoColor, pq.fico)}</span></div>
+              <div class="info-row"><span class="k">Outstanding accounts</span><span class="v">${pq.outstanding}</span></div>
+              <div class="info-row"><span class="k">Avg account age</span><span class="v">${pq.avgAge}yr</span></div>
+            </div>
+            <div class="pq-cta"><button class="mini-btn">Invite to checkout</button></div>
+          </div></div>`
+      : detailSection("Pre-qualification", prow("Result", !isFin ? "Cash — no financing" : "Not started"));
+
+    // Credit application (all fields always; rejected also links out)
+    const creditLink = (cs === "rejected") ? jumpLink("Review rejected application", "open-rejected") : "";
+
+    // Fulfillment (all fields always)
+    const fulfillment = prow("Method", fReached ? po.fulfillment : D)
+      + prow("Address", fReached ? copyV(po.address) : D)
+      + prow("Delivery fee", fReached ? (po.deliveryPrice ? money(po.deliveryPrice) : "Free") : D)
+      + prow("Estimated by", fReached && po.deliveryDate !== "--" ? po.deliveryDate : D);
+
+    return `
+      <div class="full-status"><span class="ord-chip ${osClass(po.status)}" style="margin-left:0">${po.status}</span> <span style="color:var(--rev-color-textTertiary)">· reached ${CHECKOUT_STEPS[po.furthestIdx]} (${po.furthestIdx + 1} of ${CHECKOUT_STEPS.length})</span></div>
+      <div class="detail-sec"><div class="detail-title">Vehicle of interest</div>${vehCard(po.vehicle)}</div>
+      ${detailSection("Payment method", payment)}
+      ${prequalBlock}
+      <div class="detail-title" style="margin-top:2px">Credit application${creditLink}</div><span id="credit-anchor"></span>${creditAppSections(r, caFilled)}
+      ${detailSection("Fulfillment", fulfillment)}`;
+  }
+
+  // Credit-app status for a lead: none | in_progress | approved | rejected.
+  function creditStatus(r) {
+    if (r.credit) return r.credit;
+    const po = partialOf(r);
+    if (!po || po.paymentPath !== "Financing") return "none";
+    return po.furthestIdx > 3 ? "approved" : (po.furthestIdx === 3 ? "in_progress" : "none");
+  }
+  function creditAppOf(r) {
+    const h = hashStr(r.name + "ca");
+    return {
+      dob: ["Mar 18, 1991", "Jul 2, 1988", "Nov 30, 1995", "Jan 9, 1983"][h % 4],
+      email: r.email || "--", phone: r.phone || "--",
+      address: "1420 S Rainbow Blvd, Las Vegas, NV 89146-2231",
+      ssn: "**-**-" + (1000 + (h % 9000)),
+      marital: ["Single", "Married", "Divorced"][h % 3],
+      housing: ["Own", "Rent", "LivesWithRelatives"][h % 3],
+      monthlyHousing: [0, 1200, 1850, 2400][h % 4],
+      employer: "Rainbow Powersports", occupation: "Service technician", empStatus: "Employed",
+      employerAddress: "6255 W Sahara Ave, Las Vegas, NV 89146", employerPhone: "+1 (702) 555-0148",
+      monthlyGross: 4200 + (h % 30) * 100, otherIncome: (h % 2) ? 800 : 0,
+      ref: { name: "Jamie Reed", phone: "+1 (702) 555-0170", relationship: "Sibling" },
+    };
+  }
+  // Buyer-entered credit application inputs (from the checkout flow: terms, housing, employment, income).
+  function creditAppData(r) {
+    const h = hashStr(r.name + "cd");
+    return {
+      loanLength: [36, 48, 60, 66, 72][h % 5],
+      downPayment: [0, 500, 1000, 1500][h % 4],
+      housingStatus: ["Own", "Rent", "Live with relatives"][h % 3],
+      moveIn: ["Apr 2025", "Aug 2022", "Jan 2019"][h % 3],
+      stateIdSame: (h % 2 === 0),
+      employmentStatus: "Employed (full or part-time)",
+      employer: "Ekho", jobTitle: "Software Engineer", startDate: "Sep 14, 2025", employerPhone: "+1 (123) 456-7890",
+      incomes: (h % 2) ? [{ type: "Investment income", gross: 800 }, { type: "Spousal income", gross: 1200 }] : [],
+    };
+  }
+  // The full credit-app doc as sections (Applicant info / Employment / Reference) — shown in the
+  // Rejected credit application flow.
+  // filled=false blanks every value (fields still show) for a not-yet-completed credit app.
+  function creditAppSections(r, filled) {
+    if (filled == null) filled = true;
+    const c = creditAppOf(r);
+    const D = `<span class="muted">--</span>`;
+    const V = (v) => filled ? v : D;
+    const CV = (v) => filled ? copyV(v) : D;
+    const applicant = prow("Date of birth", CV(c.dob)) + prow("Email", CV(c.email)) + prow("Phone", CV(c.phone)) + prow("Address", CV(c.address)) + prow("SSN", V(c.ssn)) + prow("Marital status", V(c.marital)) + prow("Housing", V(c.housing)) + prow("Monthly housing payment", V(money(c.monthlyHousing)));
+    const employment = prow("Employer", CV(c.employer)) + prow("Occupation", CV(c.occupation)) + prow("Status", V(c.empStatus)) + prow("Employer address", CV(c.employerAddress)) + prow("Employer phone", CV(c.employerPhone)) + prow("Monthly gross income", V(money(c.monthlyGross))) + prow("Other income", filled && c.otherIncome ? money(c.otherIncome) : D);
+    const reference = prow("Name", CV(c.ref.name)) + prow("Phone", CV(c.ref.phone)) + prow("Relationship", V(c.ref.relationship));
+    return detailSection("Applicant info", applicant) + detailSection("Employment", employment) + detailSection("Reference 1", reference);
+  }
+  const SENSITIVE_CALLOUT = `<div class="callout"><span class="ic"><span class="material-symbols-outlined">info</span></span>Contains sensitive personal information, including SSN. Handle it securely and do not share it.</div>`;
+  // Inline credit app inside the partial order (approved / completed, not rejected).
+  function creditAppInline(r) {
+    return `<div class="detail-title" style="margin-top:-2px">Credit application</div>${SENSITIVE_CALLOUT}${creditAppSections(r)}`;
+  }
+  // Rejected credit application — its own action-oriented flow (only reachable when rejected).
+  function rejectionOf(r) {
+    return [
+      { name: "FreedomRoad Financial", reasons: "Credit score below program threshold" },
+      { name: "Octane", reasons: "Insufficient credit history for requested amount" },
+    ];
+  }
+  const rejPill = `<span class="pill" style="background:#fde8e8;color:#b42318"><span class="dot" style="background:#d92d20"></span>Rejected</span>`;
+  // Compact Financing rejected preview (per rejected order): vehicle + requested terms + lender decisions + CTA.
+  function rejectedPreview(r, o) {
+    const terms = infoR("Loan length", `${o.loanTerm}-month`) + infoR("Down payment", money(o.downPayment));
+    const lenderRows = rejectionOf(r).map(l => xrow(l.name, rejPill, `<div style="font-size:13px;color:var(--rev-color-textTertiary)">${l.reasons}</div>`)).join("");
+    return `<div class="pq-wrap">
+      ${vehCardExp(o.vehicle)}
+      <div class="pq-detail" style="padding:0 16px">
+        ${xrow("Requested terms", "2 terms specified", terms)}
+        ${lenderRows}
+      </div>
+      <div class="pq-actions"><button class="review-btn" data-role="open-creditapp-doc">Review full credit app</button></div>
+    </div>`;
+  }
+  // The full "Review credit application" doc (SSN callout + Applicant info / Employment / Reference).
+  function creditAppFullDoc(r) { return SENSITIVE_CALLOUT + creditAppSections(r); }
+
+  // State-aware task cards for the drawer's "Your tasks".
+  function drawerTasks(r) {
+    if (r.stage === "Closed won" || r.stage === "Closed lost") return [];
+    const po = partialOf(r), cs = creditStatus(r), out = [];
+    if (r.stage === "To reach out") out.push({ title: "Contact lead", sub: "Log your first interaction", btn: "Log activity" });
+    if (cs === "rejected") out.push({ title: "Review rejected credit application", sub: "Review the buyer's credit application and submit it to your in-store lending partners.", btn: "Review", role: "open-rejected" });
+    else if (po && r.declinedOffers) out.push({ title: "Follow up on declined financing offers", sub: "The buyer saw financing offers and passed. Reach out with cash or in-store options.", btn: "Log activity" });
+    else if (po && r.abandoned) out.push({ title: "Follow up on abandoned checkout", sub: "This checkout stalled. Reach out to help them finish.", btn: "Log activity" });
+    else if (po && cs === "approved") out.push({ title: "Help the buyer place their order", sub: "They're approved and deep in checkout. Give them a nudge.", btn: "Log activity" });
+    else if (po) out.push({ title: "Nudge the buyer to continue", sub: "They started an Ekho Express checkout. Help them keep going.", btn: "Log activity" });
+    return out;
+  }
+
+  function renderLeadBody(r) {
+    const pq = prequalOf(r), orders = ordersOf(r), po = orders[0] || null;
+    const created = r.created + ", " + fmtTime(hashStr(r.name + "c"));
+    const lastActive = r.age === 0 ? ("Today at " + fmtTime(hashStr(r.name + "la"))) : (r.age === 1 ? "Yesterday" : r.age + " days ago");
+    const cartTotal = po ? po.cartTotal : 0;
+    const dts = drawerTasks(r);
+    const taskCard = dts.length
+      ? dts.map(t => `<div class="ld-task"><span class="tk-ic"><span class="material-symbols-outlined">schedule</span></span><div class="tk-txt"><b>${t.title}</b><span>${t.sub}</span></div><button class="mini-btn tk-btn"${t.role ? ` data-role="${t.role}"` : ""}>${t.btn}</button></div>`).join('<div style="height:10px"></div>')
+      : `<div class="ld-task"><span class="tk-ic" style="background:var(--tag-green-bg);color:var(--tag-green-dot)"><span class="material-symbols-outlined">check</span></span><div class="tk-txt"><b>You're all caught up</b><span>No open tasks for this lead</span></div></div>`;
+    const contactBody = `
+      <div class="info-row"><span class="k">Name</span><span class="v">${r.name}</span></div>
+      <div class="info-row"><span class="k">Phone number</span><span class="v">${r.phone || '--'}</span></div>
+      <div class="info-row"><span class="k">Email</span><span class="v">${r.email || '--'}</span></div>
+      <div class="info-row"><span class="k">Address</span><span class="v">--</span></div>`;
+    return `
+      <div class="rule-label">Your tasks</div>
+      ${taskCard}
+      <div class="ld-quick">
+        <div class="qa"><span class="qa-ic"><span class="material-symbols-outlined">add</span></span><span class="qa-lb">Log</span></div>
+        <div class="qa ${r.phone ? '' : 'disabled'}"><span class="qa-ic"><span class="material-symbols-outlined">call</span></span><span class="qa-lb">Call</span></div>
+        <div class="qa"><span class="qa-ic"><span class="material-symbols-outlined">mail</span></span><span class="qa-lb">Email</span></div>
+      </div>
+      <div class="ld-stats">
+        <div class="ld-stat"><div class="lb">Cart total</div><div class="vl">${money(cartTotal)}</div></div>
+        <div class="ld-stat"><div class="lb">Lead created</div><div class="vl">${created}</div></div>
+        <div class="ld-stat"><div class="lb">Last active</div><div class="vl">${lastActive}</div></div>
+      </div>
+      <div class="ld-attrs">
+        <div class="attr-row"><span class="k">Pipeline</span><span class="v">${r.pipeline} pipeline</span></div>
+        <div class="attr-row"><span class="k">Type</span><span class="v">${typePillHTML(r)}</span></div>
+        <div class="attr-row"><span class="k">Stage</span><div class="select-field">${stageHTML(r)}<span class="material-symbols-outlined">expand_more</span></div></div>
+        <div class="attr-row"><span class="k">Assigned rep</span><div class="select-field">${r.owner}<span class="material-symbols-outlined">expand_more</span></div></div>
+      </div>
+      ${acc("Contact", null, contactBody, false)}
+      ${acc("Activities", 0, `<div style="color:var(--rev-color-textQuaternary);font-size:13px;padding:4px 0 8px">No activity logged yet.</div>`, true)}
+      ${(() => {
+        // A cart is only ever In progress or Abandoned; placed orders live in the Orders module.
+        const carts = orders.map((o, i) => ({ o, i })).filter(x => x.o.status === "In progress" || x.o.status === "Abandoned");
+        // Two preview styles ship at launch: the new recovery card, and the old detailed preview
+        // (kept for cases still on the old style). o.style picks which one this cart renders as.
+        const cardFor = (o) => o.style === "old" ? partialPreview(r, o) : cartCard(r, o);
+        const body = carts.length
+          ? carts.map((x, idx) => `<div class="ord-block" data-order="${x.i}"${idx < carts.length - 1 ? ' style="margin-bottom:14px"' : ''}>${cardFor(x.o)}</div>`).join("")
+          : `<div style="color:var(--rev-color-textQuaternary);font-size:13px;padding:4px 0 8px">No in-progress or abandoned carts.</div>`;
+        return acc(`Abandoned carts (${carts.length})`, null, body, false);
+      })()}
+      ${(() => {
+        const rejected = orders.filter(o => o.creditState === "rejected");
+        return rejected.length ? acc("Financing rejected", rejected.length, rejected.map(o => rejectedPreview(r, o)).join('<div style="height:14px"></div>'), false) : "";
+      })()}
+      ${acc("Pre-qualifications", pq ? 1 : 0, prequalSection(pq), false)}
+    `;
+  }
+
+  let currentLeadId = null, currentLeadObj = null, currentOrderObj = null;
+  function openLeadDrawer(r) {
+    if (!r) return;
+    currentLeadId = r.id;
+    currentLeadObj = r;
+    currentOrderObj = ordersOf(r)[0] || null;
+    const verified = r.prequal === "done" ? ` <span class="verified material-symbols-outlined">verified</span>` : "";
+    document.getElementById("ldName").innerHTML = `${r.name}${verified}`;
+    document.getElementById("ldBody").innerHTML = renderLeadBody(r);
+    document.getElementById("ldBody").scrollTop = 0;
+    document.getElementById("leadDrawer").classList.add("open");
+    document.getElementById("scrim").classList.add("open");
+  }
+  // Full "Review partial order" view (replaces the drawer body; back arrow returns to Overview).
+  function openPartialFull(r, o) {
+    o = o || currentOrderObj || ordersOf(r)[0];
+    if (!o) return;
+    currentOrderObj = o;
+    document.getElementById("ldName").innerHTML = `<span class="ld-back" data-role="ld-back"><span class="material-symbols-outlined">arrow_back</span></span>Review partial order`;
+    document.getElementById("ldBody").innerHTML = partialFullView(r, o);
+    document.getElementById("ldBody").scrollTop = 0;
+  }
+  // The dedicated Rejected credit application flow the partial order links to.
+  // Scroll to the Financing rejected caret in the drawer (where next steps are prompted).
+  function openRejectedExperience(r) {
+    openLeadDrawer(r);
+    const el = [...document.querySelectorAll("#ldBody .ld-acc")].find(a => a.querySelector("h3").textContent.startsWith("Financing rejected"));
+    if (el) { el.classList.remove("collapsed"); el.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+  // Full "Review credit application" doc (opened from the Financing rejected preview).
+  function openCreditApp(r) {
+    document.getElementById("ldName").innerHTML = `<span class="ld-back" data-role="ld-back"><span class="material-symbols-outlined">arrow_back</span></span>Review credit application`;
+    document.getElementById("ldBody").innerHTML = creditAppFullDoc(r);
+    document.getElementById("ldBody").scrollTop = 0;
+  }
+  function openOrderRecord(r, o) {
+    o = o || currentOrderObj || ordersOf(r)[0];
+    if (!o) return;
+    currentOrderObj = o;
+    document.getElementById("ldName").innerHTML = `<span class="ld-back" data-role="ld-back"><span class="material-symbols-outlined">arrow_back</span></span>${o.orderNo || "Order"}`;
+    document.getElementById("ldBody").innerHTML = orderRecordView(r, o);
+    document.getElementById("ldBody").scrollTop = 0;
+  }
+  function openPrequalExperience(r) {
+    openLeadDrawer(r); // back to Overview
+    const acc = [...document.querySelectorAll("#ldBody .ld-acc")].find(a => a.querySelector("h3").textContent.startsWith("Pre-qualification"));
+    if (acc) { acc.classList.remove("collapsed"); acc.scrollIntoView({ block: "start", behavior: "smooth" }); }
+  }
+  function closeLeadDrawer() { document.getElementById("leadDrawer").classList.remove("open"); if (!drawer.classList.contains("open")) scrim.classList.remove("open"); }
+  document.getElementById("ldClose").addEventListener("click", closeLeadDrawer);
+  document.getElementById("ldBody").addEventListener("click", (e) => {
+    if (e.target.closest(".copyable")) return; // let the global handler copy
+    // Which order was interacted with (each stacked preview card is an .ord-block).
+    const block = e.target.closest(".ord-block");
+    if (block) currentOrderObj = ordersOf(currentLeadObj)[+block.dataset.order] || currentOrderObj;
+    const head = e.target.closest(".ld-acc-head");
+    if (head) { head.parentElement.classList.toggle("collapsed"); return; }
+    const xh = e.target.closest(".xrow-head");
+    if (xh) { xh.parentElement.classList.toggle("open"); return; }
+    const vx = e.target.closest("[data-vexp]");
+    if (vx) { vx.closest(".veh-card").classList.toggle("open"); return; }
+    if (e.target.closest('[data-role="cart-toggle"]')) { const w = e.target.closest('.pq-wrap'); if (w) w.classList.toggle('cart-collapsed'); return; }
+    if (e.target.closest('[data-role="view-full"]')) { openPartialFull(currentLeadObj, currentOrderObj); return; }
+    if (e.target.closest('[data-role="open-prequal"]')) { openPartialFull(currentLeadObj, currentOrderObj); const a = document.getElementById("prequal-anchor"); if (a) a.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    if (e.target.closest('[data-role="open-rejected"]')) { openRejectedExperience(currentLeadObj); return; }
+    if (e.target.closest('[data-role="open-creditapp-doc"]')) { openCreditApp(currentLeadObj); return; }
+    if (e.target.closest('[data-role="open-full-credit"]')) { openPartialFull(currentLeadObj, currentOrderObj); const a = document.getElementById("credit-anchor"); if (a) a.scrollIntoView({ block: "start", behavior: "smooth" }); return; }
+    if (e.target.closest('[data-role="open-order"]')) { window.open("about:blank", "_blank"); return; } // deep-links to this order in the Orders table
+  });
+  document.getElementById("ldName").addEventListener("click", (e) => {
+    if (e.target.closest('[data-role="ld-back"]')) openLeadDrawer(currentLeadObj);
+  });
+  function navLead(dir) {
+    const idx = currentRows.findIndex(r => r.id === currentLeadId);
+    const ni = idx + dir;
+    if (ni >= 0 && ni < currentRows.length) openLeadDrawer(currentRows[ni]);
+  }
+  document.getElementById("ldPrev").addEventListener("click", () => navLead(-1));
+  document.getElementById("ldNext").addEventListener("click", () => navLead(1));
+
+  // ---------- Init ----------
+  renderHead();
+  renderQuickTabs();
+  renderFilters();
+  renderPager();
+  apply();
+  requestAnimationFrame(() => tableWrap.dispatchEvent(new Event("scroll")));
+  // Showcase: open a lead that has both a pre-qualification and an in-progress Express checkout,
+  // so the new Partial order section is visible on load. Click any lead's name to open its drawer; X closes.
+  openLeadDrawer(ROWS.find(r => r.name === "Bradley Landrum"));
+
+  // ---------- Screen switcher: Leads <-> Lifecycle & forwarding ----------
+  (function () {
+    const nav = document.getElementById("screenNav");
+    const leadsScreen = document.getElementById("leadsScreen");
+    const flowScreen = document.getElementById("flowScreen");
+    nav.addEventListener("click", (e) => {
+      const btn = e.target.closest("button[data-screen]");
+      if (!btn) return;
+      nav.querySelectorAll("button").forEach(b => b.classList.toggle("active", b === btn));
+      const showFlow = btn.dataset.screen === "flow";
+      flowScreen.style.display = showFlow ? "" : "none";
+      leadsScreen.style.display = showFlow ? "none" : "";
+      if (showFlow) { // close any open leads-screen overlays, then render the diagram
+        closeLeadDrawer();
+        document.getElementById("drawer").classList.remove("open");
+        document.getElementById("scrim").classList.remove("open");
+        (function tryRender(n){ if (window.renderFlowDiagram) window.renderFlowDiagram(); else if (n < 60) setTimeout(() => tryRender(n + 1), 100); })(0);
+      }
+      window.scrollTo(0, 0);
+    });
+  })();
+</script>
+<script type="module">
+  import mermaid from "https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs";
+  mermaid.initialize({ startOnLoad: false, securityLevel: "loose", theme: "base",
+    themeVariables: { fontFamily: "Inter, system-ui, sans-serif", fontSize: "13px", lineColor: "#98a2b3" } });
+  let rendered = false;
+  window.renderFlowDiagram = async () => {
+    if (rendered) return;
+    const el = document.querySelector("#flowScreen .mermaid");
+    if (!el) return;
+    rendered = true;
+    try { await mermaid.run({ nodes: [el] }); }
+    catch (e) { rendered = false; console.error("mermaid render failed", e); }
+  };
+</script>
+</body>
+</html>
